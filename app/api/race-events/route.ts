@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { RaceEvent as DBRaceEvent } from '@prisma/client'
 
 export interface RaceEvent {
   id: string
@@ -57,7 +56,7 @@ export async function GET(request: Request) {
     })
 
     // Map DB rows to RaceEvent shape
-    const formattedEvents: RaceEvent[] = data.map((row: DBRaceEvent) => ({
+    const formattedEvents: RaceEvent[] = data.map((row: any) => ({
       id: row.id,
       title: row.title,
       date: row.date,
