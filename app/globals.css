@@ -986,20 +986,62 @@ body {
 }
 
 @media (max-width: 480px) {
+  /* Make status cards render in a 2x2 grid row */
   .stats-bar {
-    grid-template-columns: 1fr !important; /* Stack stats one per line */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem;
   }
 
   .stat-card {
-    padding: 0.88rem 1rem;
+    padding: 0.65rem 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .stat-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 0.4rem !important;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 
   .stat-value {
-    font-size: 1.35rem;
+    font-size: 1.1rem !important;
+    line-height: 1.2;
   }
 
   .stat-label {
-    font-size: 0.72rem;
+    font-size: 0.65rem !important;
+    line-height: 1.2;
+  }
+
+  /* Make navigation bar compact on tiny viewports */
+  .nav-title {
+    display: none !important; /* Hide 'FlyMetric' text on small phones to prevent overlapping */
+  }
+
+  .nav-brand {
+    gap: 0.4rem !important;
+  }
+
+  .nav-actions {
+    gap: 0.35rem !important;
+  }
+
+  .nav-btn {
+    padding: 0.45rem !important;
+    min-width: 2rem !important;
+    height: 2rem !important;
+  }
+
+  .nav-btn svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 }
 
