@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon } from '@/components/icons'
+import { getBirds, saveBird, deleteBird } from '@/lib/apiClient'
 
 interface LoftBird {
   id: string
@@ -44,10 +45,7 @@ export default function BirdRegistryModal({
   const fetchBirds = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/loft-birds', {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      })
-      const data = await res.json()
+      const data = await getBirds(authToken)
       if (Array.isArray(data)) {
         setBirds(data)
       }
@@ -98,23 +96,15 @@ export default function BirdRegistryModal({
     setSaving(true)
 
     try {
-      const response = await fetch('/api/loft-birds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({
-          ringNo: ringNo.trim(),
-          color: color.trim(),
-          name: name.trim() || undefined,
-          gender,
-        }),
-      })
+      const res = await saveBird(authToken, {
+        ringNo: ringNo.trim(),
+        color: color.trim(),
+        name: name.trim() || undefined,
+        gender,
+      }, false)
 
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to register bird')
+      if (!res.success) {
+        throw new Error('Failed to register bird')
       }
 
       setSaveSuccess(true)
@@ -142,11 +132,8 @@ export default function BirdRegistryModal({
     if (!confirm('Are you sure you want to remove this bird from your loft registry?')) return
 
     try {
-      const response = await fetch(`/api/loft-birds?id=${id}`, {
-        method: 'DELETE',
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      })
-      if (!response.ok) {
+      const res = await deleteBird(authToken, id)
+      if (!res.success) {
         throw new Error('Failed to delete bird')
       }
       fetchBirds()

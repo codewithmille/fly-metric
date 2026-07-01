@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, PlusIcon, TagIcon, TimerIcon, NotesIcon, RulerIcon, TrashIcon, PillIcon, CalendarIcon, TrophyIcon, TrainingIcon, LightningIcon } from '@/components/icons'
+import { saveEvent } from '@/lib/apiClient'
 
 interface LoftBird {
   id: string
@@ -255,32 +256,24 @@ export default function ActivityModal({
 
     try {
       const isEdit = !!eventToEdit
-      const response = await fetch('/api/race-events', {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({
-          id: eventToEdit?.id,
-          title: title || 'New Activity',
-          date: raceDate,
-          totalBirds: dbBirds,
-          maxSpeed: maxSpeed,
-          avgSpeed: avgSpeed,
-          location: dbLocation,
-          club: dbClub,
-          distance: dbDistance,
-          winner: dbWinner,
-          releaseTime: (activityType === 'race' || activityType === 'training') ? releaseTime : undefined,
-          clockInTime: (activityType === 'race' || activityType === 'training') ? clockInTime : undefined,
-          birds: (activityType === 'race' || activityType === 'training') ? JSON.stringify(birdsList) : '[]',
-        }),
-      })
+      const res = await saveEvent(authToken, {
+        id: eventToEdit?.id,
+        title: title || 'New Activity',
+        date: raceDate,
+        totalBirds: dbBirds,
+        maxSpeed: maxSpeed,
+        avgSpeed: avgSpeed,
+        location: dbLocation,
+        club: dbClub,
+        distance: dbDistance,
+        winner: dbWinner,
+        releaseTime: (activityType === 'race' || activityType === 'training') ? releaseTime : undefined,
+        clockInTime: (activityType === 'race' || activityType === 'training') ? clockInTime : undefined,
+        birds: (activityType === 'race' || activityType === 'training') ? JSON.stringify(birdsList) : '[]',
+      }, isEdit)
 
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save activity')
+      if (!res.success) {
+        throw new Error('Failed to save activity')
       }
 
       setSaveSuccess(true)

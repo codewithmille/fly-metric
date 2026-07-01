@@ -5,11 +5,12 @@ import dynamic from 'next/dynamic'
 import ActivityModal from '@/components/ActivityModal'
 import QuickClockInModal from '@/components/QuickClockInModal'
 import BirdRegistryModal from '@/components/BirdRegistryModal'
-import LoginModal from '@/components/LoginModal'
+import LandingPage from '@/components/LandingPage'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
+import { getEvents, getBirds, syncOfflineQueue, isOnline } from '@/lib/apiClient'
 
 // RaceCalendar must be loaded client-side only (FullCalendar dependency)
 const RaceCalendar = dynamic(() => import('@/components/RaceCalendar'), {
@@ -48,7 +49,9 @@ export default function Home() {
   const [selectionDate, setSelectionDate] = useState('')
   const [selectionEvents, setSelectionEvents] = useState<RaceEvent[]>([])
 
-  // ── Auth ─────────────────────────────────────────────────
+  const [isOfflineMode, setIsOfflineMode] = useState(false)
+
+  // ── Auth & Connection ──────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -63,11 +66,6 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const authHeaders = useCallback((): HeadersInit => {
-    if (!session?.access_token) return {}
-    return { Authorization: `Bearer ${session.access_token}` }
-  }, [session])
-
   const handleSignOut = async () => {
     await supabase.auth.signOut()
   }
@@ -77,8 +75,7 @@ export default function Home() {
     if (!session) return
     try {
       setLoading(true)
-      const res = await fetch('/api/race-events', { headers: authHeaders() })
-      const data = await res.json()
+      const data = await getEvents(session.access_token)
       if (Array.isArray(data)) {
         setEvents(data)
       }
@@ -87,20 +84,55 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [session, authHeaders])
+  }, [session])
 
   const fetchBirds = useCallback(async () => {
     if (!session) return
     try {
-      const res = await fetch('/api/loft-birds', { headers: authHeaders() })
-      const data = await res.json()
+      const data = await getBirds(session.access_token)
       if (Array.isArray(data)) {
         setRegisteredBirds(data)
       }
     } catch (err) {
       console.error('Error fetching birds:', err)
     }
-  }, [session, authHeaders])
+  }, [session])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOfflineMode(!navigator.onLine)
+
+      const handleOnline = () => {
+        setIsOfflineMode(false)
+        if (session?.access_token) {
+          syncOfflineQueue(session.access_token).then(() => {
+            fetchEvents()
+            fetchBirds()
+          })
+        }
+      }
+
+      const handleOffline = () => {
+        setIsOfflineMode(true)
+      }
+
+      window.addEventListener('online', handleOnline)
+      window.addEventListener('offline', handleOffline)
+
+      // Sync immediately on mount if online
+      if (navigator.onLine && session?.access_token) {
+        syncOfflineQueue(session.access_token).then(() => {
+          fetchEvents()
+          fetchBirds()
+        })
+      }
+
+      return () => {
+        window.removeEventListener('online', handleOnline)
+        window.removeEventListener('offline', handleOffline)
+      }
+    }
+  }, [session, fetchEvents, fetchBirds])
 
   useEffect(() => {
     if (session) {
@@ -108,6 +140,7 @@ export default function Home() {
       fetchBirds()
     }
   }, [session, fetchEvents, fetchBirds])
+
 
   // ── Modal handlers ────────────────────────────────────────
   const openModal = (dateStr: string, eventToEdit?: RaceEvent | null) => {
@@ -153,7 +186,7 @@ export default function Home() {
   }
 
   if (!session) {
-    return <LoginModal />
+    return <LandingPage />
   }
 
   // ── Stats ─────────────────────────────────────────────────
@@ -188,6 +221,17 @@ export default function Home() {
             Fly<span>Metric</span>
           </h1>
           <span className="nav-badge">MY LOFT</span>
+          {isOfflineMode ? (
+            <span className="nav-badge" style={{ backgroundColor: 'rgba(255, 143, 0, 0.15)', border: '1px solid rgba(255, 143, 0, 0.3)', color: '#FF8F00', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FF8F00', display: 'inline-block' }}></span>
+              Offline
+            </span>
+          ) : (
+            <span className="nav-badge" style={{ backgroundColor: 'rgba(76, 175, 80, 0.15)', border: '1px solid rgba(76, 175, 80, 0.3)', color: '#4CAF50', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4CAF50', display: 'inline-block' }}></span>
+              Online
+            </span>
+          )}
         </div>
 
         <div className="nav-actions">

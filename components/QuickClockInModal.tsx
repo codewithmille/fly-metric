@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, TrophyIcon, TagIcon, TimerIcon, PlusIcon, CalendarIcon } from '@/components/icons'
+import { saveEvent } from '@/lib/apiClient'
 
 interface LoftBird {
   id: string
@@ -166,33 +167,25 @@ export default function QuickClockInModal({
       
       const winnerRing = event.extendedProps.club === 'Training' ? 'N/A' : fastestBird.ringNo
 
-      // Submit PUT request to update the event in Supabase
-      const response = await fetch('/api/race-events', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({
-          id: event.id,
-          title: event.title,
-          date: event.date,
-          totalBirds,
-          maxSpeed,
-          avgSpeed,
-          location: event.extendedProps.location,
-          club: event.extendedProps.club,
-          distance: distanceKm,
-          winner: winnerRing,
-          releaseTime,
-          clockInTime, // Set latest clocked bird arrival time
-          birds: JSON.stringify(birdsList),
-        }),
-      })
+      // Update the event in local database (syncs to Supabase when online)
+      const res = await saveEvent(authToken, {
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        totalBirds,
+        maxSpeed,
+        avgSpeed,
+        location: event.extendedProps.location,
+        club: event.extendedProps.club,
+        distance: distanceKm,
+        winner: winnerRing,
+        releaseTime,
+        clockInTime, // Set latest clocked bird arrival time
+        birds: JSON.stringify(birdsList),
+      }, true)
 
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to clock in bird')
+      if (!res.success) {
+        throw new Error('Failed to clock in bird')
       }
 
       setSuccess(true)

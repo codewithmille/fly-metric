@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import PWARegistration from "@/components/PWARegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,11 @@ export const metadata: Metadata = {
   description:
     "Professional pigeon racing clocking dashboard. Track race events, calculate velocity in yards per minute, and manage your loft calendar with FlyMetric.",
   keywords: ["pigeon racing", "fly metric", "clocking system", "race calendar", "loft tracker"],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FlyMetric",
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +35,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PWARegistration />
+        {children}
+      </body>
     </html>
   );
 }
+
