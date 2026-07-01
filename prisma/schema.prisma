@@ -1,0 +1,46 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model RaceEvent {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  userEmail       String   @map("user_email")
+  title           String
+  date            String
+  backgroundColor String   @default("#FFC107") @map("background_color")
+  borderColor     String   @default("#FF8F00") @map("border_color")
+  totalBirds      Int      @default(1) @map("total_birds")
+  maxSpeed        Float    @default(0) @map("max_speed")
+  avgSpeed        Float    @default(0) @map("avg_speed")
+  location        String?
+  club            String?
+  distance        Float    @default(0)
+  winner          String   @default("TBD")
+  releaseTime     String?  @map("release_time")
+  clockInTime     String?  @map("clock_in_time")
+  birds           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("race_events")
+}
+
+model LoftBird {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  userEmail String   @map("user_email")
+  ringNo    String   @map("ring_no")
+  color     String
+  name      String?
+  gender    String?  @default("Unknown")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, ringNo])
+  @@index([userId])
+  @@map("loft_birds")
+}
