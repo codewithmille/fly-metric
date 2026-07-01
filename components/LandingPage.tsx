@@ -877,6 +877,74 @@ export default function LandingPage() {
             align-items: center;
           }
         }
+
+        @media (max-width: 640px) {
+          .header-container {
+            padding: 0 1rem;
+            height: 4rem;
+          }
+          .header-nav {
+            gap: 1rem;
+          }
+          .nav-link {
+            display: none; /* Hide raw links to prevent wrapping issues on tiny screens */
+          }
+          .logo-section {
+            gap: 0.5rem;
+          }
+          .app-title {
+            font-size: 1.1rem;
+          }
+
+          .hero-section {
+            padding: 3rem 1rem;
+          }
+          .hero-container {
+            gap: 2.5rem;
+          }
+          .hero-headline {
+            font-size: 2.25rem;
+          }
+          .hero-subtext {
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+          }
+          .hero-features-preview {
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+          .preview-stat strong {
+            font-size: 1.25rem;
+          }
+
+          .visual-wrapper {
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+          }
+
+          .features-section {
+            padding: 4rem 1rem;
+          }
+          .feature-card {
+            padding: 1.75rem;
+          }
+
+          .install-section {
+            padding: 4rem 1rem;
+          }
+          .install-grid {
+            gap: 3rem;
+          }
+          .steps-list {
+            margin-top: 2rem;
+            text-align: left;
+          }
+
+          .landing-footer {
+            padding: 3rem 1rem;
+          }
+        }
       `}</style>
     </div>
   )
