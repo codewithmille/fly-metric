@@ -8,6 +8,7 @@ interface LoftMapPreviewProps {
   releaseLat?: number | null
   releaseLng?: number | null
   height?: string
+  onMapClick?: (lat: number, lng: number) => void
 }
 
 export default function LoftMapPreview({
@@ -15,7 +16,8 @@ export default function LoftMapPreview({
   loftLng,
   releaseLat,
   releaseLng,
-  height = '240px'
+  height = '240px',
+  onMapClick
 }: LoftMapPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -96,6 +98,14 @@ export default function LoftMapPreview({
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap'
         }).addTo(map);
+
+        map.on('click', function(e) {
+          window.parent.postMessage({
+            type: 'MAP_CLICKED',
+            lat: e.latlng.lat,
+            lng: e.latlng.lng
+          }, '*');
+        });
 
         lIcon = L.icon({
           iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
@@ -242,11 +252,13 @@ export default function LoftMapPreview({
     const handleMessage = (e: MessageEvent) => {
       if (e.data && e.data.type === 'MAP_READY') {
         sendCoords()
+      } else if (e.data && e.data.type === 'MAP_CLICKED') {
+        onMapClick?.(e.data.lat, e.data.lng)
       }
     }
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [loftLat, loftLng, releaseLat, releaseLng])
+  }, [loftLat, loftLng, releaseLat, releaseLng, onMapClick])
 
   return (
     <div style={{

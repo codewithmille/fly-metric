@@ -661,6 +661,10 @@ export default function ActivityModal({
                     releaseLat={parseFloat(releaseLat) || null}
                     releaseLng={parseFloat(releaseLng) || null}
                     height="180px"
+                    onMapClick={(lat, lng) => {
+                      setReleaseLat(lat.toFixed(6))
+                      setReleaseLng(lng.toFixed(6))
+                    }}
                   />
                 </div>
               </div>

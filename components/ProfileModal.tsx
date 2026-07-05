@@ -241,6 +241,10 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
                     loftLat={parseFloat(latitude) || null}
                     loftLng={parseFloat(longitude) || null}
                     height="150px"
+                    onMapClick={(lat, lng) => {
+                      setLatitude(lat.toFixed(6))
+                      setLongitude(lng.toFixed(6))
+                    }}
                   />
                 </div>
               )}
