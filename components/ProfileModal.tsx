@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
+import LoftMapPreview from '@/components/LoftMapPreview'
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -229,6 +230,17 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
               >
                 🛰️ {fetchingGps ? 'Fetching GPS…' : 'Use Current Device GPS'}
               </button>
+
+              {/* Map Preview */}
+              {(latitude || longitude) && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <LoftMapPreview
+                    loftLat={parseFloat(latitude) || null}
+                    loftLng={parseFloat(longitude) || null}
+                    height="150px"
+                  />
+                </div>
+              )}
             </div>
 
             {error && (

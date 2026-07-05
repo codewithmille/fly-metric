@@ -5,6 +5,7 @@ import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, PlusIcon, TagIcon, TimerIcon, NotesIcon, RulerIcon, TrashIcon, PillIcon, CalendarIcon, TrophyIcon, TrainingIcon, LightningIcon } from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
 import type { Session } from '@supabase/supabase-js'
+import LoftMapPreview from '@/components/LoftMapPreview'
 
 interface LoftBird {
   id: string
@@ -648,6 +649,17 @@ export default function ActivityModal({
                   >
                     🌐 Calculate Distance
                   </button>
+                </div>
+
+                {/* Map Preview */}
+                <div style={{ marginTop: '0.75rem' }}>
+                  <LoftMapPreview
+                    loftLat={session?.user?.user_metadata?.loft_latitude ? parseFloat(session.user.user_metadata.loft_latitude) : null}
+                    loftLng={session?.user?.user_metadata?.loft_longitude ? parseFloat(session.user.user_metadata.loft_longitude) : null}
+                    releaseLat={parseFloat(releaseLat) || null}
+                    releaseLng={parseFloat(releaseLng) || null}
+                    height="180px"
+                  />
                 </div>
               </div>
             </>
