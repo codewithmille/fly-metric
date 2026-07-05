@@ -238,9 +238,10 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
               {(latitude || longitude) && (
                 <div style={{ marginTop: '0.75rem' }}>
                   <LoftMapPreview
-                    loftLat={parseFloat(latitude) || null}
-                    loftLng={parseFloat(longitude) || null}
+                    loftLat={latitude !== '' ? parseFloat(latitude) : null}
+                    loftLng={longitude !== '' ? parseFloat(longitude) : null}
                     height="150px"
+                    clickHint="Tap map to set loft location"
                     onMapClick={(lat, lng) => {
                       setLatitude(lat.toFixed(6))
                       setLongitude(lng.toFixed(6))

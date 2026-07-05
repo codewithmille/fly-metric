@@ -656,11 +656,12 @@ export default function ActivityModal({
                 {/* Map Preview */}
                 <div style={{ marginTop: '0.75rem' }}>
                   <LoftMapPreview
-                    loftLat={session?.user?.user_metadata?.loft_latitude ? parseFloat(session.user.user_metadata.loft_latitude) : null}
-                    loftLng={session?.user?.user_metadata?.loft_longitude ? parseFloat(session.user.user_metadata.loft_longitude) : null}
-                    releaseLat={parseFloat(releaseLat) || null}
-                    releaseLng={parseFloat(releaseLng) || null}
+                    loftLat={session?.user?.user_metadata?.loft_latitude != null ? parseFloat(session.user.user_metadata.loft_latitude) : null}
+                    loftLng={session?.user?.user_metadata?.loft_longitude != null ? parseFloat(session.user.user_metadata.loft_longitude) : null}
+                    releaseLat={releaseLat !== '' ? parseFloat(releaseLat) : null}
+                    releaseLng={releaseLng !== '' ? parseFloat(releaseLng) : null}
                     height="180px"
+                    clickHint="Tap map to set release point"
                     onMapClick={(lat, lng) => {
                       setReleaseLat(lat.toFixed(6))
                       setReleaseLng(lng.toFixed(6))
