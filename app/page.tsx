@@ -206,7 +206,7 @@ export default function Home() {
 
   const STATS = [
     { icon: <BirdIcon size={22} />, iconClass: 'stat-icon-gold', value: totalBirds.toLocaleString(), label: 'Total Birds Flown' },
-    { icon: <LightningIcon size={22} />, iconClass: 'stat-icon-blue', value: maxSpeed > 0 ? maxSpeed.toLocaleString() : '0', label: 'Max Speed (ypm)' },
+    { icon: <LightningIcon size={22} />, iconClass: 'stat-icon-blue', value: maxSpeed > 0 ? maxSpeed.toLocaleString() : '0', label: 'Max Speed (m/min)' },
     { icon: <TrainingIcon size={22} />, iconClass: 'stat-icon-green', value: totalTrainings.toLocaleString(), label: 'Training tosses' },
     { icon: <TrophyIcon size={22} />, iconClass: 'stat-icon-purple', value: totalRaces.toLocaleString(), label: 'Races Competed' },
   ]

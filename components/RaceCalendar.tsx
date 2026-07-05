@@ -137,7 +137,7 @@ export default function RaceCalendar({ events, loading, onDateClick }: RaceCalen
                   <div className="popover-row">
                     <span className="popover-label">Max Speed</span>
                     <span className="popover-value highlight">
-                      {popover.event.extendedProps.maxSpeed.toLocaleString()} ypm
+                      {popover.event.extendedProps.maxSpeed.toLocaleString()} m/min
                     </span>
                   </div>
                 )}
@@ -161,7 +161,7 @@ export default function RaceCalendar({ events, loading, onDateClick }: RaceCalen
                   <div className="popover-row">
                     <span className="popover-label">Speed</span>
                     <span className="popover-value highlight">
-                      {popover.event.extendedProps.maxSpeed.toLocaleString()} ypm
+                      {popover.event.extendedProps.maxSpeed.toLocaleString()} m/min
                     </span>
                   </div>
                 )}
@@ -219,7 +219,7 @@ export default function RaceCalendar({ events, loading, onDateClick }: RaceCalen
                         {list.map((b: any, idx: number) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                             <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{b.ringNo}</span>
-                            <span>{b.clockInTime} · <strong style={{ color: 'var(--brand-gold)' }}>{b.speed.toLocaleString()} ypm</strong></span>
+                            <span>{b.clockInTime} · <strong style={{ color: 'var(--brand-gold)' }}>{b.speed.toLocaleString()} m/min</strong></span>
                           </div>
                         ))}
                       </div>

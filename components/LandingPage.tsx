@@ -92,7 +92,7 @@ export default function LandingPage() {
                 <span>Offline support</span>
               </div>
               <div className="preview-stat">
-                <strong>YPM</strong>
+                <strong>m/min</strong>
                 <span>Velocity Calculator</span>
               </div>
               <div className="preview-stat">
@@ -120,8 +120,8 @@ export default function LandingPage() {
                 <text x="32" y="112" fill="#FFC107" fontSize="18" fontWeight="bold">1,482</text>
 
                 <rect x="147" y="68" width="115" height="60" rx="8" fill="#0d1117" stroke="#30363d" />
-                <text x="159" y="90" fill="#8b949e" fontSize="10">MAX SPEED (YPM)</text>
-                <text x="159" y="112" fill="#58a6ff" fontSize="18" fontWeight="bold">1,824.5</text>
+                <text x="159" y="90" fill="#8b949e" fontSize="10">MAX SPEED (m/min)</text>
+                <text x="159" y="112" fill="#58a6ff" fontSize="18" fontWeight="bold">1,668.5</text>
 
                 <rect x="274" y="68" width="115" height="60" rx="8" fill="#0d1117" stroke="#30363d" />
                 <text x="286" y="90" fill="#8b949e" fontSize="10">TRAINING TOSSES</text>
@@ -175,15 +175,15 @@ export default function LandingPage() {
 
                 <rect x="354" y="196" width="154" height="30" rx="4" fill="#161b22" />
                 <text x="364" y="215" fill="#8b949e" fontSize="9">PHA-10292</text>
-                <text x="450" y="215" fill="#3fb950" fontSize="9" fontWeight="bold">1,623 ypm</text>
+                <text x="450" y="215" fill="#3fb950" fontSize="9" fontWeight="bold">1,484 m/min</text>
 
                 <rect x="354" y="234" width="154" height="30" rx="4" fill="#161b22" />
                 <text x="364" y="253" fill="#8b949e" fontSize="9">PHA-88392</text>
-                <text x="450" y="253" fill="#3fb950" fontSize="9" fontWeight="bold">1,598 ypm</text>
+                <text x="450" y="253" fill="#3fb950" fontSize="9" fontWeight="bold">1,461 m/min</text>
 
                 <rect x="354" y="272" width="154" height="30" rx="4" fill="#161b22" />
                 <text x="364" y="291" fill="#8b949e" fontSize="9">PHA-11202</text>
-                <text x="450" y="291" fill="#3fb950" fontSize="9" fontWeight="bold">1,566 ypm</text>
+                <text x="450" y="291" fill="#3fb950" fontSize="9" fontWeight="bold">1,432 m/min</text>
 
                 <rect x="354" y="310" width="154" height="38" rx="4" fill="rgba(76, 175, 80, 0.05)" stroke="rgba(76, 175, 80, 0.2)" />
                 <text x="364" y="325" fill="#3fb950" fontSize="9" fontWeight="bold">✓ Database Synced</text>
@@ -216,7 +216,7 @@ export default function LandingPage() {
               </div>
               <h3 className="feature-card-title">Velocity Calculator</h3>
               <p className="feature-card-text">
-                Enter pigeon release and clock-in times alongside flight distance. Instantly calculate flight duration and bird velocity in **yards per minute (ypm)**.
+                Enter pigeon release and clock-in times alongside flight distance. Instantly calculate flight duration and bird velocity in **meters per minute (m/min)**.
               </p>
             </div>
 

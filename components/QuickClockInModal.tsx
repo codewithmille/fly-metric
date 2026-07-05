@@ -130,8 +130,8 @@ export default function QuickClockInModal({
       }
 
       const flyingTotalMins = clockInMinutes - releaseMinutes
-      const distanceYards = distanceKm * 1093.613
-      const calculatedSpeed = Math.round(distanceYards / flyingTotalMins)
+      const distanceMeters = distanceKm * 1000
+      const calculatedSpeed = Math.round(distanceMeters / flyingTotalMins)
 
       // Read existing clocked birds
       let birdsList: BirdRecord[] = []

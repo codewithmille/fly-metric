@@ -191,8 +191,8 @@ export default function ActivityModal({
     }
 
     const flyingTotalMins = clockInMinutes - releaseMinutes
-    const distanceYards = distanceKm * 1093.613
-    const speed = Math.round(distanceYards / flyingTotalMins)
+    const distanceMeters = distanceKm * 1000
+    const speed = Math.round(distanceMeters / flyingTotalMins)
 
     const newBird: BirdRecord = {
       ringNo: ring,
@@ -380,7 +380,7 @@ export default function ActivityModal({
   }
 
   // Real-time speed calculation preview
-  let speedPreviewYards = 0
+  let speedPreviewMeters = 0
   let speedPreviewKmh = 0
   let flyingHours = 0
   let flyingMins = 0
@@ -395,8 +395,8 @@ export default function ActivityModal({
         const clockInMinutes = cH * 60 + cM
         if (clockInMinutes > releaseMinutes) {
           const flyingTotalMins = clockInMinutes - releaseMinutes
-          const distanceYards = distanceKm * 1093.613
-          speedPreviewYards = Math.round(distanceYards / flyingTotalMins)
+          const distanceMeters = distanceKm * 1000
+          speedPreviewMeters = Math.round(distanceMeters / flyingTotalMins)
           speedPreviewKmh = Math.round((distanceKm / flyingTotalMins) * 60 * 100) / 100
           flyingHours = Math.floor(flyingTotalMins / 60)
           flyingMins = flyingTotalMins % 60
@@ -779,7 +779,7 @@ export default function ActivityModal({
                         <tr key={idx} style={{ borderBottom: idx < birdsList.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
                           <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{bird.ringNo}</td>
                           <td style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>{bird.clockInTime}</td>
-                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--brand-gold)', textAlign: 'right' }}>{bird.speed.toLocaleString()} ypm</td>
+                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--brand-gold)', textAlign: 'right' }}>{bird.speed.toLocaleString()} m/min</td>
                           <td style={{ padding: '0.4rem 0.6rem', textAlign: 'center' }}>
                             <button
                               type="button"
@@ -835,7 +835,7 @@ export default function ActivityModal({
           {error && <div className="form-error">{error}</div>}
 
           {/* Real-time speed calculation preview block */}
-          {eventToEdit && speedPreviewYards > 0 && (
+          {eventToEdit && speedPreviewMeters > 0 && (
             <div style={{
               background: 'rgba(255, 193, 7, 0.04)',
               border: '1px solid rgba(255, 193, 7, 0.2)',
@@ -854,10 +854,10 @@ export default function ActivityModal({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
                   <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--brand-gold)' }}>
-                    {speedPreviewYards.toLocaleString()}
+                    {speedPreviewMeters.toLocaleString()}
                   </span>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                    yards / min
+                    m/min
                   </span>
                 </div>
               </div>
