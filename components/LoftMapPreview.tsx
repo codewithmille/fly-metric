@@ -25,8 +25,7 @@ export default function LoftMapPreview({
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map {
       height: 100%;
@@ -66,84 +65,132 @@ export default function LoftMapPreview({
 </head>
 <body>
   <div id="map"></div>
+  
   <script>
-    const map = L.map('map', { zoomControl: false });
-    
-    L.control.zoom({ position: 'topright' }).addTo(map);
+    // Redirect iframe errors to parent console for debugging
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error("Leaflet Iframe Error:", message, "at line", lineno);
+      return false;
+    };
+  </script>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onload="initMap()"></script>
+  
+  <script>
+    let map = null;
     let loftMarker = null;
     let releaseMarker = null;
     let polyline = null;
+    let pendingCoords = null;
 
-    const loftIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    let lIcon = null;
+    let rIcon = null;
 
-    const releaseIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+    function initMap() {
+      try {
+        map = L.map('map', { zoomControl: false });
+        
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-    function updateMap(loftLat, loftLng, releaseLat, releaseLng) {
-      if (loftMarker) map.removeLayer(loftMarker);
-      if (releaseMarker) map.removeLayer(releaseMarker);
-      if (polyline) map.removeLayer(polyline);
-
-      loftMarker = null;
-      releaseMarker = null;
-      polyline = null;
-
-      const points = [];
-
-      // Add Loft
-      if (loftLat !== null && loftLng !== null && !isNaN(loftLat) && !isNaN(loftLng)) {
-        const loftPoint = [loftLat, loftLng];
-        points.push(loftPoint);
-        loftMarker = L.marker(loftPoint, { icon: loftIcon })
-          .addTo(map)
-          .bindPopup('<b>🏡 Loft Location</b><br>' + loftLat.toFixed(5) + ', ' + loftLng.toFixed(5));
-      }
-
-      // Add Release Point
-      if (releaseLat !== null && releaseLng !== null && !isNaN(releaseLat) && !isNaN(releaseLng)) {
-        const releasePoint = [releaseLat, releaseLng];
-        points.push(releasePoint);
-        releaseMarker = L.marker(releasePoint, { icon: releaseIcon })
-          .addTo(map)
-          .bindPopup('<b>🎯 Release Point</b><br>' + releaseLat.toFixed(5) + ', ' + releaseLng.toFixed(5));
-      }
-
-      // Draw Flight Path
-      if (points.length === 2) {
-        polyline = L.polyline(points, {
-          color: '#FFC107',
-          weight: 3,
-          opacity: 0.8,
-          dashArray: '5, 10',
-          lineJoin: 'round'
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-      } else if (points.length === 1) {
-        map.setView(points[0], 13);
-        if (loftMarker) loftMarker.openPopup();
-        else if (releaseMarker) releaseMarker.openPopup();
-      } else {
-        map.setView([12.8797, 121.7740], 5);
+        lIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+
+        rIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+
+        // Trigger map layout computation to prevent blank dimensions rendering
+        setTimeout(() => {
+          if (map) {
+            map.invalidateSize();
+          }
+        }, 150);
+
+        if (pendingCoords) {
+          updateMap(pendingCoords.loftLat, pendingCoords.loftLng, pendingCoords.releaseLat, pendingCoords.releaseLng);
+        } else {
+          map.setView([12.8797, 121.7740], 5); // Default center on Philippines
+        }
+
+        window.parent.postMessage({ type: 'MAP_READY' }, '*');
+      } catch (err) {
+        console.error("Map initialization failed inside iframe:", err);
+      }
+    }
+
+    function updateMap(loftLat, loftLng, releaseLat, releaseLng) {
+      if (!map) {
+        pendingCoords = { loftLat, loftLng, releaseLat, releaseLng };
+        return;
+      }
+
+      try {
+        map.invalidateSize();
+
+        if (loftMarker) map.removeLayer(loftMarker);
+        if (releaseMarker) map.removeLayer(releaseMarker);
+        if (polyline) map.removeLayer(polyline);
+
+        loftMarker = null;
+        releaseMarker = null;
+        polyline = null;
+
+        const points = [];
+
+        // Add Loft
+        if (loftLat !== null && loftLng !== null && !isNaN(loftLat) && !isNaN(loftLng)) {
+          const loftPoint = [loftLat, loftLng];
+          points.push(loftPoint);
+          loftMarker = L.marker(loftPoint, { icon: lIcon })
+            .addTo(map)
+            .bindPopup('<b>🏡 Loft Location</b><br>' + loftLat.toFixed(5) + ', ' + loftLng.toFixed(5));
+        }
+
+        // Add Release Point
+        if (releaseLat !== null && releaseLng !== null && !isNaN(releaseLat) && !isNaN(releaseLng)) {
+          const releasePoint = [releaseLat, releaseLng];
+          points.push(releasePoint);
+          releaseMarker = L.marker(releasePoint, { icon: rIcon })
+            .addTo(map)
+            .bindPopup('<b>🎯 Release Point</b><br>' + releaseLat.toFixed(5) + ', ' + releaseLng.toFixed(5));
+        }
+
+        // Draw Flight Path
+        if (points.length === 2) {
+          polyline = L.polyline(points, {
+            color: '#FFC107',
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 10',
+            lineJoin: 'round'
+          }).addTo(map);
+
+          map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+        } else if (points.length === 1) {
+          map.setView(points[0], 13);
+          if (loftMarker) loftMarker.openPopup();
+          else if (releaseMarker) releaseMarker.openPopup();
+        } else {
+          map.setView([12.8797, 121.7740], 5);
+        }
+      } catch (err) {
+        console.error("Map update failed inside iframe:", err);
       }
     }
 
@@ -154,9 +201,6 @@ export default function LoftMapPreview({
         updateMap(loftLat, loftLng, releaseLat, releaseLng);
       }
     });
-
-    // Notify ready
-    window.parent.postMessage({ type: 'MAP_READY' }, '*');
   </script>
 </body>
 </html>
