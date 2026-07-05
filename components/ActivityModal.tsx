@@ -54,6 +54,7 @@ export default function ActivityModal({
   // Coordinates for release point distance calculation
   const [releaseLat, setReleaseLat] = useState('')
   const [releaseLng, setReleaseLng] = useState('')
+  const [fetchingGps, setFetchingGps] = useState(false)
   
   // Multi-bird states
   const [birdsList, setBirdsList] = useState<BirdRecord[]>([])
@@ -202,6 +203,30 @@ export default function ActivityModal({
 
   const handleRemoveBird = (idx: number) => {
     setBirdsList(birdsList.filter((_, i) => i !== idx))
+  }
+
+  const handleUseDeviceGpsForRelease = () => {
+    setError('')
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.')
+      return
+    }
+
+    setFetchingGps(true)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setReleaseLat(position.coords.latitude.toFixed(6))
+        setReleaseLng(position.coords.longitude.toFixed(6))
+        setFetchingGps(false)
+      },
+      (err) => {
+        console.error('Error fetching GPS location:', err)
+        setError('Failed to retrieve location. Please check browser permissions.')
+        setFetchingGps(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
   }
 
   const calculateDistanceFromGps = () => {
@@ -580,27 +605,50 @@ export default function ActivityModal({
                   </div>
                 </div>
                 
-                <button
-                  type="button"
-                  className="nav-btn nav-btn-secondary"
-                  onClick={calculateDistanceFromGps}
-                  style={{
-                    marginTop: '0.6rem',
-                    width: '100%',
-                    padding: '0.4rem',
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.3rem',
-                    borderColor: 'rgba(255, 193, 7, 0.3)',
-                    color: 'var(--brand-gold)',
-                    background: 'rgba(255, 193, 7, 0.05)',
-                    height: '2.2rem'
-                  }}
-                >
-                  🌐 Calculate Distance from Loft GPS
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                  <button
+                    type="button"
+                    className="nav-btn nav-btn-secondary"
+                    disabled={fetchingGps}
+                    onClick={handleUseDeviceGpsForRelease}
+                    style={{
+                      flex: 1,
+                      padding: '0.4rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem',
+                      borderColor: 'rgba(33, 150, 243, 0.3)',
+                      color: '#2196F3',
+                      background: 'rgba(33, 150, 243, 0.05)',
+                      height: '2.2rem'
+                    }}
+                  >
+                    📍 {fetchingGps ? 'Locating…' : 'Use Current GPS'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="nav-btn nav-btn-secondary"
+                    onClick={calculateDistanceFromGps}
+                    style={{
+                      flex: 1.25,
+                      padding: '0.4rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem',
+                      borderColor: 'rgba(255, 193, 7, 0.3)',
+                      color: 'var(--brand-gold)',
+                      background: 'rgba(255, 193, 7, 0.05)',
+                      height: '2.2rem'
+                    }}
+                  >
+                    🌐 Calculate Distance
+                  </button>
+                </div>
               </div>
             </>
           )}

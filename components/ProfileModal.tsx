@@ -32,9 +32,31 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
     }
   }, [isOpen, session])
 
-  if (!isOpen || !session?.user) return null
+  const [fetchingGps, setFetchingGps] = useState(false)
 
-  const user = session.user
+  const handleUseDeviceGps = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.')
+      return
+    }
+
+    setFetchingGps(true)
+    setError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude.toFixed(6))
+        setLongitude(position.coords.longitude.toFixed(6))
+        setFetchingGps(false)
+      },
+      (err) => {
+        console.error('Error fetching GPS location:', err)
+        setError('Failed to retrieve location. Please check browser permissions.')
+        setFetchingGps(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +110,9 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
       setSaving(false)
     }
   }
+
+  if (!isOpen || !session?.user) return null
+  const user = session.user
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -181,6 +206,29 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
                   />
                 </div>
               </div>
+
+              <button
+                type="button"
+                className="nav-btn nav-btn-secondary"
+                disabled={fetchingGps}
+                onClick={handleUseDeviceGps}
+                style={{
+                  marginTop: '0.75rem',
+                  width: '100%',
+                  padding: '0.4rem',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.3rem',
+                  borderColor: 'rgba(255, 193, 7, 0.3)',
+                  color: 'var(--brand-gold)',
+                  background: 'rgba(255, 193, 7, 0.05)',
+                  height: '2.2rem'
+                }}
+              >
+                🛰️ {fetchingGps ? 'Fetching GPS…' : 'Use Current Device GPS'}
+              </button>
             </div>
 
             {error && (
