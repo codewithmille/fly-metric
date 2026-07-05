@@ -73,10 +73,11 @@ export default function ActivityModal({
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   const modalRef = useRef<HTMLDivElement>(null)
+  const wasOpenRef = useRef(false)
 
   // Sync date when parent passes a new selectedDate or eventToEdit
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       setReleaseLat('')
       setReleaseLng('')
       if (eventToEdit) {
@@ -127,6 +128,7 @@ export default function ActivityModal({
       setSaveSuccess(false)
       setError('')
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, selectedDate, eventToEdit, registeredBirds])
 
   // Close on Escape key

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
@@ -21,8 +21,10 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const wasOpenRef = useRef(false)
+
   useEffect(() => {
-    if (isOpen && session?.user) {
+    if (isOpen && !wasOpenRef.current && session?.user) {
       const metadata = session.user.user_metadata || {}
       setDisplayName(metadata.full_name || session.user.email?.split('@')[0] || 'Fancier')
       setLoftName(metadata.loft_name || '')
@@ -31,6 +33,7 @@ export default function ProfileModal({ isOpen, onClose, session, onProfileUpdate
       setSuccess(false)
       setError(null)
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, session])
 
   const [fetchingGps, setFetchingGps] = useState(false)
