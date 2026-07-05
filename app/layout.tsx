@@ -16,12 +16,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FlyMetric — Pigeon Racing Clocking System",
   description:
-    "Professional pigeon racing clocking dashboard. Track race events, calculate velocity in yards per minute, and manage your loft calendar with FlyMetric.",
+    "Professional pigeon racing clocking dashboard. Track race events, calculate velocity in meters per minute, and manage your loft calendar with FlyMetric.",
   keywords: ["pigeon racing", "fly metric", "clocking system", "race calendar", "loft tracker"],
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/icon.png',
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "FlyMetric",
+    startupImage: '/icon.png',
   },
 };
 
