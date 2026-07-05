@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, PlusIcon, TagIcon, TimerIcon, NotesIcon, RulerIcon, TrashIcon, PillIcon, CalendarIcon, TrophyIcon, TrainingIcon, LightningIcon } from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
+import type { Session } from '@supabase/supabase-js'
 
 interface LoftBird {
   id: string
@@ -21,6 +22,7 @@ interface ActivityModalProps {
   eventToEdit?: RaceEvent | null
   registeredBirds: LoftBird[]
   authToken?: string
+  session?: Session | null
 }
 
 interface BirdRecord {
@@ -39,6 +41,7 @@ export default function ActivityModal({
   eventToEdit,
   registeredBirds,
   authToken,
+  session,
 }: ActivityModalProps) {
   const [activityType, setActivityType] = useState<ActivityType>('race')
   const [raceDate, setRaceDate] = useState(selectedDate)
@@ -47,6 +50,10 @@ export default function ActivityModal({
   const [distanceKmStr, setDistanceKmStr] = useState('90')
   const [releaseTime, setReleaseTime] = useState('06:00')
   const [clockInTime, setClockInTime] = useState('09:30')
+
+  // Coordinates for release point distance calculation
+  const [releaseLat, setReleaseLat] = useState('')
+  const [releaseLng, setReleaseLng] = useState('')
   
   // Multi-bird states
   const [birdsList, setBirdsList] = useState<BirdRecord[]>([])
@@ -68,6 +75,8 @@ export default function ActivityModal({
   // Sync date when parent passes a new selectedDate or eventToEdit
   useEffect(() => {
     if (isOpen) {
+      setReleaseLat('')
+      setReleaseLng('')
       if (eventToEdit) {
         setRaceDate(eventToEdit.date)
         setTitle(eventToEdit.title)
@@ -193,6 +202,43 @@ export default function ActivityModal({
 
   const handleRemoveBird = (idx: number) => {
     setBirdsList(birdsList.filter((_, i) => i !== idx))
+  }
+
+  const calculateDistanceFromGps = () => {
+    setError('')
+    const loftLat = session?.user?.user_metadata?.loft_latitude
+    const loftLng = session?.user?.user_metadata?.loft_longitude
+
+    if (loftLat === undefined || loftLng === undefined || loftLat === null || loftLng === null) {
+      setError('Loft coordinates are not configured in your profile. Click your avatar to configure them.')
+      return
+    }
+
+    const relLat = parseFloat(releaseLat)
+    const relLng = parseFloat(releaseLng)
+
+    if (isNaN(relLat) || relLat < -90 || relLat > 90) {
+      setError('Please enter a valid Release Latitude (-90 to 90 degrees).')
+      return
+    }
+
+    if (isNaN(relLng) || relLng < -180 || relLng > 180) {
+      setError('Please enter a valid Release Longitude (-180 to 180 degrees).')
+      return
+    }
+
+    // Haversine distance formula
+    const R = 6371 // Earth radius in km
+    const dLat = (relLat - loftLat) * Math.PI / 180
+    const dLon = (relLng - loftLng) * Math.PI / 180
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(loftLat * Math.PI / 180) * Math.cos(relLat * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    const d = R * c
+
+    setDistanceKmStr(d.toFixed(2))
   }
 
   const saveActivity = async () => {
@@ -502,6 +548,59 @@ export default function ActivityModal({
                     km
                   </span>
                 </div>
+              </div>
+
+              {/* Release Point GPS coordinates (Optional calculator) */}
+              <div style={{ borderTop: '1px solid var(--border-muted)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>🛰️ Release GPS (Distance Calculator)</span>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="rel-lat" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lat</label>
+                    <input
+                      id="rel-lat"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={releaseLat}
+                      onChange={(e) => setReleaseLat(e.target.value)}
+                      placeholder="e.g. 15.2104"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="rel-lng" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lng</label>
+                    <input
+                      id="rel-lng"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={releaseLng}
+                      onChange={(e) => setReleaseLng(e.target.value)}
+                      placeholder="e.g. 120.5732"
+                    />
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  className="nav-btn nav-btn-secondary"
+                  onClick={calculateDistanceFromGps}
+                  style={{
+                    marginTop: '0.6rem',
+                    width: '100%',
+                    padding: '0.4rem',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    borderColor: 'rgba(255, 193, 7, 0.3)',
+                    color: 'var(--brand-gold)',
+                    background: 'rgba(255, 193, 7, 0.05)',
+                    height: '2.2rem'
+                  }}
+                >
+                  🌐 Calculate Distance from Loft GPS
+                </button>
               </div>
             </>
           )}

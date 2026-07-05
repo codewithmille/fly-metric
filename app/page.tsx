@@ -6,6 +6,7 @@ import ActivityModal from '@/components/ActivityModal'
 import QuickClockInModal from '@/components/QuickClockInModal'
 import BirdRegistryModal from '@/components/BirdRegistryModal'
 import LandingPage from '@/components/LandingPage'
+import ProfileModal from '@/components/ProfileModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -50,6 +51,12 @@ export default function Home() {
   const [selectionEvents, setSelectionEvents] = useState<RaceEvent[]>([])
 
   const [isOfflineMode, setIsOfflineMode] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  const refreshSession = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    setSession(session)
+  }, [])
 
   // ── Auth & Connection ──────────────────────────────────────
   useEffect(() => {
@@ -302,7 +309,8 @@ export default function Home() {
               <img
                 src={avatarUrl}
                 alt={displayName}
-                title={displayName}
+                title="Edit Loft Profile"
+                onClick={() => setIsProfileOpen(true)}
                 style={{
                   width: '34px',
                   height: '34px',
@@ -310,23 +318,29 @@ export default function Home() {
                   border: '2px solid rgba(255,193,7,0.35)',
                   objectFit: 'cover',
                   flexShrink: 0,
+                  cursor: 'pointer',
                 }}
               />
             ) : (
-              <div style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                color: '#000',
-                flexShrink: 0,
-                border: '2px solid rgba(255,193,7,0.35)',
-              }}>
+              <div 
+                title="Edit Loft Profile"
+                onClick={() => setIsProfileOpen(true)}
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  color: '#000',
+                  flexShrink: 0,
+                  border: '2px solid rgba(255,193,7,0.35)',
+                  cursor: 'pointer',
+                }}
+              >
                 {initials}
               </div>
             )}
@@ -413,6 +427,15 @@ export default function Home() {
         eventToEdit={selectedEvent}
         registeredBirds={registeredBirds}
         authToken={session.access_token}
+        session={session}
+      />
+
+      {/* ── Profile settings Modal ──────────────────────── */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        session={session}
+        onProfileUpdated={refreshSession}
       />
 
       {/* ── Quick Clock-in Modal ─────────────────────── */}
