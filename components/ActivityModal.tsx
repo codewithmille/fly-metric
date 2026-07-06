@@ -1126,43 +1126,7 @@ export default function ActivityModal({
           {/* Error */}
           {error && <div className="form-error">{error}</div>}
 
-          {/* Real-time speed calculation preview block */}
-          {eventToEdit && speedPreviewMeters > 0 && (
-            <div style={{
-              background: 'rgba(255, 193, 7, 0.04)',
-              border: '1px solid rgba(255, 193, 7, 0.2)',
-              borderRadius: '0.875rem',
-              padding: '0.875rem 1.125rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              marginTop: '0.5rem',
-              marginBottom: '0.5rem'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <LightningIcon size={12} /> Calculated Speed
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
-                  <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--brand-gold)' }}>
-                    {speedPreviewMeters.toLocaleString()}
-                  </span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                    m/min
-                  </span>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {speedPreviewKmh} km/h
-                </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
-                  Flying Time: {flyingHours}h {flyingMins}m
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Save Status */}
           {saveSuccess && (
