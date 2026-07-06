@@ -372,7 +372,9 @@ export default function VerifyPhotoModal({
     locationText: string,
     coordinatesText: string
   ) => {
-    const scale = width / 640
+    const baseScale = width / 640
+    // Make the entire watermark ~45% larger
+    const scale = baseScale * 1.45
     
     // Calculate crop margins dynamically based on display client dimensions to keep text visible
     let cropLeft = 0
@@ -395,11 +397,11 @@ export default function VerifyPhotoModal({
       }
     }
 
-    const marginX = cropLeft + 20 * scale
+    const marginX = cropLeft + 20 * baseScale
     
     // Position watermark from the visible bottom
-    const boxHeight = 115 * scale
-    const startY = (height - cropBottom) - boxHeight - 20 * scale
+    const boxHeight = 120 * scale
+    const startY = (height - cropBottom) - boxHeight - 20 * baseScale
     const badgeHeight = 24 * scale
     const badgeY = startY
 
@@ -441,7 +443,9 @@ export default function VerifyPhotoModal({
     // Details vertical gold border + text
     const detailsY = badgeY + badgeHeight + 8 * scale
     const textX = marginX + 10 * scale
-    const maxTextWidth = (visibleWidth / 2) - 32 * scale
+    
+    // Allow text to occupy up to the visible boundary width minus margin
+    const maxTextWidth = visibleWidth - (marginX - cropLeft) - 30 * baseScale
 
     // We draw texts dynamically and track Y position
     ctx.textAlign = 'left'
@@ -562,12 +566,12 @@ export default function VerifyPhotoModal({
       const snapTime = new Date()
       const locStr = coordinatesText ? `${locationText} (${coordinatesText})` : locationText
 
-        recorder.onstop = () => {
-          const blob = new Blob(recordedChunksRef.current, { type: recorder.mimeType || 'video/webm' })
-          const url = URL.createObjectURL(blob)
-          setCapturedVideo(url)
-          setCapturedTime(snapTime)
-          setCapturedLocation(locStr)
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: recorder.mimeType || 'video/webm' })
+        const url = URL.createObjectURL(blob)
+        setCapturedVideo(url)
+        setCapturedTime(snapTime)
+        setCapturedLocation(locStr)
 
         // Convert to compact base64 for offline saving in localStorage
         const reader = new FileReader()
@@ -920,105 +924,6 @@ export default function VerifyPhotoModal({
                   </div>
                 )}
 
-                {/* Controls overlay */}
-                {hasCameraAccess && !isRecording && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                  }}>
-                    {devices.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={handleSwitchCamera}
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: 'rgba(0,0,0,0.6)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.15s'
-                        }}
-                        title="Switch Camera"
-                      >
-                        <RotateIcon size={16} />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Big Action Buttons (Capture or Record) */}
-                {hasCameraAccess && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '0',
-                    right: '0',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    {mode === 'photo' ? (
-                      /* PHOTO BUTTON */
-                      <button
-                        type="button"
-                        onClick={handleSnapPhoto}
-                        style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '50%',
-                          background: '#fff',
-                          border: '4px solid rgba(0,0,0,0.35)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.45)',
-                          transition: 'all 0.15s'
-                        }}
-                        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
-                        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        title="Capture Photo"
-                      >
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid #000' }} />
-                      </button>
-                    ) : (
-                      /* VIDEO BUTTON */
-                      <button
-                        type="button"
-                        onClick={handleToggleRecording}
-                        style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '50%',
-                          background: isRecording ? '#ef4444' : '#fff',
-                          border: '4px solid rgba(0,0,0,0.35)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.45)',
-                          transition: 'all 0.15s'
-                        }}
-                        title={isRecording ? "Stop Recording" : "Start Recording"}
-                      >
-                        {isRecording ? (
-                          /* Stop Square */
-                          <div style={{ width: '18px', height: '18px', background: '#fff', borderRadius: '3px' }} />
-                        ) : (
-                          /* Start Red Dot */
-                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid #000', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: '#fff' }} />
-                          </div>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                )}
               </>
             ) : (
               /* PREVIEW PORT */
@@ -1063,6 +968,104 @@ export default function VerifyPhotoModal({
               </div>
             )}
           </div>
+
+          {/* VIEWPORT CONTROLS BAR (Below viewport) */}
+          {!capturedPhoto && !capturedVideo && hasCameraAccess && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.6rem 1rem',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: '0.75rem',
+              marginBottom: '1rem',
+            }}>
+              {/* Switch Camera Button on the Left */}
+              <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
+                {devices.length > 1 && !isRecording && (
+                  <button
+                    type="button"
+                    onClick={handleSwitchCamera}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid var(--border-default)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.15s'
+                    }}
+                    title="Switch Camera"
+                  >
+                    <RotateIcon size={16} />
+                  </button>
+                )}
+              </div>
+
+              {/* Capture/Record Button in the Center */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {mode === 'photo' ? (
+                  <button
+                    type="button"
+                    onClick={handleSnapPhoto}
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: '#fff',
+                      border: '4px solid rgba(0,0,0,0.15)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
+                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    title="Capture Photo"
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid #000' }} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleToggleRecording}
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: isRecording ? '#ef4444' : '#fff',
+                      border: '4px solid rgba(0,0,0,0.15)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      transition: 'all 0.15s'
+                    }}
+                    title={isRecording ? "Stop Recording" : "Start Recording"}
+                  >
+                    {isRecording ? (
+                      <div style={{ width: '18px', height: '18px', background: '#fff', borderRadius: '3px' }} />
+                    ) : (
+                      <div style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid #000', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: '#fff' }} />
+                      </div>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Spacer on the right to balance the layout */}
+              <div style={{ width: '40px' }} />
+            </div>
+          )}
 
           {/* VERIFICATION FORM PANEL */}
           {(capturedPhoto || capturedVideoBase64) && (
