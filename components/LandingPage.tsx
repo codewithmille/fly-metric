@@ -38,8 +38,8 @@ export default function LandingPage() {
       <header className="landing-header">
         <div className="header-container">
           <div className="logo-section">
-            <div className="app-logo">
-              <BirdIcon size={24} />
+            <div className="app-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/icon.png" alt="FlyMetric" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             </div>
             <span className="app-title">Fly<span>Metric</span></span>
           </div>
@@ -330,8 +330,8 @@ export default function LandingPage() {
         <div className="footer-container">
           <div className="footer-left">
             <div className="logo-section">
-              <div className="app-logo">
-                <BirdIcon size={20} />
+              <div className="app-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/icon.png" alt="FlyMetric" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
               </div>
               <span className="app-title">Fly<span>Metric</span></span>
             </div>

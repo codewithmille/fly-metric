@@ -7,6 +7,7 @@ import QuickClockInModal from '@/components/QuickClockInModal'
 import BirdRegistryModal from '@/components/BirdRegistryModal'
 import LandingPage from '@/components/LandingPage'
 import ProfileModal from '@/components/ProfileModal'
+import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -42,6 +43,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isClockInOpen, setIsClockInOpen] = useState(false)
   const [isRegistryOpen, setIsRegistryOpen] = useState(false)
+  const [isVerifyPhotoOpen, setIsVerifyPhotoOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedEvent, setSelectedEvent] = useState<RaceEvent | null>(null)
 
@@ -221,8 +223,8 @@ export default function Home() {
       {/* ── Navigation ────────────────────────────────── */}
       <nav className="dashboard-nav">
         <div className="nav-brand">
-          <div className="nav-logo" aria-hidden="true" style={{ color: 'var(--brand-gold)', display: 'flex', alignItems: 'center' }}>
-            <BirdIcon size={26} />
+          <div className="nav-logo" aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/icon.png" alt="FlyMetric" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
           </div>
           <h1 className="nav-title">
             Fly<span>Metric</span>
@@ -287,6 +289,44 @@ export default function Home() {
             }}
           >
             <PlusIcon size={16} /> <span className="nav-btn-text">Clock-in Bird</span>
+          </button>
+          <button
+            id="verify-photo-nav"
+            className="nav-btn nav-btn-secondary"
+            onClick={() => setIsVerifyPhotoOpen(true)}
+            aria-label="Verify clock-in photo"
+            style={{
+              background: 'rgba(33, 150, 243, 0.1)',
+              border: '1px solid rgba(33, 150, 243, 0.3)',
+              color: '#2196F3',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.88rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ flexShrink: 0 }}
+            >
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span className="nav-btn-text">Verify Photos</span>
           </button>
           <button
             id="log-new-activity-nav"
@@ -453,6 +493,16 @@ export default function Home() {
         isOpen={isRegistryOpen}
         onClose={() => setIsRegistryOpen(false)}
         onBirdsUpdated={fetchBirds}
+        authToken={session.access_token}
+      />
+
+      {/* ── Verify Photo Modal ───────────────────────── */}
+      <VerifyPhotoModal
+        isOpen={isVerifyPhotoOpen}
+        events={events}
+        registeredBirds={registeredBirds}
+        onClose={() => setIsVerifyPhotoOpen(false)}
+        onClockInSaved={fetchEvents}
         authToken={session.access_token}
       />
 

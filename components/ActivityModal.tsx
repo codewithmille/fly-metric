@@ -30,6 +30,7 @@ interface BirdRecord {
   ringNo: string
   clockInTime: string
   speed: number
+  photo?: string
 }
 
 type ActivityType = 'race' | 'training' | 'medication' | 'task'
@@ -71,6 +72,41 @@ export default function ActivityModal({
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [selectedMedia, setSelectedMedia] = useState<{ type: 'photo' | 'video'; url: string } | null>(null)
+  const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({})
+  const [localVideos, setLocalVideos] = useState<Record<string, string>>({})
+
+  // Load verification photos and videos from localStorage
+  useEffect(() => {
+    if (isOpen && eventToEdit && birdsList.length > 0) {
+      const photos: Record<string, string> = {}
+      const videos: Record<string, string> = {}
+      
+      birdsList.forEach((b) => {
+        const ring = b.ringNo.toUpperCase()
+        
+        // Photos
+        const photoKey = `verify_photo_${eventToEdit.id}_${ring}`
+        const storedPhoto = localStorage.getItem(photoKey)
+        if (storedPhoto) {
+          photos[ring] = storedPhoto
+        }
+
+        // Videos
+        const videoKey = `verify_video_${eventToEdit.id}_${ring}`
+        const storedVideo = localStorage.getItem(videoKey)
+        if (storedVideo) {
+          videos[ring] = storedVideo
+        }
+      })
+      
+      setLocalPhotos(photos)
+      setLocalVideos(videos)
+    } else {
+      setLocalPhotos({})
+      setLocalVideos({})
+    }
+  }, [isOpen, eventToEdit, birdsList])
 
   const modalRef = useRef<HTMLDivElement>(null)
   const wasOpenRef = useRef(false)
@@ -205,6 +241,11 @@ export default function ActivityModal({
   }
 
   const handleRemoveBird = (idx: number) => {
+    const birdToRemove = birdsList[idx]
+    if (eventToEdit && birdToRemove) {
+      localStorage.removeItem(`verify_photo_${eventToEdit.id}_${birdToRemove.ringNo.toUpperCase()}`)
+      localStorage.removeItem(`verify_video_${eventToEdit.id}_${birdToRemove.ringNo.toUpperCase()}`)
+    }
     setBirdsList(birdsList.filter((_, i) => i !== idx))
   }
 
@@ -782,7 +823,55 @@ export default function ActivityModal({
                     <tbody>
                       {birdsList.map((bird, idx) => (
                         <tr key={idx} style={{ borderBottom: idx < birdsList.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
-                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{bird.ringNo}</td>
+                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span>{bird.ringNo}</span>
+                              {localPhotos[bird.ringNo.toUpperCase()] && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMedia({ type: 'photo', url: localPhotos[bird.ringNo.toUpperCase()] })}
+                                  style={{
+                                    background: 'rgba(33, 150, 243, 0.12)',
+                                    border: '1px solid rgba(33, 150, 243, 0.3)',
+                                    borderRadius: '4px',
+                                    color: '#2196F3',
+                                    padding: '0.1rem 0.3rem',
+                                    fontSize: '0.65rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.15rem',
+                                    fontWeight: 700
+                                  }}
+                                  title="View Verification Photo"
+                                >
+                                  📷 Photo
+                                </button>
+                              )}
+                              {localVideos[bird.ringNo.toUpperCase()] && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMedia({ type: 'video', url: localVideos[bird.ringNo.toUpperCase()] })}
+                                  style={{
+                                    background: 'rgba(76, 175, 80, 0.12)',
+                                    border: '1px solid rgba(76, 175, 80, 0.3)',
+                                    borderRadius: '4px',
+                                    color: '#4CAF50',
+                                    padding: '0.1rem 0.3rem',
+                                    fontSize: '0.65rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.15rem',
+                                    fontWeight: 700
+                                  }}
+                                  title="View Verification Video"
+                                >
+                                  📹 Video
+                                </button>
+                              )}
+                            </div>
+                          </td>
                           <td style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>{bird.clockInTime}</td>
                           <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--brand-gold)', textAlign: 'right' }}>{bird.speed.toLocaleString()} m/min</td>
                           <td style={{ padding: '0.4rem 0.6rem', textAlign: 'center' }}>
@@ -942,6 +1031,90 @@ export default function ActivityModal({
           </div>
         </div>
       </div>
+
+      {/* Lightbox for verification media */}
+      {selectedMedia && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            cursor: 'zoom-out'
+          }}
+          onClick={() => setSelectedMedia(null)}
+        >
+          <div 
+            style={{
+              position: 'relative',
+              maxWidth: '90%',
+              maxHeight: '90%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1rem'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {selectedMedia.type === 'photo' ? (
+              <img 
+                src={selectedMedia.url} 
+                alt="Verification watermark photo"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  objectFit: 'contain',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                }}
+              />
+            ) : (
+              <video 
+                src={selectedMedia.url} 
+                controls 
+                autoPlay 
+                loop
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                }}
+              />
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="nav-btn nav-btn-primary"
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = selectedMedia.url
+                  const ext = selectedMedia.type === 'photo' ? 'jpg' : 'webm'
+                  link.download = `verified-clockin-media.${ext}`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700 }}
+              >
+                📥 Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}
+              </button>
+              <button
+                type="button"
+                className="nav-btn nav-btn-secondary"
+                onClick={() => setSelectedMedia(null)}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
