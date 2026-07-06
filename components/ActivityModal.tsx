@@ -76,6 +76,94 @@ export default function ActivityModal({
   const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({})
   const [localVideos, setLocalVideos] = useState<Record<string, string>>({})
 
+  // Velocity Forecast States
+  const [showForecast, setShowForecast] = useState(true)
+  const [forecastTargetTime, setForecastTargetTime] = useState('07:30')
+
+  useEffect(() => {
+    if (releaseTime) {
+      const [h, m] = releaseTime.split(':').map(Number)
+      if (!isNaN(h) && !isNaN(m)) {
+        const targetMins = (h * 60 + m + 90) % (24 * 60) // release + 90 mins
+        const th = Math.floor(targetMins / 60)
+        const tm = targetMins % 60
+        setForecastTargetTime(`${String(th).padStart(2, '0')}:${String(tm).padStart(2, '0')}`)
+      }
+    }
+  }, [releaseTime])
+
+  const calculateForecastSpeed = (targetTime: string): string => {
+    const dist = parseFloat(distanceKmStr)
+    if (isNaN(dist) || dist <= 0 || !releaseTime || !targetTime) return 'N/A'
+    
+    const [rH, rM] = releaseTime.split(':').map(Number)
+    const [tH, tM] = targetTime.split(':').map(Number)
+    if (isNaN(rH) || isNaN(rM) || isNaN(tH) || isNaN(tM)) return 'N/A'
+    
+    let releaseMins = rH * 60 + rM
+    let targetMins = tH * 60 + tM
+    
+    if (targetMins <= releaseMins) {
+      targetMins += 24 * 60
+    }
+    
+    const flyingMins = targetMins - releaseMins
+    if (flyingMins <= 0) return 'N/A'
+    
+    const speed = Math.round((dist * 1000) / flyingMins)
+    return `${speed.toLocaleString()} m/min`
+  }
+
+  const generateForecastGrid = () => {
+    const dist = parseFloat(distanceKmStr)
+    if (isNaN(dist) || dist <= 0 || !releaseTime || !clockInTime) return []
+    
+    const [rH, rM] = releaseTime.split(':').map(Number)
+    const [cH, cM] = clockInTime.split(':').map(Number)
+    if (isNaN(rH) || isNaN(rM) || isNaN(cH) || isNaN(cM)) return []
+    
+    let releaseMins = rH * 60 + rM
+    let cutoffMins = cH * 60 + cM
+    
+    if (cutoffMins <= releaseMins) {
+      cutoffMins += 24 * 60
+    }
+    
+    const totalSpan = cutoffMins - releaseMins
+    if (totalSpan <= 0) return []
+    
+    let step = 5
+    if (totalSpan > 360) {
+      step = 15
+    } else if (totalSpan > 120) {
+      step = 10
+    }
+    
+    const grid = []
+    for (let mins = releaseMins + step; mins <= cutoffMins; mins += step) {
+      const currentMins = mins % (24 * 60)
+      const hh = Math.floor(currentMins / 60)
+      const mm = currentMins % 60
+      const timeStr = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
+      
+      const displayHour = hh % 12 || 12
+      const ampm = hh >= 12 ? 'PM' : 'AM'
+      const timeLabel = `${String(displayHour).padStart(2, '0')}:${String(mm).padStart(2, '0')} ${ampm}`
+      
+      const flyingMins = mins - releaseMins
+      const speed = Math.round((dist * 1000) / flyingMins)
+      
+      grid.push({
+        time: timeStr,
+        timeLabel,
+        flyingTime: flyingMins,
+        speed
+      })
+    }
+    
+    return grid
+  }
+
   // Load verification photos and videos from localStorage
   useEffect(() => {
     if (isOpen && eventToEdit && birdsList.length > 0) {
@@ -709,6 +797,116 @@ export default function ActivityModal({
                     }}
                   />
                 </div>
+
+                {/* Velocity Arrival Forecast */}
+                {distanceKmStr && releaseTime && (
+                  <div style={{
+                    marginTop: '0.88rem',
+                    background: 'rgba(255, 255, 255, 0.01)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: '0.6rem',
+                    padding: '0.75rem',
+                  }}>
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }} onClick={() => setShowForecast(!showForecast)}>
+                      <span style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        color: 'var(--brand-gold)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
+                      }}>
+                        📈 Velocity Arrival Forecast
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                        {showForecast ? '▼ Collapse' : '▶ Expand'}
+                      </span>
+                    </div>
+
+                    {showForecast && (
+                      <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {/* Dynamic Calculator input */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '0.4rem',
+                          border: '1px solid rgba(255, 255, 255, 0.05)'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <label htmlFor="forecast-time" style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.15rem' }}>
+                              Target Arrival Time
+                            </label>
+                            <input
+                              id="forecast-time"
+                              type="time"
+                              value={forecastTargetTime}
+                              onChange={(e) => setForecastTargetTime(e.target.value)}
+                              style={{
+                                width: '100%',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '0.8rem',
+                                outline: 'none',
+                                padding: 0
+                              }}
+                            />
+                          </div>
+                          <div style={{ textAlign: 'right', paddingLeft: '0.5rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Forecast Speed</span>
+                            <strong style={{ fontSize: '0.92rem', color: 'var(--brand-gold)' }}>
+                              {calculateForecastSpeed(forecastTargetTime)}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {/* Increments table */}
+                        <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '0.4rem' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Arrival Time</th>
+                                <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Flying Time</th>
+                                <th style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Speed</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {generateForecastGrid().map((row, idx) => (
+                                <tr
+                                  key={idx}
+                                  style={{
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+                                    background: row.time === forecastTargetTime ? 'rgba(255, 193, 7, 0.06)' : 'transparent'
+                                  }}
+                                >
+                                  <td style={{ padding: '0.35rem 0.5rem', fontWeight: 600 }}>
+                                    {row.timeLabel}
+                                  </td>
+                                  <td style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                    {row.flyingTime} mins
+                                  </td>
+                                  <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', fontWeight: 700, color: 'var(--brand-gold)' }}>
+                                    {row.speed.toLocaleString()} m/min
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
