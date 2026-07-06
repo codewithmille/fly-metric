@@ -246,11 +246,22 @@ export default function VerifyPhotoModal({
     setError('')
     setHasCameraAccess(null)
 
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setHasCameraAccess(false)
+      setError('Camera access is not supported by your browser or connection. Please ensure you are using HTTPS and a modern browser like Safari or Chrome.')
+      return
+    }
+
     try {
+      let videoConstraint: any = { facingMode: 'environment' }
+      
+      // Only use exact deviceId if we have a valid, non-empty deviceId
+      if (devices.length > 0 && devices[activeDeviceIdx]?.deviceId) {
+        videoConstraint = { deviceId: { exact: devices[activeDeviceIdx].deviceId } }
+      }
+
       const constraints: MediaStreamConstraints = {
-        video: devices.length > 0 
-          ? { deviceId: { exact: devices[activeDeviceIdx].deviceId } }
-          : { facingMode: 'environment' },
+        video: videoConstraint,
         audio: true // Request audio for video recording
       }
       
@@ -260,10 +271,14 @@ export default function VerifyPhotoModal({
       } catch (audioErr) {
         // Fallback if mic is blocked or not available
         console.warn('Microphone access failed, falling back to video only:', audioErr)
+        
+        let fallbackVideoConstraint: any = { facingMode: 'environment' }
+        if (devices.length > 0 && devices[activeDeviceIdx]?.deviceId) {
+          fallbackVideoConstraint = { deviceId: { exact: devices[activeDeviceIdx].deviceId } }
+        }
+        
         stream = await navigator.mediaDevices.getUserMedia({
-          video: devices.length > 0 
-            ? { deviceId: { exact: devices[activeDeviceIdx].deviceId } }
-            : { facingMode: 'environment' }
+          video: fallbackVideoConstraint
         })
       }
 
@@ -275,7 +290,7 @@ export default function VerifyPhotoModal({
     } catch (err: any) {
       console.error('Camera access error:', err)
       setHasCameraAccess(false)
-      setError('Could not access your camera. Please ensure permissions are granted.')
+      setError('Could not access your camera. Please ensure permissions are granted and that you are using a secure connection (HTTPS).')
     }
   }
 
