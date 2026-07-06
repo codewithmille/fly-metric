@@ -400,8 +400,8 @@ export default function VerifyPhotoModal({
     const marginX = cropLeft + 20 * baseScale
     
     // Position watermark from the visible bottom
-    const boxHeight = 120 * scale
-    const startY = (height - cropBottom) - boxHeight - 20 * baseScale
+    const boxHeight = 84 * scale
+    const startY = (height - cropBottom) - boxHeight - 10 * baseScale
     const badgeHeight = 24 * scale
     const badgeY = startY
 
