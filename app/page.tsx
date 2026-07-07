@@ -8,6 +8,7 @@ import BirdRegistryModal from '@/components/BirdRegistryModal'
 import LandingPage from '@/components/LandingPage'
 import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
+import ResultsHistoryModal from '@/components/ResultsHistoryModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -44,6 +45,7 @@ export default function Home() {
   const [isClockInOpen, setIsClockInOpen] = useState(false)
   const [isRegistryOpen, setIsRegistryOpen] = useState(false)
   const [isVerifyPhotoOpen, setIsVerifyPhotoOpen] = useState(false)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedEvent, setSelectedEvent] = useState<RaceEvent | null>(null)
 
@@ -54,6 +56,8 @@ export default function Home() {
 
   const [isOfflineMode, setIsOfflineMode] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
+  const [modalIsClockInOnly, setModalIsClockInOnly] = useState(false)
 
   const refreshSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -181,6 +185,27 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'profile' | 'home') => {
+    setIsModalOpen(false)
+    setIsSelectionOpen(false)
+    setIsClockInOpen(false)
+    setIsVerifyPhotoOpen(false)
+    setIsHistoryOpen(false)
+    setIsProfileOpen(false)
+
+    if (tabName === 'addEvent') {
+      openModal(today)
+    } else if (tabName === 'clockIn') {
+      setIsClockInOpen(true)
+    } else if (tabName === 'camera') {
+      setIsVerifyPhotoOpen(true)
+    } else if (tabName === 'history') {
+      setIsHistoryOpen(true)
+    } else if (tabName === 'profile') {
+      setIsProfileOpen(true)
+    }
+  }
+
   // ── Show login if not authenticated ───────────────────────
   if (authLoading) {
     return (
@@ -216,6 +241,7 @@ export default function Home() {
   const user: User = session.user
   const avatarUrl = user.user_metadata?.avatar_url as string | undefined
   const displayName = (user.user_metadata?.full_name as string | undefined) || user.email || 'Fancier'
+  const loftName = (user.user_metadata?.loft_name as string | undefined) || ''
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (
@@ -228,6 +254,21 @@ export default function Home() {
           </div>
           <h1 className="nav-title">
             Fly<span>Metric</span>
+            {loftName && (
+              <span className="mobile-loft-subtitle" style={{
+                display: 'none',
+                fontSize: '0.72rem',
+                color: 'var(--brand-gold)',
+                fontWeight: 700,
+                marginLeft: '0.5rem',
+                borderLeft: '1px solid rgba(255,255,255,0.15)',
+                paddingLeft: '0.5rem',
+                textTransform: 'uppercase',
+                verticalAlign: 'middle'
+              }}>
+                {loftName}
+              </span>
+            )}
           </h1>
           <span className="nav-badge">MY LOFT</span>
           {isOfflineMode ? (
@@ -442,18 +483,272 @@ export default function Home() {
           ))}
         </section>
 
-        {/* Calendar Card */}
-        <section className="calendar-card" aria-label="Loft calendar">
-          <div className="calendar-card-header">
-            <div className="calendar-card-title">
-              📅 Loft Activity Calendar
+        {/* Activities List / Calendar Card */}
+        <section className="calendar-card" aria-label="Loft activities and calendar">
+          <div className="calendar-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ minWidth: '180px' }}>
+              <div className="calendar-card-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+                Loft Activities & Flights
+              </div>
+              <span className="calendar-card-hint">
+                {viewMode === 'calendar' ? 'Click date to log or edit events' : 'Grouped chronologically by date'}
+              </span>
             </div>
-            <span className="calendar-card-hint">
-              Hover for details · Click date to log training, races, meds or tasks
-            </span>
+
+            {/* Toggle view and Add Activity buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              {/* Segmented Control Switcher */}
+              <div style={{
+                display: 'flex',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--border-default)',
+                borderRadius: '0.5rem',
+                padding: '2px',
+                gap: '2px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: viewMode === 'list' ? 'var(--brand-gold)' : 'transparent',
+                    color: viewMode === 'list' ? '#000' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  📝 List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('calendar')}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: viewMode === 'calendar' ? 'var(--brand-gold)' : 'transparent',
+                    color: viewMode === 'calendar' ? '#000' : 'var(--text-secondary)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  📅 Calendar
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedDate(today)
+                  setSelectedEvent(null)
+                  setIsModalOpen(true)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.75rem',
+                  background: 'rgba(255, 193, 7, 0.08)',
+                  border: '1px solid var(--brand-gold)',
+                  borderRadius: '0.375rem',
+                  color: 'var(--brand-gold)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  height: '1.9rem'
+                }}
+                className="menu-item-hover"
+              >
+                <PlusIcon size={12} /> Log Activity
+              </button>
+            </div>
           </div>
 
-          <RaceCalendar events={events} loading={loading} onDateClick={openModal} />
+          {loading ? (
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <div className="loading-spinner" style={{ margin: '0 auto 1rem auto' }} />
+              <span>Loading activities...</span>
+            </div>
+          ) : viewMode === 'calendar' ? (
+            /* CALENDAR VIEW MODE */
+            <div style={{ padding: '0.5rem' }}>
+              <RaceCalendar events={events} loading={loading} onDateClick={openModal} />
+            </div>
+          ) : events.length === 0 ? (
+            /* EMPTY STATE */
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📅</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>No Loft Activities Logged</div>
+              <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', maxWidth: '280px', margin: '0.25rem auto 1rem auto' }}>
+                Create a training flight or official race to start tracking pigeon velocities.
+              </p>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setSelectedDate(today)
+                  setSelectedEvent(null)
+                  setIsModalOpen(true)
+                }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+              >
+                <PlusIcon size={12} /> Log First Activity
+              </button>
+            </div>
+          ) : (
+            /* GROUPED LIST VIEW MODE WITH DATE HEADERS */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem' }}>
+              {(() => {
+                // Group events by date string
+                const groupedEvents: Record<string, RaceEvent[]> = {}
+                events.forEach((ev) => {
+                  const dateStr = ev.date || ''
+                  if (!groupedEvents[dateStr]) {
+                    groupedEvents[dateStr] = []
+                  }
+                  groupedEvents[dateStr].push(ev)
+                })
+
+                // Get sorted dates (newest first)
+                const sortedDates = Object.keys(groupedEvents).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+
+                return sortedDates.map((dateStr) => {
+                  const dayEvents = groupedEvents[dateStr]
+                  const dateObj = new Date(dateStr)
+                  
+                  // Format nice header: e.g. "Tuesday, July 7, 2026"
+                  const formattedHeaderDate = dateObj.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })
+
+                  return (
+                    <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {/* Section Date Header */}
+                      <div style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: 'var(--brand-gold)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        padding: '0.4rem 0.25rem',
+                        borderLeft: '2px solid var(--brand-gold)',
+                        paddingLeft: '0.5rem',
+                        marginTop: '0.5rem',
+                        marginBottom: '0.2rem',
+                        background: 'rgba(255, 193, 7, 0.02)'
+                      }}>
+                        {formattedHeaderDate}
+                      </div>
+
+                      {/* Day Activities */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {dayEvents.map((ev) => {
+                          const type = ev.extendedProps?.club || 'Race'
+                          const location = ev.extendedProps?.location || 'No location configured'
+                          
+                          return (
+                            <div
+                              key={ev.id}
+                              onClick={() => {
+                                setModalIsClockInOnly(true)
+                                openModal(ev.date || '', ev)
+                              }}
+                              style={{
+                                background: 'rgba(255,255,255,0.01)',
+                                border: '1px solid var(--border-default)',
+                                borderRadius: '0.75rem',
+                                padding: '0.88rem 1rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                transition: 'all 0.15s ease'
+                              }}
+                              className="selection-item-card"
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
+                                <span style={{
+                                  color: type === 'Training' ? '#2196F3' :
+                                         type === 'Medication' ? '#4CAF50' :
+                                         type === 'Task' ? '#9C27B0' : 'var(--brand-gold)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '2.2rem',
+                                  height: '2.2rem',
+                                  borderRadius: '0.5rem',
+                                  background: type === 'Training' ? 'rgba(33, 150, 243, 0.08)' :
+                                              type === 'Medication' ? 'rgba(76, 175, 80, 0.08)' :
+                                              type === 'Task' ? 'rgba(156, 39, 176, 0.08)' : 'rgba(255, 193, 7, 0.08)',
+                                  border: type === 'Training' ? '1px solid rgba(33, 150, 243, 0.2)' :
+                                          type === 'Medication' ? '1px solid rgba(76, 175, 80, 0.2)' :
+                                          type === 'Task' ? '1px solid rgba(156, 39, 176, 0.2)' : '1px solid rgba(255, 193, 7, 0.2)',
+                                  flexShrink: 0
+                                }}>
+                                  {type === 'Training' ? <TrainingIcon size={18} /> :
+                                   type === 'Medication' ? <PillIcon size={18} /> :
+                                   type === 'Task' ? <NotesIcon size={18} /> :
+                                   <TrophyIcon size={18} />}
+                                </span>
+                                
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {ev.title}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.6rem', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 600, color: 'var(--brand-gold)' }}>{type}</span>
+                                    <span style={{ color: 'var(--text-muted)' }}>•</span>
+                                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>📍 {location}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation() // prevent opening in clockin mode
+                                  setModalIsClockInOnly(false)
+                                  openModal(ev.date || '', ev)
+                                }}
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.05)',
+                                  border: '1px solid var(--border-default)',
+                                  borderRadius: '0.375rem',
+                                  padding: '0.35rem 0.5rem',
+                                  color: 'var(--text-secondary)',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  transition: 'all 0.15s ease',
+                                  flexShrink: 0
+                                }}
+                                className="menu-item-hover"
+                                title="Edit Event Details"
+                              >
+                                ✏️ Edit
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          )}
         </section>
 
       </main>
@@ -468,6 +763,7 @@ export default function Home() {
         registeredBirds={registeredBirds}
         authToken={session.access_token}
         session={session}
+        isClockInOnly={modalIsClockInOnly}
       />
 
       {/* ── Profile settings Modal ──────────────────────── */}
@@ -476,6 +772,10 @@ export default function Home() {
         onClose={() => setIsProfileOpen(false)}
         session={session}
         onProfileUpdated={refreshSession}
+        registeredBirds={registeredBirds}
+        onBirdsUpdated={fetchBirds}
+        events={events}
+        onAddEventTrigger={() => navigateToTab('addEvent')}
       />
 
       {/* ── Quick Clock-in Modal ─────────────────────── */}
@@ -488,14 +788,6 @@ export default function Home() {
         authToken={session.access_token}
       />
 
-      {/* ── Bird Registry Modal ──────────────────────── */}
-      <BirdRegistryModal
-        isOpen={isRegistryOpen}
-        onClose={() => setIsRegistryOpen(false)}
-        onBirdsUpdated={fetchBirds}
-        authToken={session.access_token}
-      />
-
       {/* ── Verify Photo Modal ───────────────────────── */}
       <VerifyPhotoModal
         isOpen={isVerifyPhotoOpen}
@@ -504,6 +796,13 @@ export default function Home() {
         onClose={() => setIsVerifyPhotoOpen(false)}
         onClockInSaved={fetchEvents}
         authToken={session.access_token}
+      />
+
+      {/* ── Results History Modal ──────────────────────── */}
+      <ResultsHistoryModal
+        isOpen={isHistoryOpen}
+        events={events}
+        onClose={() => setIsHistoryOpen(false)}
       />
 
       {/* ── Day Selection Modal ──────────────────────── */}
@@ -584,7 +883,6 @@ export default function Home() {
               <div style={{ borderTop: '1px solid var(--border-default)', margin: '0.5rem 0' }} />
 
               <button
-                className="btn-primary"
                 onClick={() => {
                   setIsSelectionOpen(false)
                   setSelectedDate(selectionDate)
@@ -597,15 +895,82 @@ export default function Home() {
                   justifyContent: 'center',
                   gap: '0.4rem',
                   width: '100%',
-                  padding: '0.75rem'
+                  padding: '0.75rem',
+                  background: 'rgba(255, 193, 7, 0.04)',
+                  border: '1px dashed var(--brand-gold)',
+                  borderRadius: '0.625rem',
+                  color: 'var(--brand-gold)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  flex: 'none'
                 }}
+                className="menu-item-hover"
               >
-                <PlusIcon size={16} /> Log New Activity
+                <PlusIcon size={14} /> Log New Activity
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* React Native-style Mobile Bottom Tab Bar */}
+      <div className="mobile-tab-bar">
+        <button 
+          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isHistoryOpen && !isProfileOpen) ? 'active' : ''}`}
+          onClick={() => navigateToTab('home')}
+          aria-label="Loft Dashboard Home"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </button>
+        <button 
+          className={`mobile-tab-btn ${isClockInOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('clockIn')}
+          aria-label="Quick Clock-in bird"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Clock-In</span>
+        </button>
+        <button 
+          className={`mobile-tab-btn mobile-tab-btn-camera ${isVerifyPhotoOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('camera')}
+          aria-label="Verify camera clock-in"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span>Camera</span>
+        </button>
+        <button 
+          className={`mobile-tab-btn ${isHistoryOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('history')}
+          aria-label="Loft Results History"
+        >
+          <TrophyIcon size={20} />
+          <span>History</span>
+        </button>
+        <button 
+          className={`mobile-tab-btn ${isProfileOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('profile')}
+          aria-label="Loft Profile"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </button>
+      </div>
     </div>
   )
 }

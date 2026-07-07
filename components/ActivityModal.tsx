@@ -24,6 +24,7 @@ interface ActivityModalProps {
   registeredBirds: LoftBird[]
   authToken?: string
   session?: Session | null
+  isClockInOnly?: boolean
 }
 
 interface BirdRecord {
@@ -44,6 +45,7 @@ export default function ActivityModal({
   registeredBirds,
   authToken,
   session,
+  isClockInOnly = false,
 }: ActivityModalProps) {
   const [activityType, setActivityType] = useState<ActivityType>('race')
   const [raceDate, setRaceDate] = useState(selectedDate)
@@ -79,6 +81,7 @@ export default function ActivityModal({
   // Velocity Forecast States
   const [showForecast, setShowForecast] = useState(true)
   const [forecastTargetTime, setForecastTargetTime] = useState('07:30')
+  const [clockInOnly, setClockInOnly] = useState(false)
 
   useEffect(() => {
     if (releaseTime) {
@@ -202,6 +205,7 @@ export default function ActivityModal({
   // Sync date when parent passes a new selectedDate or eventToEdit
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
+      setClockInOnly(!!isClockInOnly)
       setReleaseLat('')
       setReleaseLng('')
       if (eventToEdit) {
@@ -253,7 +257,7 @@ export default function ActivityModal({
       setError('')
     }
     wasOpenRef.current = isOpen
-  }, [isOpen, selectedDate, eventToEdit, registeredBirds])
+  }, [isOpen, selectedDate, eventToEdit, registeredBirds, isClockInOnly])
 
   // Close on Escape key
   useEffect(() => {
@@ -573,341 +577,414 @@ export default function ActivityModal({
         </div>
 
         {/* Tab Selection */}
-        <div style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--border-default)',
-          background: 'var(--bg-surface)'
-        }}>
-          {(['race', 'training', 'medication', 'task'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => setActivityType(type)}
-              style={{
-                flex: 1,
-                padding: '0.75rem 0.5rem',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                background: activityType === type ? 'var(--bg-card)' : 'transparent',
-                color: activityType === type ? (
-                  type === 'race' ? 'var(--brand-gold)' :
-                  type === 'training' ? '#2196F3' :
-                  type === 'medication' ? '#4CAF50' : '#9C27B0'
-                ) : 'var(--text-secondary)',
-                border: 'none',
-                borderBottom: activityType === type ? `2px solid ${
-                  type === 'race' ? 'var(--brand-gold)' :
-                  type === 'training' ? '#2196F3' :
-                  type === 'medication' ? '#4CAF50' : '#9C27B0'
-                }` : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                {type === 'race' ? <TrophyIcon size={14} /> :
-                 type === 'training' ? <TrainingIcon size={14} /> :
-                 type === 'medication' ? <PillIcon size={14} /> : <NotesIcon size={14} />}
-                <span>
-                  {type === 'race' ? 'Race' :
-                   type === 'training' ? 'Training' :
-                   type === 'medication' ? 'Diet' : 'Task'}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+        {!clockInOnly && (
+          <div style={{
+            display: 'flex',
+            borderBottom: '1px solid var(--border-default)',
+            background: 'var(--bg-surface)'
+          }}>
+            {(['race', 'training', 'medication', 'task'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setActivityType(type)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 0.5rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  background: activityType === type ? 'var(--bg-card)' : 'transparent',
+                  color: activityType === type ? (
+                    type === 'race' ? 'var(--brand-gold)' :
+                    type === 'training' ? '#2196F3' :
+                    type === 'medication' ? '#4CAF50' : '#9C27B0'
+                  ) : 'var(--text-secondary)',
+                  border: 'none',
+                  borderBottom: activityType === type ? `2px solid ${
+                    type === 'race' ? 'var(--brand-gold)' :
+                    type === 'training' ? '#2196F3' :
+                    type === 'medication' ? '#4CAF50' : '#9C27B0'
+                  }` : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+                  {type === 'race' ? <TrophyIcon size={14} /> :
+                   type === 'training' ? <TrainingIcon size={14} /> :
+                   type === 'medication' ? <PillIcon size={14} /> : <NotesIcon size={14} />}
+                  <span>
+                    {type === 'race' ? 'Race' :
+                     type === 'training' ? 'Training' :
+                     type === 'medication' ? 'Diet' : 'Task'}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Body */}
         <div className="modal-body">
-
-          {/* Activity Title */}
-          <div className="form-group">
-            <label htmlFor="activity-title" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <NotesIcon size={14} /> Activity Title
-            </label>
-            <input
-              id="activity-title"
-              type="text"
-              className="form-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* Date Row */}
-          <div className="form-group">
-            <label htmlFor="race-date" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <CalendarIcon size={14} /> Date
-            </label>
-            <input
-              id="race-date"
-              type="date"
-              className="form-input"
-              value={raceDate}
-              onChange={(e) => setRaceDate(e.target.value)}
-            />
-          </div>
-
-          {/* CONDITIONAL RENDER: RACE OR TRAINING TIME & SPEED */}
-          {(activityType === 'race' || activityType === 'training') && (
-            <>
-              {/* Time Row */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="release-time" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <PlusIcon size={14} style={{ transform: 'rotate(45deg)' }} /> Release Time
-                  </label>
-                  <input
-                    id="release-time"
-                    type="time"
-                    className="form-input"
-                    value={releaseTime}
-                    onChange={(e) => setReleaseTime(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="clock-in-time" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <TimerIcon size={14} /> Cut-off Time
-                  </label>
-                  <input
-                    id="clock-in-time"
-                    type="time"
-                    className="form-input"
-                    value={clockInTime}
-                    onChange={(e) => setClockInTime(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Distance Input */}
-              <div className="form-group">
-                <label htmlFor="distance-km" className="form-label">📏 Distance</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input
-                    id="distance-km"
-                    type="number"
-                    step="any"
-                    min="0"
-                    placeholder="e.g. 90"
-                    className="form-input"
-                    value={distanceKmStr}
-                    onChange={(e) => setDistanceKmStr(e.target.value)}
-                    style={{ paddingRight: '3rem' }}
-                  />
+          {clockInOnly && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--border-default)',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1rem',
+              position: 'relative'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span style={{
-                    position: 'absolute',
-                    right: '1rem',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.88rem',
-                    fontWeight: 600,
-                    pointerEvents: 'none'
+                    color: activityType === 'training' ? '#2196F3' :
+                           activityType === 'medication' ? '#4CAF50' :
+                           activityType === 'task' ? '#9C27B0' : 'var(--brand-gold)',
+                    display: 'flex',
+                    alignItems: 'center'
                   }}>
-                    km
+                    {activityType === 'training' ? <TrainingIcon size={16} /> :
+                     activityType === 'medication' ? <PillIcon size={16} /> :
+                     activityType === 'task' ? <NotesIcon size={16} /> :
+                     <TrophyIcon size={16} />}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+                    {activityType === 'race' ? 'Race Details' :
+                     activityType === 'training' ? 'Training Details' :
+                     activityType === 'medication' ? 'Diet/Meds Details' : 'Task Details'}
                   </span>
                 </div>
+                
+                {/* Small Edit Details button */}
+                <button
+                  type="button"
+                  onClick={() => setClockInOnly(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--brand-gold)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  ✏️ Edit Event Details
+                </button>
               </div>
 
-              {/* Release Point GPS coordinates (Optional calculator) */}
-              <div style={{ borderTop: '1px solid var(--border-muted)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
-                <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>🛰️ Release GPS (Distance Calculator)</span>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="rel-lat" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lat</label>
-                    <input
-                      id="rel-lat"
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={releaseLat}
-                      onChange={(e) => setReleaseLat(e.target.value)}
-                      placeholder="e.g. 15.2104"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="rel-lng" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lng</label>
-                    <input
-                      id="rel-lng"
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={releaseLng}
-                      onChange={(e) => setReleaseLng(e.target.value)}
-                      placeholder="e.g. 120.5732"
-                    />
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
-                  <button
-                    type="button"
-                    className="nav-btn nav-btn-secondary"
-                    disabled={fetchingGps}
-                    onClick={handleUseDeviceGpsForRelease}
-                    style={{
-                      flex: 1,
-                      padding: '0.4rem',
-                      fontSize: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem',
-                      borderColor: 'rgba(33, 150, 243, 0.3)',
-                      color: '#2196F3',
-                      background: 'rgba(33, 150, 243, 0.05)',
-                      height: '2.2rem'
-                    }}
-                  >
-                    📍 {fetchingGps ? 'Locating…' : 'Use Current GPS'}
-                  </button>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                {title || 'Untitled Activity'}
+              </div>
 
-                  <button
-                    type="button"
-                    className="nav-btn nav-btn-secondary"
-                    onClick={calculateDistanceFromGps}
-                    style={{
-                      flex: 1.25,
-                      padding: '0.4rem',
-                      fontSize: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem',
-                      borderColor: 'rgba(255, 193, 7, 0.3)',
-                      color: 'var(--brand-gold)',
-                      background: 'rgba(255, 193, 7, 0.05)',
-                      height: '2.2rem'
-                    }}
-                  >
-                    🌐 Calculate Distance
-                  </button>
-                </div>
-
-                {/* Map Preview */}
-                <div style={{ marginTop: '0.75rem' }}>
-                  <LoftMapPreview
-                    loftLat={session?.user?.user_metadata?.loft_latitude != null ? parseFloat(session.user.user_metadata.loft_latitude) : null}
-                    loftLng={session?.user?.user_metadata?.loft_longitude != null ? parseFloat(session.user.user_metadata.loft_longitude) : null}
-                    releaseLat={releaseLat !== '' ? parseFloat(releaseLat) : null}
-                    releaseLng={releaseLng !== '' ? parseFloat(releaseLng) : null}
-                    height="180px"
-                    clickHint="Tap map to set release point"
-                    onMapClick={(lat, lng) => {
-                      setReleaseLat(lat.toFixed(6))
-                      setReleaseLng(lng.toFixed(6))
-                    }}
-                  />
-                </div>
-
-                {/* Velocity Arrival Forecast */}
-                {distanceKmStr && releaseTime && (
-                  <div style={{
-                    marginTop: '0.88rem',
-                    background: 'rgba(255, 255, 255, 0.01)',
-                    border: '1px solid var(--border-default)',
-                    borderRadius: '0.6rem',
-                    padding: '0.75rem',
-                  }}>
-                    {/* Header */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }} onClick={() => setShowForecast(!showForecast)}>
-                      <span style={{
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        color: 'var(--brand-gold)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem'
-                      }}>
-                        📈 Velocity Arrival Forecast
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                        {showForecast ? '▼ Collapse' : '▶ Expand'}
-                      </span>
-                    </div>
-
-                    {showForecast && (
-                      <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {/* Dynamic Calculator input */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                          padding: '0.4rem 0.6rem',
-                          borderRadius: '0.4rem',
-                          border: '1px solid rgba(255, 255, 255, 0.05)'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <label htmlFor="forecast-time" style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.15rem' }}>
-                              Target Arrival Time
-                            </label>
-                            <input
-                              id="forecast-time"
-                              type="time"
-                              value={forecastTargetTime}
-                              onChange={(e) => setForecastTargetTime(e.target.value)}
-                              style={{
-                                width: '100%',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#fff',
-                                fontSize: '0.8rem',
-                                outline: 'none',
-                                padding: 0
-                              }}
-                            />
-                          </div>
-                          <div style={{ textAlign: 'right', paddingLeft: '0.5rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Forecast Speed</span>
-                            <strong style={{ fontSize: '0.92rem', color: 'var(--brand-gold)' }}>
-                              {calculateForecastSpeed(forecastTargetTime)}
-                            </strong>
-                          </div>
-                        </div>
-
-                        {/* Increments table */}
-                        <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '0.4rem' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
-                            <thead>
-                              <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                                <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Arrival Time</th>
-                                <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Flying Time</th>
-                                <th style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Speed</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {generateForecastGrid().map((row, idx) => (
-                                <tr
-                                  key={idx}
-                                  style={{
-                                    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-                                    background: row.time === forecastTargetTime ? 'rgba(255, 193, 7, 0.06)' : 'transparent'
-                                  }}
-                                >
-                                  <td style={{ padding: '0.35rem 0.5rem', fontWeight: 600 }}>
-                                    {row.timeLabel}
-                                  </td>
-                                  <td style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>
-                                    {row.flyingTime} mins
-                                  </td>
-                                  <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', fontWeight: 700, color: 'var(--brand-gold)' }}>
-                                    {row.speed.toLocaleString()} m/min
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                <span>📅 {raceDate}</span>
+                {(activityType === 'race' || activityType === 'training') && (
+                  <>
+                    <span>📏 {distanceKmStr} km</span>
+                    <span>⏰ Release: {releaseTime}</span>
+                    <span>⏱️ Cut-off: {clockInTime}</span>
+                  </>
                 )}
               </div>
+            </div>
+          )}
+
+          {!clockInOnly && (
+            <>
+              {/* Activity Title */}
+              <div className="form-group">
+                <label htmlFor="activity-title" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <NotesIcon size={14} /> Activity Title
+                </label>
+                <input
+                  id="activity-title"
+                  type="text"
+                  className="form-input"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              {/* Date Row */}
+              <div className="form-group">
+                <label htmlFor="race-date" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <CalendarIcon size={14} /> Date
+                </label>
+                <input
+                  id="race-date"
+                  type="date"
+                  className="form-input"
+                  value={raceDate}
+                  onChange={(e) => setRaceDate(e.target.value)}
+                />
+              </div>
+
+              {/* CONDITIONAL RENDER: RACE OR TRAINING TIME & SPEED */}
+              {(activityType === 'race' || activityType === 'training') && (
+                <>
+                  {/* Time Row */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="release-time" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <PlusIcon size={14} style={{ transform: 'rotate(45deg)' }} /> Release Time
+                      </label>
+                      <input
+                        id="release-time"
+                        type="time"
+                        className="form-input"
+                        value={releaseTime}
+                        onChange={(e) => setReleaseTime(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="clock-in-time" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <TimerIcon size={14} /> Cut-off Time
+                      </label>
+                      <input
+                        id="clock-in-time"
+                        type="time"
+                        className="form-input"
+                        value={clockInTime}
+                        onChange={(e) => setClockInTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Distance Input */}
+                  <div className="form-group">
+                    <label htmlFor="distance-km" className="form-label">📏 Distance</label>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        id="distance-km"
+                        type="number"
+                        step="any"
+                        min="0"
+                        placeholder="e.g. 90"
+                        className="form-input"
+                        value={distanceKmStr}
+                        onChange={(e) => setDistanceKmStr(e.target.value)}
+                        style={{ paddingRight: '3rem' }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        right: '1rem',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        pointerEvents: 'none'
+                      }}>
+                        km
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Release Point GPS coordinates (Optional calculator) */}
+                  <div style={{ borderTop: '1px solid var(--border-muted)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
+                    <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>🛰️ Release GPS (Distance Calculator)</span>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="rel-lat" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lat</label>
+                        <input
+                          id="rel-lat"
+                          type="number"
+                          step="any"
+                          className="form-input"
+                          value={releaseLat}
+                          onChange={(e) => setReleaseLat(e.target.value)}
+                          placeholder="e.g. 15.2104"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="rel-lng" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lng</label>
+                        <input
+                          id="rel-lng"
+                          type="number"
+                          step="any"
+                          className="form-input"
+                          value={releaseLng}
+                          onChange={(e) => setReleaseLng(e.target.value)}
+                          placeholder="e.g. 120.5732"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                      <button
+                        type="button"
+                        className="nav-btn nav-btn-secondary"
+                        disabled={fetchingGps}
+                        onClick={handleUseDeviceGpsForRelease}
+                        style={{
+                          flex: 1,
+                          padding: '0.4rem',
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem',
+                          borderColor: 'rgba(33, 150, 243, 0.3)',
+                          color: '#2196F3',
+                          background: 'rgba(33, 150, 243, 0.05)',
+                          height: '2.2rem'
+                        }}
+                      >
+                        📍 {fetchingGps ? 'Locating…' : 'Use Current GPS'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="nav-btn nav-btn-secondary"
+                        onClick={calculateDistanceFromGps}
+                        style={{
+                          flex: 1.25,
+                          padding: '0.4rem',
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.3rem',
+                          borderColor: 'rgba(255, 193, 7, 0.3)',
+                          color: 'var(--brand-gold)',
+                          background: 'rgba(255, 193, 7, 0.05)',
+                          height: '2.2rem'
+                        }}
+                      >
+                        🌐 Calculate Distance
+                      </button>
+                    </div>
+
+                    {/* Map Preview */}
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <LoftMapPreview
+                        loftLat={session?.user?.user_metadata?.loft_latitude != null ? parseFloat(session.user.user_metadata.loft_latitude) : null}
+                        loftLng={session?.user?.user_metadata?.loft_longitude != null ? parseFloat(session.user.user_metadata.loft_longitude) : null}
+                        releaseLat={releaseLat !== '' ? parseFloat(releaseLat) : null}
+                        releaseLng={releaseLng !== '' ? parseFloat(releaseLng) : null}
+                        height="180px"
+                        clickHint="Tap map to set release point"
+                        onMapClick={(lat, lng) => {
+                          setReleaseLat(lat.toFixed(6))
+                          setReleaseLng(lng.toFixed(6))
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Velocity Arrival Forecast */}
+                  {distanceKmStr && releaseTime && (
+                    <div style={{
+                      marginTop: '0.88rem',
+                      background: 'rgba(255, 255, 255, 0.01)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '0.6rem',
+                      padding: '0.75rem',
+                    }}>
+                      {/* Header */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }} onClick={() => setShowForecast(!showForecast)}>
+                        <span style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: 'var(--brand-gold)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}>
+                          📈 Velocity Arrival Forecast
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                          {showForecast ? '▼ Collapse' : '▶ Expand'}
+                        </span>
+                      </div>
+
+                      {showForecast && (
+                        <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {/* Dynamic Calculator input */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                            padding: '0.4rem 0.6rem',
+                            borderRadius: '0.4rem',
+                            border: '1px solid rgba(255, 255, 255, 0.05)'
+                          }}>
+                            <div style={{ flex: 1 }}>
+                              <label htmlFor="forecast-time" style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.15rem' }}>
+                                Target Arrival Time
+                              </label>
+                              <input
+                                id="forecast-time"
+                                type="time"
+                                value={forecastTargetTime}
+                                onChange={(e) => setForecastTargetTime(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#fff',
+                                  fontSize: '0.8rem',
+                                  outline: 'none',
+                                  padding: 0
+                                }}
+                              />
+                            </div>
+                            <div style={{ textAlign: 'right', paddingLeft: '0.5rem', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                              <span style={{ display: 'block', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Forecast Speed</span>
+                              <strong style={{ fontSize: '0.92rem', color: 'var(--brand-gold)' }}>
+                                {calculateForecastSpeed(forecastTargetTime)}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {/* Increments table */}
+                          <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '0.4rem' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
+                              <thead>
+                                <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                  <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Arrival Time</th>
+                                  <th style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>Flying Time</th>
+                                  <th style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Speed</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {generateForecastGrid().map((row, idx) => (
+                                  <tr
+                                    key={idx}
+                                    style={{
+                                      borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+                                      background: row.time === forecastTargetTime ? 'rgba(255, 193, 7, 0.06)' : 'transparent'
+                                    }}
+                                  >
+                                    <td style={{ padding: '0.35rem 0.5rem', fontWeight: 600 }}>
+                                      {row.timeLabel}
+                                    </td>
+                                    <td style={{ padding: '0.35rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                      {row.flyingTime} mins
+                                    </td>
+                                    <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', fontWeight: 700, color: 'var(--brand-gold)' }}>
+                                      {row.speed.toLocaleString()} m/min
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </>
           )}
 

@@ -807,7 +807,7 @@ export default function VerifyPhotoModal({
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" style={{ color: '#000', background: 'rgba(0,0,0,0.08)' }} onClick={onClose} aria-label="Close modal">✕</button>
+          <button className="modal-close-btn camera-close-btn" style={{ color: '#000', background: 'rgba(0,0,0,0.08)' }} onClick={onClose} aria-label="Close modal">✕</button>
         </div>
 
         {/* Modal Body */}

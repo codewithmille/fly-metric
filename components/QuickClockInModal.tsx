@@ -225,7 +225,7 @@ export default function QuickClockInModal({
               <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.75)' }}>Add a bird arrival to a scheduled event</p>
             </div>
           </div>
-          <button className="modal-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)' }} onClick={onClose} aria-label="Close modal">✕</button>
+          <button className="modal-close-btn clockin-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)' }} onClick={onClose} aria-label="Close modal">✕</button>
         </div>
 
         {/* Body */}

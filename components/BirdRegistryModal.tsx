@@ -178,7 +178,7 @@ export default function BirdRegistryModal({
         </div>
 
         {/* Body */}
-        <div className="modal-body" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+        <div className="modal-body modal-scroll-body" style={{ overflowY: 'auto' }}>
           
           {/* Add Bird Form */}
           <form onSubmit={handleRegisterBird} style={{

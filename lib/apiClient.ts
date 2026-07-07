@@ -364,7 +364,12 @@ export async function syncOfflineQueue(authToken?: string): Promise<boolean> {
           })
           if (!res.ok) {
             const data = await res.json()
-            throw new Error(data.error || 'Sync bird failed')
+            const errText = data.error || ''
+            if (res.status === 409 || errText.toLowerCase().includes('already registered')) {
+              console.log(`Bird with Ring No. "${item.body?.ringNo}" is already registered, resolving sync queue entry successfully.`)
+            } else {
+              throw new Error(errText || 'Sync bird failed')
+            }
           }
         }
       }
