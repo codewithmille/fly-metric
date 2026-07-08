@@ -1252,6 +1252,7 @@ body {
     flex-direction: column;
     box-shadow: none !important;
     animation: mobilePageSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow: hidden !important;
   }
 
   .modal-header {
@@ -1264,14 +1265,18 @@ body {
     flex: 1;
     max-height: calc(100dvh - 65px) !important;
     height: calc(100dvh - 65px) !important;
-    padding-bottom: 5.5rem !important;
+    padding-bottom: 7.5rem !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal-scroll-body {
     flex: 1;
     max-height: calc(100dvh - 180px) !important; /* space for header / avatar settings */
     height: calc(100dvh - 180px) !important;
-    padding-bottom: 5.5rem !important;
+    padding-bottom: 7.5rem !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   @keyframes mobilePageSlide {
