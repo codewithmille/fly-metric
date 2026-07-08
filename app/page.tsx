@@ -9,6 +9,7 @@ import LandingPage from '@/components/LandingPage'
 import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import ResultsHistoryModal from '@/components/ResultsHistoryModal'
+import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -58,6 +59,7 @@ export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
   const [modalIsClockInOnly, setModalIsClockInOnly] = useState(false)
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
 
   const refreshSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -282,6 +284,31 @@ export default function Home() {
               Online
             </span>
           )}
+
+          {/* Quick Speed Calculator navbar trigger */}
+          <button
+            onClick={() => setIsCalculatorOpen(true)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--text-primary)',
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              padding: '0.25rem 0.55rem',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              marginLeft: '0.75rem',
+              transition: 'all 0.15s'
+            }}
+            className="menu-item-hover"
+            title="Quick Speed Calculator"
+          >
+            <span>🧮</span>
+            <span className="nav-btn-text">Speed Calculator</span>
+          </button>
         </div>
 
         <div className="nav-actions">
@@ -803,6 +830,12 @@ export default function Home() {
         isOpen={isHistoryOpen}
         events={events}
         onClose={() => setIsHistoryOpen(false)}
+      />
+
+      {/* ── Quick Speed Calculator Modal ────────────────── */}
+      <SpeedCalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
       />
 
       {/* ── Day Selection Modal ──────────────────────── */}
