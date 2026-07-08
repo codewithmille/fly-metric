@@ -1095,8 +1095,16 @@ body {
 }
 
 @media (max-width: 768px) {
-  /* Hide header actions on mobile */
+  /* Hide header actions on mobile except for specific buttons like the speed calculator */
   .dashboard-nav .nav-actions {
+    display: flex !important;
+    gap: 0.5rem;
+  }
+
+  #loft-registry-nav,
+  #quick-clockin-nav,
+  #verify-photo-nav,
+  #log-new-activity-nav {
     display: none !important;
   }
 
