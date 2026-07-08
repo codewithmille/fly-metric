@@ -10,7 +10,7 @@ import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import ResultsHistoryModal from '@/components/ResultsHistoryModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
-import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon } from '@/components/icons'
+import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
@@ -284,31 +284,6 @@ export default function Home() {
               Online
             </span>
           )}
-
-          {/* Quick Speed Calculator navbar trigger */}
-          <button
-            onClick={() => setIsCalculatorOpen(true)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-default)',
-              color: 'var(--text-primary)',
-              fontWeight: 700,
-              fontSize: '0.72rem',
-              padding: '0.25rem 0.55rem',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              marginLeft: '0.75rem',
-              transition: 'all 0.15s'
-            }}
-            className="menu-item-hover"
-            title="Quick Speed Calculator"
-          >
-            <span>🧮</span>
-            <span className="nav-btn-text">Speed Calculator</span>
-          </button>
         </div>
 
         <div className="nav-actions">
@@ -334,6 +309,29 @@ export default function Home() {
             }}
           >
             <BirdIcon size={16} /> <span className="nav-btn-text">Loft Registry</span>
+          </button>
+          <button
+            id="speed-calc-nav"
+            className="nav-btn nav-btn-secondary"
+            onClick={() => setIsCalculatorOpen(true)}
+            aria-label="Speed Calculator"
+            style={{
+              background: 'rgba(255, 193, 7, 0.1)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              color: 'var(--brand-gold)',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.88rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <CalculatorIcon size={16} /> <span className="nav-btn-text">Speed Calculator</span>
           </button>
           <button
             id="quick-clockin-nav"
