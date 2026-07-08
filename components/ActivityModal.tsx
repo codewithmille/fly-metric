@@ -114,6 +114,7 @@ export default function ActivityModal({
     if (flyingMins <= 0) return 'N/A'
     
     const speed = Math.round((dist * 1000) / flyingMins)
+    if (speed > 1600) return 'N/A'
     return `${speed.toLocaleString()} m/min`
   }
 
@@ -156,12 +157,14 @@ export default function ActivityModal({
       const flyingMins = mins - releaseMins
       const speed = Math.round((dist * 1000) / flyingMins)
       
-      grid.push({
-        time: timeStr,
-        timeLabel,
-        flyingTime: flyingMins,
-        speed
-      })
+      if (speed <= 1600) {
+        grid.push({
+          time: timeStr,
+          timeLabel,
+          flyingTime: flyingMins,
+          speed
+        })
+      }
     }
     
     return grid
