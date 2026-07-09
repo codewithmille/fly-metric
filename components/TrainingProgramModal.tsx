@@ -259,6 +259,8 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
             display: 'flex',
             borderBottom: '1px solid var(--border-default)',
             background: 'rgba(255,255,255,0.01)',
+            overflowX: 'auto',
+            width: '100%',
             flexShrink: 0
           }}
         >
@@ -278,7 +280,8 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
                 textTransform: 'uppercase',
-                letterSpacing: '0.04em'
+                letterSpacing: '0.04em',
+                flexShrink: 0
               }}
             >
               {tab === 'schedule' && '📅 Weekly Schedule'}
@@ -306,7 +309,9 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                   background: 'rgba(255,255,255,0.02)',
                   padding: '0.3rem',
                   borderRadius: '0.5rem',
-                  border: '1px solid var(--border-default)'
+                  border: '1px solid var(--border-default)',
+                  overflowX: 'auto',
+                  width: '100%'
                 }}
               >
                 {(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'] as DayType[]).map((day) => (
