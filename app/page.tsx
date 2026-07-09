@@ -11,6 +11,7 @@ import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import ResultsHistoryModal from '@/components/ResultsHistoryModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
+import PigeonChatModal from '@/components/PigeonChatModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -62,6 +63,7 @@ export default function Home() {
   const [modalIsClockInOnly, setModalIsClockInOnly] = useState(false)
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
   const [isTrainingOpen, setIsTrainingOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   const refreshSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -189,13 +191,14 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
-  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'profile' | 'home') => {
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'profile' | 'home' | 'chat') => {
     setIsModalOpen(false)
     setIsSelectionOpen(false)
     setIsClockInOpen(false)
     setIsVerifyPhotoOpen(false)
     setIsHistoryOpen(false)
     setIsProfileOpen(false)
+    setIsChatOpen(false)
 
     if (tabName === 'addEvent') {
       openModal(today)
@@ -207,6 +210,8 @@ export default function Home() {
       setIsHistoryOpen(true)
     } else if (tabName === 'profile') {
       setIsProfileOpen(true)
+    } else if (tabName === 'chat') {
+      setIsChatOpen(true)
     }
   }
 
@@ -434,8 +439,53 @@ export default function Home() {
             <PlusIcon size={16} /> <span className="nav-btn-text">Log Activity</span>
           </button>
 
+          {/* ── Camera / Verify Photos icon ── */}
+          <button
+            id="verify-photo-nav-icon"
+            onClick={() => setIsVerifyPhotoOpen(true)}
+            aria-label="Verify clock-in photo"
+            title="Verify Photos"
+            style={{
+              background: 'rgba(33, 150, 243, 0.08)',
+              border: '1px solid rgba(33, 150, 243, 0.25)',
+              borderRadius: '0.5rem',
+              color: '#2196F3',
+              cursor: 'pointer',
+              padding: '0.4rem 0.55rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(33,150,243,0.18)'
+              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.5)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(33,150,243,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.25)'
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
+
           {/* ── User Avatar + Sign out ── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.25rem' }}>
+
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -849,6 +899,12 @@ export default function Home() {
         authToken={session.access_token}
       />
 
+      {/* ── Pigeon AI Chat Modal ─────────────────────── */}
+      <PigeonChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
+
       {/* ── Results History Modal ──────────────────────── */}
       <ResultsHistoryModal
         isOpen={isHistoryOpen}
@@ -981,7 +1037,7 @@ export default function Home() {
       {/* React Native-style Mobile Bottom Tab Bar */}
       <div className="mobile-tab-bar">
         <button 
-          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isHistoryOpen && !isProfileOpen) ? 'active' : ''}`}
+          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isHistoryOpen && !isProfileOpen && !isChatOpen) ? 'active' : ''}`}
           onClick={() => navigateToTab('home')}
           aria-label="Loft Dashboard Home"
         >
@@ -996,27 +1052,34 @@ export default function Home() {
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span>Clock-In</span>
         </button>
+
+        {/* CENTER: AI Chat Button */}
         <button 
-          className={`mobile-tab-btn mobile-tab-btn-camera ${isVerifyPhotoOpen ? 'active' : ''}`}
-          onClick={() => navigateToTab('camera')}
-          aria-label="Verify camera clock-in"
+          className={`mobile-tab-btn mobile-tab-btn-chat ${isChatOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('chat')}
+          aria-label="FlyMetric AI Pigeon Chat"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
-          <span>Camera</span>
+          <div style={{
+            width: '46px', height: '46px',
+            borderRadius: '50%',
+            background: isChatOpen
+              ? 'linear-gradient(135deg, #047857, #065f46)'
+              : 'linear-gradient(135deg, #10b981, #047857)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: isChatOpen
+              ? '0 0 0 3px rgba(16,185,129,0.4), 0 4px 16px rgba(16,185,129,0.4)'
+              : '0 0 0 3px rgba(16,185,129,0.25), 0 4px 12px rgba(16,185,129,0.3)',
+            fontSize: '1.35rem',
+            marginTop: '-18px',
+            border: '3px solid #0d1117',
+            transition: 'all 0.2s ease',
+            flexShrink: 0,
+          }}>
+            🕊️
+          </div>
+          <span style={{ marginTop: '2px' }}>AI Chat</span>
         </button>
+
         <button 
           className={`mobile-tab-btn ${isHistoryOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('history')}

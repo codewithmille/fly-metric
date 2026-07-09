@@ -1110,7 +1110,7 @@ body {
 
   /* Add space at bottom of dashboard for the sticky navigation */
   .dashboard {
-    padding-bottom: 4.8rem !important;
+    padding-bottom: 5.5rem !important;
   }
 
   .mobile-tab-bar {
@@ -1119,7 +1119,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3.8rem;
+    height: 4.4rem;
     background-color: #0d1117;
     border-top: 1px solid var(--border-default);
     align-items: center;
@@ -1127,7 +1127,20 @@ body {
     z-index: 10000;
     padding-bottom: env(safe-area-inset-bottom);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+    overflow: visible;
   }
+
+  /* Center AI Chat elevated button */
+  .mobile-tab-btn-chat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-bottom: 0.3rem !important;
+    min-width: 60px;
+    overflow: visible !important;
+  }
+
 
   .mobile-tab-btn {
     display: flex;
