@@ -508,7 +508,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                   </ul>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                <div className="responsive-grid-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
                   <div>
                     <h4 style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem', letterSpacing: '0.04em' }}>🌾 Feeding</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.3' }}>{daysInfo[activeDay].feeding}</p>
@@ -606,7 +606,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               
               {/* Distance selectors */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr', gap: '0.5rem' }}>
+              <div className="responsive-btn-group">
                 <button
                   type="button"
                   onClick={() => setActiveDistance('short')}
@@ -712,24 +712,26 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 {/* Table Breakdown */}
                 <div>
                   <h4 style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.4rem', letterSpacing: '0.04em' }}>Suggested Ratio Mixture</h4>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-default)', color: 'var(--text-muted)' }}>
-                        <th style={{ padding: '0.4rem 0.25rem' }}>Grain Group</th>
-                        <th style={{ padding: '0.4rem 0.25rem' }}>Ratio</th>
-                        <th style={{ padding: '0.4rem 0.25rem' }}>Biological Purpose</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {feedingBreakdown[activeDistance].feedBreakdownTable.map((row, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td style={{ padding: '0.5rem 0.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{row.item}</td>
-                          <td style={{ padding: '0.5rem 0.25rem', color: '#10b981', fontWeight: 800 }}>{row.ratio}</td>
-                          <td style={{ padding: '0.5rem 0.25rem', color: 'var(--text-secondary)' }}>{row.role}</td>
+                  <div className="responsive-table-container">
+                    <table style={{ width: '100%', minWidth: '400px', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-default)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '0.4rem 0.25rem' }}>Grain Group</th>
+                          <th style={{ padding: '0.4rem 0.25rem' }}>Ratio</th>
+                          <th style={{ padding: '0.4rem 0.25rem' }}>Biological Purpose</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {feedingBreakdown[activeDistance].feedBreakdownTable.map((row, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                            <td style={{ padding: '0.5rem 0.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{row.item}</td>
+                            <td style={{ padding: '0.5rem 0.25rem', color: '#10b981', fontWeight: 800 }}>{row.ratio}</td>
+                            <td style={{ padding: '0.5rem 0.25rem', color: 'var(--text-secondary)' }}>{row.role}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Guidelines */}
@@ -822,7 +824,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
           {activeTab === 'supplements' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+              <div className="responsive-grid-2">
                 {supplementsList.map((sup, index) => (
                   <div
                     key={index}

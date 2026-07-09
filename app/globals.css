@@ -1412,5 +1412,39 @@ body {
   background: rgba(16, 185, 129, 0.6);
 }
 
+/* Responsive grid (2 columns on desktop, 1 on mobile) */
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 580px) {
+  .responsive-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Responsive grid (2 buttons row on desktop, stacked on mobile) */
+.responsive-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .responsive-btn-group {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Responsive table wrapper */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+
 
 
