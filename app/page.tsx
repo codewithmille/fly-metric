@@ -10,6 +10,7 @@ import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import ResultsHistoryModal from '@/components/ResultsHistoryModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
+import TrainingProgramModal from '@/components/TrainingProgramModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -60,6 +61,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
   const [modalIsClockInOnly, setModalIsClockInOnly] = useState(false)
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
+  const [isTrainingOpen, setIsTrainingOpen] = useState(false)
 
   const refreshSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -309,6 +311,29 @@ export default function Home() {
             }}
           >
             <BirdIcon size={16} /> <span className="nav-btn-text">Loft Registry</span>
+          </button>
+          <button
+            id="training-prog-nav"
+            className="nav-btn nav-btn-secondary"
+            onClick={() => setIsTrainingOpen(true)}
+            aria-label="Training Program"
+            style={{
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#10b981',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.88rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <TrainingIcon size={16} /> <span className="nav-btn-text">Training Program</span>
           </button>
           <button
             id="speed-calc-nav"
@@ -566,6 +591,7 @@ export default function Home() {
                   📅 Calendar
                 </button>
               </div>
+
 
               <button
                 onClick={() => {
@@ -834,6 +860,12 @@ export default function Home() {
       <SpeedCalculatorModal
         isOpen={isCalculatorOpen}
         onClose={() => setIsCalculatorOpen(false)}
+      />
+
+      {/* ── Training Program Modal ──────────────────────── */}
+      <TrainingProgramModal
+        isOpen={isTrainingOpen}
+        onClose={() => setIsTrainingOpen(false)}
       />
 
       {/* ── Day Selection Modal ──────────────────────── */}
