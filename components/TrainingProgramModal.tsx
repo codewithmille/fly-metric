@@ -223,7 +223,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
     <div 
       className="modal-backdrop modal-floating" 
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      style={{ zIndex: 11000 }}
+      style={{ zIndex: 9000 }}
     >
       <div
         className="modal-container"

@@ -74,7 +74,7 @@ export default function SpeedCalculatorModal({ isOpen, onClose }: SpeedCalculato
     <div 
       className="modal-backdrop modal-floating" 
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      style={{ zIndex: 11500 }} // high z-index overlay
+      style={{ zIndex: 9000 }} // overlay below mobile bottom tab bar (10000)
     >
       <div
         className="modal-container"
