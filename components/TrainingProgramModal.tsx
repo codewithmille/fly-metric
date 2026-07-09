@@ -8,11 +8,130 @@ interface TrainingProgramModalProps {
 }
 
 type TabType = 'schedule' | 'progression' | 'feeding' | 'recovery' | 'supplements'
-type DayType = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri'
+type DayType = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
 type DistanceType = 'short' | 'medium'
+
+interface WeeklyStep {
+  title: string
+  subtitle: string
+  icon: string
+  focus: string
+  schedule: string[]
+  feeding: string
+  supplements: string
+}
+
+const weeklySteps: WeeklyStep[] = [
+  {
+    title: 'Race Return / Rest',
+    subtitle: 'Day of Return',
+    icon: '🏁',
+    focus: 'Rehydration, detoxification, and physical rest.',
+    schedule: [
+      '08:00 AM – 12:00 PM (Race Return): Pag-uwi ng mga ibon, bigyan agad ng lukewarm water na may Electrolytes + Glucose o Honey para mabilis ma-restore ang energy at maiwasan ang dehydration.',
+      '12:00 PM – 02:00 PM (Digestive Check): Pakanin ng 100% light depurative (diet) seed mix. Huwag bigyan ng mabigat na grains dahil stress pa ang digestive tract.',
+      '02:00 PM (Rest Phase): Diliman ang loft at panatilihing tahimik para makapagpahinga ng maayos ang mga ibon nang walang istorbo.',
+      '04:30 PM (Evening Feed): Bigyan ng kaunting depurative feed (half serving).',
+      '06:00 PM (Health Check & Drops): Patakan ang mga mata at ilong ng disinfectant drops. Suriin ang bawat ibon kung may sugat o pinsala sa pakpak/paa.'
+    ],
+    feeding: '100% Depurative (diet seeds) - easy to digest, low protein, moderate carbohydrate.',
+    supplements: 'Electrolytes + Glucose in drinking water immediately. Probiotics in the evening feed.'
+  },
+  {
+    title: 'Recovery & Bath',
+    subtitle: 'Day 1 after return',
+    icon: '🛁',
+    focus: 'Gut recovery, bathing, and mental relaxation.',
+    schedule: [
+      '06:00 AM – 07:00 AM (Morning Free Fly): Buksan ang loft para sa 30 minutong boluntaryong lipad (voluntary flying). Huwag pilitin o flag-in ang mga ibon.',
+      '07:30 AM (Bathing Routine): Maglagay ng paliguan (bath tub) sa loft garden na may warm water at bath salts (nakakatulong mag-relax ng dibdib at maglinis ng balahibo).',
+      '08:30 AM (Morning Feed): Pakanin ng 50% depurative mix + 50% sport/breed mix na binasa sa lemon juice o probiotics.',
+      '11:00 AM (Loft Hygiene): Alisin ang bathtub. Linisin, ikaskasan, at disimpektahin ang buong loft (loft scraping & spraying).',
+      '04:30 PM (Evening Feed): Regular na feeding ng 50/50 mix. Dagdagan ng mineral grit at clay block sa grit tray.'
+    ],
+    feeding: '50% Depurative mix + 50% Sport/Breed mix.',
+    supplements: 'Probiotics + Liver Support (e.g. Sedochol or herbal extracts) in water.'
+  },
+  {
+    title: 'Muscle Rebuilding',
+    subtitle: 'Day 2 after return',
+    icon: '💪',
+    focus: 'Protein intake to repair muscle fibers and tissue.',
+    schedule: [
+      '05:30 AM – 06:15 AM (Morning forced training): Palipadin ang mga ibon gamit ang flag ng 45 minutes para ma-stretch at gumaling ang muscle fibers.',
+      '07:00 AM (Morning Feed): Bigyan ng 70% Sport mix + 30% Protein-rich seeds (peas, vetches, horse beans) para sa muscle tissue repair.',
+      '08:30 AM (Loft Separation): Paghiwalayin muli ang mga barako (cocks) at babae (hens) kung gumagamit ng widowhood system.',
+      '04:00 PM – 04:45 PM (Afternoon Flight): Ikalawang forced fly session ng 45 minutes para sa stamina build-up.',
+      '05:30 PM (Evening Feed): Sundan ng protein-rich feed. Maglagay ng sariwang mineral grit.'
+    ],
+    feeding: '70% Sport mix + 30% Protein-rich seeds (Maple peas, dun peas, vetches, horse beans).',
+    supplements: 'Amino acids + Vitamin B12 in water to facilitate protein synthesis.'
+  },
+  {
+    title: 'Stamina Conditioning',
+    subtitle: 'Day 3 after return',
+    icon: '⚡',
+    focus: 'Building aerobic capacity and metabolic conditioning.',
+    schedule: [
+      '05:30 AM – 06:30 AM (Forced Loft Fly): Taasan ang pagpapalipad hanggang 60 minutes gamit ang flag o sipol. Obserbahan ang pag-flock ng mga ibon.',
+      '07:00 AM (Morning Feed): Bigyan ng 100% Sport mix (walang depurative). Water with Apple Cider Vinegar para mapanatili ang tamang pH sa bituka.',
+      '09:00 AM (Loft Sanitation): Scrape ang dumi at palitan ang inuman ng malinis na tubig.',
+      '04:00 PM – 05:00 PM (Afternoon Flight): Palipadin muli ng 45–60 minutes. Suriin kung may nahuhuling ibon.',
+      '05:30 PM (Evening Feed): Bigyan ng 100% Sport mix hanggang mabusog.'
+    ],
+    feeding: '100% Sport mix (rich in quality maize, wheat, and clean peas).',
+    supplements: 'Apple Cider Vinegar (5ml per Litre) in water to maintain gut acidity and deter pathogens.'
+  },
+  {
+    title: 'Power & Road Work',
+    subtitle: 'Day 4 after return',
+    icon: '🚀',
+    focus: 'Stamina building and orientation training.',
+    schedule: [
+      '04:30 AM (Basketing for Toss): I-basket ang mga ibon nang madaling araw para sa road training toss.',
+      '06:00 AM (Release Time): Bitawan ang mga ibon sa 30–50 km toss site sa malinaw na sikat ng araw at walang malakas na hamog.',
+      '07:15 AM (Arrival Home): Pagdating ng mga ibon sa loft, patakbuhin sa electronic clock at painumin ng tubig na may Vitamin B12 + Liquid Iron.',
+      '08:00 AM (Morning Feed): Pakanin ng 90% Sport mix + 10% Energy seeds (safflower, hemp, sunflower kernels).',
+      '04:30 PM (Evening Feed): Bigyan ng Sport at Energy seeds hanggang sa mabusog. I-check ang crop kung matigas o lumambot na.'
+    ],
+    feeding: '90% Sport mix + 10% Energy seeds (Safflower, hemp, canola, sunflower kernels).',
+    supplements: 'Vitamin B12 + Liquid Iron in water to boost red blood cell and oxygen capacity.'
+  },
+  {
+    title: 'Carbohydrate Loading',
+    subtitle: 'Day 5 after return',
+    icon: '🔋',
+    focus: 'Filling glycogen stores in muscles and liver.',
+    schedule: [
+      '06:00 AM – 06:30 AM (Voluntary Loft Fly): Hayaang lumipad nang malaya (free fly) ang mga ibon nang 30 minutes lamang. Huwag nang pilitin o i-flag.',
+      '07:30 AM (Morning Feed): Pakanin ng 70% Sport mix + 30% High-fat energy seeds (peanuts, hemp seed, safflower) para magkarga ng taba/lipids.',
+      '02:00 PM (Basket Prep): Linisin ang transport baskets, lagyan ng tuyong karton o wood shavings para sumipsip ng basa sa biyahe.',
+      '04:30 PM (Motivation Phase): Ipakita saglit ang mga babae/lalaki (widowhood partner) sa loob ng 5-10 minutes para ganahan sila umuwi.',
+      '05:15 PM (Heavy Evening Feed): Pakanin ng marami. Iwanan ang feed tray hanggang sa iwanan na nila ang pulang mais o mani.'
+    ],
+    feeding: '70% Sport mix + 30% High-fat energy seeds (peanuts, hemp seed, safflower, toasted soy).',
+    supplements: 'Vitamin E + Selenium (muscle protection) + Electrolytes in water.'
+  },
+  {
+    title: 'Basketing / Calmness',
+    subtitle: 'Day 6 after return (Basketing)',
+    icon: '📦',
+    focus: 'Maintaining energy, hydration, and a calm nervous system.',
+    schedule: [
+      '06:00 AM – 06:20 AM (Stretch Fly): 20 minutong napaka-gaan at malayang lipad para lang ma-stretch ang mga pakpak.',
+      '07:00 AM (Morning Feed): Magaan na almusal: purong mais at polished paddy rice (diet/easy carb conversion) para magaan ang crop sa basketing.',
+      '12:00 PM (Fast Start): Alisin ang lahat ng tirang pagkain. Iwanan lang ang malinis at purong tubig sa loft.',
+      '04:00 PM (Final Inspection): Suriin ang mga mata, tuka (dapat walang uhog), at balahibo ng bawat ibon bago ilagay sa basket.',
+      '05:30 PM (Basketing Time): Dahan-dahang ilagay ang mga ibon sa basketing crates. Ibiyahe patungo sa club house/basketing station nang hindi nayayanig.'
+    ],
+    feeding: 'Light carbohydrates (pure maize and polished paddy rice). Do not overfeed.',
+    supplements: 'Pure, fresh water (untreated) to ensure maximum water intake before transport.'
+  }
+]
 
 export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgramModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('schedule')
+  const [returnDay, setReturnDay] = useState<DayType>('sat')
   const [activeDay, setActiveDay] = useState<DayType>('sat')
   const [activeDistance, setActiveDistance] = useState<DistanceType>('short')
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({})
@@ -37,113 +156,46 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
     }))
   }
 
-  const daysInfo: Record<DayType, { title: string; subtitle: string; icon: string; focus: string; schedule: string[]; feeding: string; supplements: string }> = {
-    sat: {
-      title: 'Saturday',
-      subtitle: 'Race Return / Rest',
-      icon: '🏁',
-      focus: 'Rehydration, detoxification, and physical rest.',
-      schedule: [
-        '08:00 AM – 12:00 PM (Race Return): Pag-uwi ng mga ibon, bigyan agad ng lukewarm water na may Electrolytes + Glucose o Honey para mabilis ma-restore ang energy at maiwasan ang dehydration.',
-        '12:00 PM – 02:00 PM (Digestive Check): Pakanin ng 100% light depurative (diet) seed mix. Huwag bigyan ng mabigat na grains dahil stress pa ang digestive tract.',
-        '02:00 PM (Rest Phase): Diliman ang loft at panatilihing tahimik para makapagpahinga ng maayos ang mga ibon nang walang istorbo.',
-        '04:30 PM (Evening Feed): Bigyan ng kaunting depurative feed (half serving).',
-        '06:00 PM (Health Check & Drops): Patakan ang mga mata at ilong ng disinfectant drops. Suriin ang bawat ibon kung may sugat o pinsala sa pakpak/paa.'
-      ],
-      feeding: '100% Depurative (diet seeds) - easy to digest, low protein, moderate carbohydrate.',
-      supplements: 'Electrolytes + Glucose in drinking water immediately. Probiotics in the evening feed.'
-    },
-    sun: {
-      title: 'Sunday',
-      subtitle: 'Recovery & Bath',
-      icon: '🛁',
-      focus: 'Gut recovery, bathing, and mental relaxation.',
-      schedule: [
-        '06:00 AM – 07:00 AM (Morning Free Fly): Buksan ang loft para sa 30 minutong boluntaryong lipad (voluntary flying). Huwag pilitin o flag-in ang mga ibon.',
-        '07:30 AM (Bathing Routine): Maglagay ng paliguan (bath tub) sa loft garden na may warm water at bath salts (nakakatulong mag-relax ng dibdib at maglinis ng balahibo).',
-        '08:30 AM (Morning Feed): Pakanin ng 50% depurative mix + 50% sport/breed mix na binasa sa lemon juice o probiotics.',
-        '11:00 AM (Loft Hygiene): Alisin ang bathtub. Linisin, ikaskasan, at disimpektahin ang buong loft (loft scraping & spraying).',
-        '04:30 PM (Evening Feed): Regular na feeding ng 50/50 mix. Dagdagan ng mineral grit at clay block sa grit tray.'
-      ],
-      feeding: '50% Depurative mix + 50% Sport/Breed mix.',
-      supplements: 'Probiotics + Liver Support (e.g. Sedochol or herbal extracts) in water.'
-    },
-    mon: {
-      title: 'Monday',
-      subtitle: 'Muscle Rebuilding',
-      icon: '💪',
-      focus: 'Protein intake to repair muscle fibers and tissue.',
-      schedule: [
-        '05:30 AM – 06:15 AM (Morning forced training): Palipadin ang mga ibon gamit ang flag ng 45 minutes para ma-stretch at gumaling ang muscle fibers.',
-        '07:00 AM (Morning Feed): Bigyan ng 70% Sport mix + 30% Protein-rich seeds (peas, vetches, horse beans) para sa muscle tissue repair.',
-        '08:30 AM (Loft Separation): Paghiwalayin muli ang mga barako (cocks) at babae (hens) kung gumagamit ng widowhood system.',
-        '04:00 PM – 04:45 PM (Afternoon Flight): Ikalawang forced fly session ng 45 minutes para sa stamina build-up.',
-        '05:30 PM (Evening Feed): Sundan ng protein-rich feed. Maglagay ng sariwang mineral grit.'
-      ],
-      feeding: '70% Sport mix + 30% Protein-rich seeds (Maple peas, dun peas, vetches, horse beans).',
-      supplements: 'Amino acids + Vitamin B12 in water to facilitate protein synthesis.'
-    },
-    tue: {
-      title: 'Tuesday',
-      subtitle: 'Stamina Conditioning',
-      icon: '⚡',
-      focus: 'Building aerobic capacity and metabolic conditioning.',
-      schedule: [
-        '05:30 AM – 06:30 AM (Forced Loft Fly): Taasan ang pagpapalipad hanggang 60 minutes gamit ang flag o sipol. Obserbahan ang pag-flock ng mga ibon.',
-        '07:00 AM (Morning Feed): Bigyan ng 100% Sport mix (walang depurative). Water with Apple Cider Vinegar para mapanatili ang tamang pH sa bituka.',
-        '09:00 AM (Loft Sanitation): Scrape ang dumi at palitan ang inuman ng malinis na tubig.',
-        '04:00 PM – 05:00 PM (Afternoon Flight): Palipadin muli ng 45–60 minutes. Suriin kung may nahuhuling ibon.',
-        '05:30 PM (Evening Feed): Bigyan ng 100% Sport mix hanggang mabusog.'
-      ],
-      feeding: '100% Sport mix (rich in quality maize, wheat, and clean peas).',
-      supplements: 'Apple Cider Vinegar (5ml per Litre) in water to maintain gut acidity and deter pathogens.'
-    },
-    wed: {
-      title: 'Wednesday',
-      subtitle: 'Power & Road Work',
-      icon: '🚀',
-      focus: 'Stamina building and orientation training.',
-      schedule: [
-        '04:30 AM (Basketing for Toss): I-basket ang mga ibon nang madaling araw para sa road training toss.',
-        '06:00 AM (Release Time): Bitawan ang mga ibon sa 30–50 km toss site sa malinaw na sikat ng araw at walang malakas na hamog.',
-        '07:15 AM (Arrival Home): Pagdating ng mga ibon sa loft, patakbuhin sa electronic clock at painumin ng tubig na may Vitamin B12 + Liquid Iron.',
-        '08:00 AM (Morning Feed): Pakanin ng 90% Sport mix + 10% Energy seeds (safflower, hemp, sunflower kernels).',
-        '04:30 PM (Evening Feed): Bigyan ng Sport at Energy seeds hanggang sa mabusog. I-check ang crop kung matigas o lumambot na.'
-      ],
-      feeding: '90% Sport mix + 10% Energy seeds (Safflower, hemp, canola, sunflower kernels).',
-      supplements: 'Vitamin B12 + Liquid Iron in water to boost red blood cell and oxygen capacity.'
-    },
-    thu: {
-      title: 'Thursday',
-      subtitle: 'Carbohydrate Loading',
-      icon: '🔋',
-      focus: 'Filling glycogen stores in muscles and liver.',
-      schedule: [
-        '06:00 AM – 06:30 AM (Voluntary Loft Fly): Hayaang lumipad nang malaya (free fly) ang mga ibon nang 30 minutes lamang. Huwag nang pilitin o i-flag.',
-        '07:30 AM (Morning Feed): Pakanin ng 70% Sport mix + 30% High-fat energy seeds (peanuts, hemp seed, safflower) para magkarga ng taba/lipids.',
-        '02:00 PM (Basket Prep): Linisin ang transport baskets, lagyan ng tuyong karton o wood shavings para sumipsip ng basa sa biyahe.',
-        '04:30 PM (Motivation Phase): Ipakita saglit ang mga babae/lalaki (widowhood partner) sa loob ng 5-10 minutes para ganahan sila umuwi.',
-        '05:15 PM (Heavy Evening Feed): Pakanin ng marami. Iwanan ang feed tray hanggang sa iwanan na nila ang pulang mais o mani.'
-      ],
-      feeding: '70% Sport mix + 30% High-fat energy seeds (peanuts, hemp seed, safflower, toasted soy).',
-      supplements: 'Vitamin E + Selenium (muscle protection) + Electrolytes in water.'
-    },
-    fri: {
-      title: 'Friday',
-      subtitle: 'Basketing / Calmness',
-      icon: '📦',
-      focus: 'Maintaining energy, hydration, and a calm nervous system.',
-      schedule: [
-        '06:00 AM – 06:20 AM (Stretch Fly): 20 minutong napaka-gaan at malayang lipad para lang ma-stretch ang mga pakpak.',
-        '07:00 AM (Morning Feed): Magaan na almusal: purong mais at polished paddy rice (diet/easy carb conversion) para magaan ang crop sa basketing.',
-        '12:00 PM (Fast Start): Alisin ang lahat ng tirang pagkain. Iwanan lang ang malinis at purong tubig sa loft.',
-        '04:00 PM (Final Inspection): Suriin ang mga mata, tuka (dapat walang uhog), at balahibo ng bawat ibon bago ilagay sa basket.',
-        '05:30 PM (Basketing Time): Dahan-dahang ilagay ang mga ibon sa basketing crates. Ibiyahe patungo sa club house/basketing station nang hindi nayayanig.'
-      ],
-      feeding: 'Light carbohydrates (pure maize and polished paddy rice). Do not overfeed.',
-      supplements: 'Pure, fresh water (untreated) to ensure maximum water intake before transport.'
-    }
+  const DAYS_ORDER: DayType[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+  const returnDayIndex = DAYS_ORDER.indexOf(returnDay)
+  
+  // Reorder days starting from returnDay
+  const getOrderedDays = (): DayType[] => {
+    const startIndex = DAYS_ORDER.indexOf(returnDay)
+    return [
+      ...DAYS_ORDER.slice(startIndex),
+      ...DAYS_ORDER.slice(0, startIndex)
+    ]
   }
+
+  // Create daysInfo dynamically based on selected returnDay!
+  const daysInfo: Record<DayType, { title: string; subtitle: string; icon: string; focus: string; schedule: string[]; feeding: string; supplements: string }> = {} as any
+  
+  DAYS_ORDER.forEach((day) => {
+    const dayIndex = DAYS_ORDER.indexOf(day)
+    const stepIndex = (dayIndex - returnDayIndex + 7) % 7
+    const step = weeklySteps[stepIndex]
+    
+    const dayNames: Record<DayType, string> = {
+      sun: 'Sunday',
+      mon: 'Monday',
+      tue: 'Tuesday',
+      wed: 'Wednesday',
+      thu: 'Thursday',
+      fri: 'Friday',
+      sat: 'Saturday'
+    }
+    
+    daysInfo[day] = {
+      title: dayNames[day],
+      subtitle: step.title,
+      icon: step.icon,
+      focus: step.focus,
+      schedule: step.schedule,
+      feeding: step.feeding,
+      supplements: step.supplements
+    }
+  })
 
   const feedingBreakdown: Record<DistanceType, { title: string; range: string; fatStart: string; carboPercent: number; fatPercent: number; proteinPercent: number; depurativePercent: number; guidelines: string[]; feedBreakdownTable: { item: string; ratio: string; role: string }[] }> = {
     short: {
@@ -299,6 +351,51 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
           {/* TAB 1: WEEKLY CONDITIONING SCHEDULE */}
           {activeTab === 'schedule' && (
             <div>
+              {/* Return Day Selector */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '1rem',
+                padding: '0.65rem 0.88rem',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid var(--border-default)',
+                borderRadius: '0.625rem',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  📅 Race Return Day (Araw ng Uwi):
+                </span>
+                <select
+                  aria-label="Race Return Day"
+                  value={returnDay}
+                  onChange={(e) => {
+                    const newDay = e.target.value as DayType
+                    setReturnDay(newDay)
+                    setActiveDay(newDay) // auto select the new return day
+                  }}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-default)',
+                    padding: '0.35rem 0.6rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="sun">Sunday (Linggo)</option>
+                  <option value="mon">Monday (Lunes)</option>
+                  <option value="tue">Tuesday (Martes)</option>
+                  <option value="wed">Wednesday (Miyerkules)</option>
+                  <option value="thu">Thursday (Huwebes)</option>
+                  <option value="fri">Friday (Biyernes)</option>
+                  <option value="sat">Saturday (Sabado)</option>
+                </select>
+              </div>
+
               {/* Day selection badges */}
               <div 
                 className="small-scrollbar"
@@ -314,7 +411,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                   width: '100%'
                 }}
               >
-                {(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'] as DayType[]).map((day) => (
+                {getOrderedDays().map((day) => (
                   <button
                     key={day}
                     onClick={() => setActiveDay(day)}
