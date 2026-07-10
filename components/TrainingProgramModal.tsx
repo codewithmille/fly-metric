@@ -7,7 +7,7 @@ interface TrainingProgramModalProps {
   onClose: () => void
 }
 
-type TabType = 'schedule' | 'progression' | 'feeding' | 'recovery' | 'supplements'
+type TabType = 'schedule' | 'progression' | 'feeding' | 'recovery' | 'supplements' | 'breeder'
 type DayType = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
 type DistanceType = 'short' | 'medium'
 
@@ -316,7 +316,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
             flexShrink: 0
           }}
         >
-          {(['schedule', 'progression', 'feeding', 'recovery', 'supplements'] as TabType[]).map((tab) => (
+          {(['schedule', 'progression', 'feeding', 'recovery', 'supplements', 'breeder'] as TabType[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -341,6 +341,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {tab === 'feeding' && '🌾 Feed Calc'}
               {tab === 'recovery' && '🏥 Recovery'}
               {tab === 'supplements' && '🧪 Supplements'}
+              {tab === 'breeder' && '🥚 Breeder Guide'}
             </button>
           ))}
         </div>
@@ -865,6 +866,239 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                     </div>
                   </div>
                 ))}
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 6: BREEDER CONDITIONER GUIDE */}
+          {activeTab === 'breeder' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              {/* Intro Banner */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.04))',
+                border: '1px solid rgba(245,158,11,0.2)',
+                borderRadius: '0.75rem',
+                padding: '1rem 1.1rem',
+                display: 'flex', gap: '0.75rem', alignItems: 'flex-start'
+              }}>
+                <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>🥚</span>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Breeder Conditioning Program</div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.55 }}>
+                    A complete guide for conditioning your breeding pairs before, during, and after the breeding season.
+                    Proper nutrition and conditioning directly determines the quality and athleticism of the young birds produced.
+                  </p>
+                </div>
+              </div>
+
+              {/* Philippine Breeding Calendar */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  📆 Philippine Breeding Calendar
+                </h3>
+                <div className="responsive-grid-2" style={{ gap: '0.6rem' }}>
+                  {[
+                    { season: 'Early Breeding Season', months: 'October – December', icon: '🌤️', color: '#f59e0b', tip: 'Condition pairs from September. Best ambient temperature for nesting. Young birds will be fit for February–March races.' },
+                    { season: 'Mid Breeding Season', months: 'January – March', icon: '☀️', color: '#10b981', tip: 'Peak breeding season. High energy feeds needed. Transition young birds to loft training by April.' },
+                    { season: 'Off-Season Breeding', months: 'April – June', icon: '🌧️', color: '#6366f1', tip: 'Rainy season. Limit breeding pairs. Focus on health maintenance. Ventilation is critical to avoid respiratory illness.' },
+                    { season: 'Rest & Moult Period', months: 'July – September', icon: '🍃', color: '#64748b', tip: 'Separate cocks and hens. Support full moult with high-protein feed and Vitamin E. No breeding during moult.' },
+                  ].map((s, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${s.color}33`,
+                      borderRadius: '0.625rem',
+                      padding: '0.75rem 0.88rem',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                        <span style={{ fontSize: '1rem' }}>{s.icon}</span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: s.color }}>{s.season}</span>
+                      </div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{s.months}</div>
+                      <p style={{ fontSize: '0.71rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{s.tip}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4-Week Pre-Breeding Conditioning */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  💪 Pre-Breeding Conditioning — 4 Weeks Before Pairing
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {[
+                    { week: 'Week 1 — Detox & Parasite Clear', icon: '🧹', tasks: ['Treat for Canker (Metronidazole 3 days)', 'Treat for Coccidiosis if needed', 'ACV (Apple Cider Vinegar) in water daily — 10ml/L', 'Depurative diet: barley + wheat only', 'Separate cocks and hens'] },
+                    { week: 'Week 2 — Health Build', icon: '🏗️', tasks: ['Probiotics in feed (5g/kg) for 5 days', 'Vitamin B-complex in water', 'Transition to sport mix: 60% barley, 40% maize', 'Grit and mineral free access', 'Check for respiratory symptoms'] },
+                    { week: 'Week 3 — Conditioning', icon: '⚡', tasks: ['High-protein breeding mix: maize 35%, peas 20%, wheat 20%, safflower 15%, hemp 10%', 'Vitamin E + Selenium supplement (3 days)', 'Allow supervised exercise — loft flying 2× daily', 'Canary seed added for hens (calcium)', 'Inspect nest boxes — clean and disinfect'] },
+                    { week: 'Week 4 — Pair-Ready', icon: '💑', tasks: ['Feed breeding mix ad libitum (free access)', 'Iron + B12 in water (Wednesday)', 'Allow pairs to meet through cage divider', 'Select pairs based on pedigree and performance records', 'Begin pairing on Day 28 or when hens show egg-laying posture'] },
+                  ].map((w, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '0.625rem',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        background: 'rgba(245,158,11,0.06)',
+                        borderBottom: '1px solid var(--border-default)',
+                        padding: '0.5rem 0.88rem',
+                        display: 'flex', alignItems: 'center', gap: '0.4rem'
+                      }}>
+                        <span style={{ fontSize: '1rem' }}>{w.icon}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b' }}>{w.week}</span>
+                      </div>
+                      <ul style={{ margin: 0, padding: '0.6rem 0.88rem 0.6rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        {w.tasks.map((t, j) => (
+                          <li key={j} style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Breeding Season Feed Composition Table */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  🌾 Breeding Season Feed Composition
+                </h3>
+                <div style={{ border: '1px solid var(--border-default)', borderRadius: '0.625rem', overflow: 'hidden' }}>
+                  <div className="responsive-table-container">
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(245,158,11,0.07)', borderBottom: '1px solid var(--border-default)' }}>
+                          <th style={{ textAlign: 'left', padding: '0.6rem 0.88rem', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.04em' }}>Grain</th>
+                          <th style={{ textAlign: 'center', padding: '0.6rem 0.88rem', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.04em' }}>Egg Stage</th>
+                          <th style={{ textAlign: 'center', padding: '0.6rem 0.88rem', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.04em' }}>Squab Feeding</th>
+                          <th style={{ textAlign: 'left', padding: '0.6rem 0.88rem', fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.04em' }}>Purpose</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { grain: '🌽 Maize (Mais)', egg: '30%', squab: '35%', purpose: 'Primary energy source for sitting pairs and crop milk production' },
+                          { grain: '🫘 Peas (Gisantes)', egg: '25%', squab: '30%', purpose: 'High protein for squab growth and cock stamina during feeding' },
+                          { grain: '🌾 Wheat (Trigo)', egg: '20%', squab: '15%', purpose: 'B-vitamins and carbohydrate for sustained energy' },
+                          { grain: '🌻 Safflower', egg: '12%', squab: '10%', purpose: 'High fat for crop milk fat content; immune function' },
+                          { grain: '🌿 Hemp Seed', egg: '8%', squab: '7%', purpose: 'Omega-3 fatty acids, hormone balance, feather quality' },
+                          { grain: '🟡 Canary Seed', egg: '5%', squab: '3%', purpose: 'Calcium-rich; essential for shell hardening and bone density of squabs' },
+                        ].map((row, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--border-default)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                            <td style={{ padding: '0.55rem 0.88rem', fontSize: '0.72rem', color: 'var(--text-primary)', fontWeight: 600 }}>{row.grain}</td>
+                            <td style={{ padding: '0.55rem 0.88rem', fontSize: '0.72rem', color: '#10b981', fontWeight: 700, textAlign: 'center' }}>{row.egg}</td>
+                            <td style={{ padding: '0.55rem 0.88rem', fontSize: '0.72rem', color: '#f59e0b', fontWeight: 700, textAlign: 'center' }}>{row.squab}</td>
+                            <td style={{ padding: '0.55rem 0.88rem', fontSize: '0.71rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>{row.purpose}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nest Box & Egg Management */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  🪺 Nest Box & Egg Management
+                </h3>
+                <div className="responsive-grid-2" style={{ gap: '0.6rem' }}>
+                  {[
+                    { title: 'Egg Laying', icon: '🥚', timeline: 'Days 1–2 after mating', notes: ['First egg laid ~10 days after pairing', 'Second egg follows 40–44 hours later', 'Do not disturb nest for first 5 days', 'Mark eggs with pencil to track fertility'] },
+                    { title: 'Incubation', icon: '♨️', timeline: 'Days 1–17', notes: ['Both parents sit in shifts (cock: morning, hen: afternoon/night)', 'Normal incubation: 17–19 days', 'Candle eggs on Day 7–9 to check fertility', 'Infertile (clear) eggs — remove on Day 9'] },
+                    { title: 'Hatching & Squab', icon: '🐣', timeline: 'Days 17–28', notes: ['Squabs hatch on Day 17–19', 'Fed crop milk by both parents for first 5 days', 'Add extra protein feed after Day 5', 'Squabs fledge (leave nest) at Day 28–35'] },
+                    { title: 'Weaning', icon: '🕊️', timeline: 'Days 28–35', notes: ['Separate squabs from parents at 28–30 days', 'Place in young bird loft with water and grit access', 'Begin loft training at 6–8 weeks', 'Re-pair parents for 2nd round or rest'] },
+                  ].map((stage, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '0.625rem',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        padding: '0.5rem 0.88rem',
+                        background: 'rgba(99,102,241,0.07)',
+                        borderBottom: '1px solid var(--border-default)',
+                        display: 'flex', alignItems: 'center', gap: '0.4rem'
+                      }}>
+                        <span style={{ fontSize: '1rem' }}>{stage.icon}</span>
+                        <div>
+                          <div style={{ fontSize: '0.73rem', fontWeight: 800, color: '#818cf8' }}>{stage.title}</div>
+                          <div style={{ fontSize: '0.63rem', color: 'var(--text-muted)' }}>{stage.timeline}</div>
+                        </div>
+                      </div>
+                      <ul style={{ margin: 0, padding: '0.6rem 0.88rem 0.6rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        {stage.notes.map((n, j) => (
+                          <li key={j} style={{ fontSize: '0.71rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Breeder Supplement Schedule */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  🧪 Breeder Supplement Schedule
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {[
+                    { sup: 'Vitamin E + Selenium', when: '2× weekly (Mon & Thu)', why: 'Improves fertility in cocks, egg quality in hens. Critical for embryo development.' },
+                    { sup: 'B12 + Iron', when: 'Wednesday in water', why: 'Supports blood production in breeding hens and growing squabs.' },
+                    { sup: 'Calcium + Vitamin D3', when: 'Daily for laying hens', why: 'Prevents soft-shelled eggs and egg binding. Always provide limestone grit freely.' },
+                    { sup: 'Probiotics', when: 'Monday & Friday in feed', why: 'Prevents Canker spread through crop milk to squabs. Maintains gut health in breeding pairs.' },
+                    { sup: 'Amino Acids (Lysine/Methionine)', when: 'Tuesday in water', why: 'Critical for feather and muscle development of growing squabs.' },
+                    { sup: 'ACV (Apple Cider Vinegar)', when: 'Daily — 10ml per litre', why: 'Acidifies drinking water. Prevents bacterial and fungal overgrowth in nest cups and crop.' },
+                    { sup: 'Liver Support (Sorbitol)', when: 'Sunday only', why: 'Detoxifies parents after high-demand squab feeding period.' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: 'flex', gap: '0.75rem',
+                      padding: '0.65rem 0.88rem',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '0.5rem',
+                      alignItems: 'flex-start'
+                    }}>
+                      <div style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', marginTop: '5px' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.2rem' }}>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-primary)' }}>{item.sup}</span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '0.1rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>{item.when}</span>
+                        </div>
+                        <p style={{ fontSize: '0.71rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{item.why}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Common Problems & Solutions */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  ⚠️ Common Breeder Problems & Solutions
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {[
+                    { problem: 'Infertile Eggs (Clear Eggs)', cause: 'Poor cock condition, Vitamin E deficiency, or incompatible pair', solution: 'Supplement Vitamin E + Selenium for 2 weeks. Try re-pairing. Ensure cock is at peak body weight.' },
+                    { problem: 'Egg Binding', cause: 'Calcium deficiency in hen', solution: 'URGENT: Warm the hen in a humid box. Give Calcium + D3 immediately. Provide constant grit access.' },
+                    { problem: 'Squab Death (Day 1–3)', cause: 'Canker (Trichomoniasis) in crop milk, or parents abandoning nest', solution: 'Treat parents with Metronidazole before breeding. Use foster parents if needed.' },
+                    { problem: 'Hen Abandoning Eggs', cause: 'Stress, loft disturbance, or hen in poor condition', solution: 'Minimize traffic near breeding loft. Ensure hen is at optimal weight before pairing.' },
+                    { problem: 'Slow Squab Growth', cause: 'Low-protein feed or parents underfeeding', solution: 'Increase peas to 30% of mix. Add egg food supplement. Check for Canker in parents.' },
+                    { problem: 'Cock Fighting Other Pairs', cause: 'Overcrowding or territorial behavior', solution: 'Ensure each pair has its own enclosed nest box. Minimum 1 box per pair plus 20% spare.' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(239,68,68,0.03)',
+                      border: '1px solid rgba(239,68,68,0.15)',
+                      borderRadius: '0.5rem',
+                      padding: '0.65rem 0.88rem',
+                    }}>
+                      <div style={{ fontSize: '0.73rem', fontWeight: 800, color: '#f87171', marginBottom: '0.2rem' }}>⚠️ {item.problem}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}><strong>Cause:</strong> {item.cause}</div>
+                      <div style={{ fontSize: '0.71rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}><strong style={{ color: '#10b981' }}>Solution:</strong> {item.solution}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
             </div>
