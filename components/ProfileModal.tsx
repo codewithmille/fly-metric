@@ -14,6 +14,12 @@ interface LoftBird {
   color: string
   name: string | null
   gender: string | null
+  birthdate?: string | null
+  strain?: string | null
+  status?: string | null
+  notes?: string | null
+  sire?: string | null
+  dam?: string | null
   createdAt?: string
 }
 
@@ -32,6 +38,7 @@ interface ProfileModalProps {
   onBirdsUpdated: () => void
   events: RaceEvent[]
   onAddEventTrigger?: () => void
+  onOpenRegistryTrigger?: () => void
 }
 
 export default function ProfileModal({
@@ -43,6 +50,7 @@ export default function ProfileModal({
   onBirdsUpdated,
   events,
   onAddEventTrigger,
+  onOpenRegistryTrigger,
 }: ProfileModalProps) {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false)
 
@@ -53,11 +61,6 @@ export default function ProfileModal({
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   
-  // Bird Registry Form States
-  const [ringNo, setRingNo] = useState('')
-  const [color, setColor] = useState('')
-  const [name, setName] = useState('')
-  const [gender, setGender] = useState('Unknown')
   const [registrySearch, setRegistrySearch] = useState('')
 
   // Control States
@@ -65,11 +68,7 @@ export default function ProfileModal({
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  const [registrySaving, setRegistrySaving] = useState(false)
-  const [registrySuccess, setRegistrySuccess] = useState(false)
-  const [registryError, setRegistryError] = useState<string | null>(null)
   const [seeding, setSeeding] = useState(false)
-  const [isAddBirdModalOpen, setIsAddBirdModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   const [fetchingGps, setFetchingGps] = useState(false)
@@ -84,7 +83,6 @@ export default function ProfileModal({
   useEffect(() => {
     if (!isOpen) {
       setSelectedHistoryBird(null)
-      setIsAddBirdModalOpen(false)
       setIsSettingsModalOpen(false)
       setIsSettingsMenuOpen(false)
     }
@@ -127,8 +125,6 @@ export default function ProfileModal({
       setLongitude(metadata.loft_longitude?.toString() || '')
       setSuccess(false)
       setError(null)
-      setRegistrySuccess(false)
-      setRegistryError(null)
       modalRef.current?.focus()
     }
     wasOpenRef.current = isOpen
@@ -568,54 +564,6 @@ export default function ProfileModal({
     }
   }
 
-  const handleRegisterBird = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setRegistryError(null)
-    setRegistrySuccess(false)
-
-    if (!ringNo.trim()) {
-      setRegistryError('Ring Number is required.')
-      return
-    }
-
-    if (!color.trim()) {
-      setRegistryError('Color is required (e.g. Blue Bar).')
-      return
-    }
-
-    setRegistrySaving(true)
-
-    try {
-      const res = await saveBird(session?.access_token, {
-        ringNo: ringNo.trim(),
-        color: color.trim(),
-        name: name.trim() || undefined,
-        gender,
-      }, false)
-
-      if (!res.success) {
-        throw new Error('Failed to register bird')
-      }
-
-      setRegistrySuccess(true)
-      setRingNo('')
-      setColor('')
-      setName('')
-      setGender('Unknown')
-      
-      // Reload parent state
-      onBirdsUpdated()
-
-      setTimeout(() => {
-        setRegistrySuccess(false)
-        setIsAddBirdModalOpen(false)
-      }, 1200)
-    } catch (err: any) {
-      setRegistryError(err.message || 'An error occurred while saving bird.')
-    } finally {
-      setRegistrySaving(false)
-    }
-  }
 
   const handleDeleteBird = async (id: string) => {
     if (!confirm('Are you sure you want to remove this bird from your loft registry?')) return
@@ -1141,9 +1089,9 @@ export default function ProfileModal({
                         <button
                           type="button"
                           onClick={() => {
-                            setRegistryError(null)
-                            setRegistrySuccess(false)
-                            setIsAddBirdModalOpen(true)
+                            if (onOpenRegistryTrigger) {
+                              onOpenRegistryTrigger()
+                            }
                           }}
                           style={{
                             display: 'flex',
@@ -1354,11 +1302,14 @@ export default function ProfileModal({
                 </div>
               </button>
 
+
               <button
                 type="button"
                 onClick={() => {
                   setIsSettingsMenuOpen(false)
-                  setIsAddBirdModalOpen(true)
+                  if (onOpenRegistryTrigger) {
+                    onOpenRegistryTrigger()
+                  }
                 }}
                 style={{
                   display: 'flex',
@@ -1378,12 +1329,12 @@ export default function ProfileModal({
                 }}
                 className="menu-item-hover"
               >
-                <span style={{ color: '#4CAF50', fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
-                  <PlusIcon size={18} />
+                <span style={{ color: '#2196F3', fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
+                  <BirdIcon size={18} />
                 </span>
                 <div>
-                  <div style={{ fontWeight: 700 }}>Register New Pigeon</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>Add a new clocked band number to registry</div>
+                  <div style={{ fontWeight: 700 }}>Loft Bird Registry</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>View bird list, detailed profiles, strain & lineage</div>
                 </div>
               </button>
 
@@ -1540,140 +1491,7 @@ export default function ProfileModal({
           </div>
         </div>
       )}
-      {/* Sub-modal for registering a new bird */}
-      {isAddBirdModalOpen && (
-        <div 
-          className="modal-backdrop modal-floating" 
-          style={{ zIndex: 11000 }}
-          onClick={(e) => { if (e.target === e.currentTarget) setIsAddBirdModalOpen(false) }}
-        >
-          <div 
-            className="modal-container" 
-            style={{ maxWidth: '420px', padding: 0 }}
-          >
-            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #4CAF50, #2E7D32)', padding: '0.9rem 1.2rem' }}>
-              <div className="modal-header-left">
-                <span style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
-                  <PlusIcon size={18} />
-                </span>
-                <h2 className="modal-title" style={{ color: '#fff', fontSize: '1rem', fontWeight: 800 }}>
-                  Register New Pigeon
-                </h2>
-              </div>
-              <button 
-                type="button"
-                className="modal-close-btn" 
-                style={{ color: '#fff', background: 'rgba(255,255,255,0.15)' }} 
-                onClick={() => setIsAddBirdModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-body" style={{ padding: '1.2rem' }}>
-              <form onSubmit={handleRegisterBird} style={{ display: 'flex', flexDirection: 'column', gap: '0.88rem' }}>
-                
-                <div className="form-group">
-                  <label htmlFor="modal-reg-ring" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <TagIcon size={12} /> Ring Number
-                  </label>
-                  <input
-                    id="modal-reg-ring"
-                    type="text"
-                    placeholder="e.g. PH-2026-1001"
-                    className="form-input"
-                    value={ringNo}
-                    onChange={(e) => setRingNo(e.target.value)}
-                    required
-                  />
-                </div>
 
-                <div className="form-group">
-                  <label htmlFor="modal-reg-color" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <NotesIcon size={12} /> Color
-                  </label>
-                  <input
-                    id="modal-reg-color"
-                    type="text"
-                    placeholder="e.g. Blue Bar"
-                    className="form-input"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="modal-reg-name" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <NameIcon size={12} /> Name / Alias (Optional)
-                  </label>
-                  <input
-                    id="modal-reg-name"
-                    type="text"
-                    placeholder="e.g. Super Fast"
-                    className="form-input"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="modal-reg-gender" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <DnaIcon size={12} /> Gender
-                  </label>
-                  <select
-                    id="modal-reg-gender"
-                    className="form-input"
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
-                  >
-                    <option value="Cock">Cock (Male)</option>
-                    <option value="Hen">Hen (Female)</option>
-                    <option value="Unknown">Unknown</option>
-                  </select>
-                </div>
-
-                {registryError && <div className="form-error" style={{ fontSize: '0.75rem' }}>{registryError}</div>}
-                
-                {registrySuccess && (
-                  <div style={{
-                    background: 'rgba(63, 185, 80, 0.1)',
-                    border: '1px solid rgba(63, 185, 80, 0.3)',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem',
-                    color: 'var(--color-success)',
-                    textAlign: 'center',
-                    fontSize: '0.78rem',
-                    fontWeight: 600
-                  }}>
-                    Pigeon registered successfully!
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem' }}>
-                  <button
-                    type="button"
-                    className="nav-btn nav-btn-secondary"
-                    onClick={() => setIsAddBirdModalOpen(false)}
-                    style={{ flex: 1, padding: '0.5rem', height: '2.2rem', fontSize: '0.8rem' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={registrySaving}
-                    className="nav-btn nav-btn-primary"
-                    style={{ flex: 1, padding: '0.5rem', height: '2.2rem', background: '#4CAF50', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: '0.8rem' }}
-                  >
-                    {registrySaving ? 'Registering...' : 'Register Pigeon'}
-                  </button>
-                </div>
-
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Sub-modal for editing profile/loft settings */}
       {isSettingsModalOpen && (
         <div 

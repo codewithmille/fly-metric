@@ -38,6 +38,12 @@ model LoftBird {
   color     String
   name      String?
   gender    String?  @default("Unknown")
+  birthdate String?
+  strain    String?
+  status    String?  @default("Active")
+  notes     String?
+  sire      String?
+  dam       String?
   createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([userId, ringNo])

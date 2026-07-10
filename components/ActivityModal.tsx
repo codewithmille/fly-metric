@@ -13,6 +13,12 @@ interface LoftBird {
   color: string
   name: string | null
   gender: string | null
+  birthdate?: string | null
+  strain?: string | null
+  status?: string | null
+  notes?: string | null
+  sire?: string | null
+  dam?: string | null
 }
 
 interface ActivityModalProps {

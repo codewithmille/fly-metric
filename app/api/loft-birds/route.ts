@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { ringNo, color, name, gender } = body
+    const { ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam } = body
 
     if (!ringNo || !color) {
       return NextResponse.json({ error: 'Ring Number and Color are required' }, { status: 400 })
@@ -87,12 +87,74 @@ export async function POST(request: Request) {
         color: color.trim(),
         name: name ? name.trim() : null,
         gender: gender || 'Unknown',
+        birthdate: birthdate ? birthdate.trim() : null,
+        strain: strain ? strain.trim() : null,
+        status: status || 'Active',
+        notes: notes ? notes.trim() : null,
+        sire: sire ? sire.trim() : null,
+        dam: dam ? dam.trim() : null,
       },
     })
 
     return NextResponse.json({ success: true, data })
   } catch (err: any) {
     console.error('Error in POST /api/loft-birds:', err)
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'DATABASE_URL env variable is not configured' }, { status: 500 })
+    }
+
+    const user = await getUserFromRequest(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json()
+    const { id, ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'Bird ID is required for editing' }, { status: 400 })
+    }
+
+    if (!ringNo || !color) {
+      return NextResponse.json({ error: 'Ring Number and Color are required' }, { status: 400 })
+    }
+
+    // Check if ringNo is taken by another bird of this user
+    const existing = await prisma.loftBird.findFirst({
+      where: {
+        userId: user.userId,
+        ringNo: ringNo.trim().toUpperCase(),
+        NOT: { id }
+      }
+    })
+
+    if (existing) {
+      return NextResponse.json({ error: `Another bird with Ring No. "${ringNo.trim().toUpperCase()}" is already registered.` }, { status: 400 })
+    }
+
+    const data = await prisma.loftBird.update({
+      where: { id, userId: user.userId },
+      data: {
+        ringNo: ringNo.trim().toUpperCase(),
+        color: color.trim(),
+        name: name ? name.trim() : null,
+        gender: gender || 'Unknown',
+        birthdate: birthdate ? birthdate.trim() : null,
+        strain: strain ? strain.trim() : null,
+        status: status || 'Active',
+        notes: notes ? notes.trim() : null,
+        sire: sire ? sire.trim() : null,
+        dam: dam ? dam.trim() : null,
+      },
+    })
+
+    return NextResponse.json({ success: true, data })
+  } catch (err: any) {
+    console.error('Error in PUT /api/loft-birds:', err)
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
   }
 }

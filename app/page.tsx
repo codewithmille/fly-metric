@@ -35,6 +35,12 @@ interface LoftBird {
   color: string
   name: string | null
   gender: string | null
+  birthdate?: string | null
+  strain?: string | null
+  status?: string | null
+  notes?: string | null
+  sire?: string | null
+  dam?: string | null
 }
 
 export default function Home() {
@@ -877,6 +883,19 @@ export default function Home() {
         onBirdsUpdated={fetchBirds}
         events={events}
         onAddEventTrigger={() => navigateToTab('addEvent')}
+        onOpenRegistryTrigger={() => {
+          setIsProfileOpen(false) // Close the profile modal so user doesn't have stacked modals
+          setIsRegistryOpen(true)
+        }}
+      />
+
+      {/* ── Bird Registry Modal ─────────────────────────── */}
+      <BirdRegistryModal
+        isOpen={isRegistryOpen}
+        onClose={() => setIsRegistryOpen(false)}
+        onBirdsUpdated={fetchBirds}
+        authToken={session?.access_token}
+        events={events}
       />
 
       {/* ── Quick Clock-in Modal ─────────────────────── */}
