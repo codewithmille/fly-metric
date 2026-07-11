@@ -997,6 +997,70 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 </div>
               </div>
 
+              {/* Breeder Feeding & Watering Guide */}
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  🥤 Breeder Feeding & Watering Guide (Gabay sa Pakain at Tubig)
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {[
+                    {
+                      title: '🍽️ Feed Quantity (Gaano Karaming Pagkain)',
+                      desc: 'Depende sa stage ng breeder ang dami ng kailangang patuka para maiwasan ang labis na katabaan o pagkabansot ng inakay:',
+                      bullets: [
+                        '🥚 Sitting on Eggs (Nangangitlog/Naglilimlim): Limitahan sa 30 to 35 grams bawat kalapati kada araw. Hatiin sa 15g sa umaga (gisingin sila) at 20g sa hapon. Ang labis na pagkain ay magpapataba sa kanila at magiging sanhi ng tamad na paglilimlim.',
+                        '🐣 Feeding Squabs (May Inakay): Ad Libitum o Free Access (unlimited). Dapat laging may pagkain sa loft feeder dahil ang mga magulang ay patuloy na nagpapasuso ng crop milk at nagpapakain sa mga inakay buong araw.',
+                        '💡 Tip: Bago magpatuka sa hapon, maglagay ng mineral block o grit. Nakakatulong ito sa paggiling ng matitigas na butil sa loob ng gizzard.'
+                      ]
+                    },
+                    {
+                      title: '💧 Water Management (Tamang Pagpapainom)',
+                      desc: 'Ang malinis na tubig ay kritikal sa paggawa ng crop milk (gatas ng kalapati):',
+                      bullets: [
+                        '🥤 Dami ng Tubig: Ang isang pares ay karaniwang umiinom ng 80ml–120ml kada araw. Ngunit kapag may inakay na pinapakain, umaabot ito ng 250ml–300ml bawat pares dahil sa paggawa ng crop milk.',
+                        '🧼 Dalas ng Pagpapalit: Palitan ang tubig 2 beses sa isang araw (umaga at hapon). Linisin ang painuman gamit ang brush para matanggal ang madulas na slime/lumot at dumi.',
+                        '🍋 Apple Cider Vinegar (ACV): Maglagay ng 5ml hanggang 10ml ACV bawat 1 litro ng tubig, 3 beses sa isang linggo. Pinapanatili nitong acidic ang bituka at crop ng magulang upang hindi sila tubuan ng amag, bacteria, o Canker na madaling maipasa sa inakay.'
+                      ]
+                    },
+                    {
+                      title: '🪨 Minerals & Grit (Asin at Bato-bato)',
+                      desc: 'Kailangang-kailangan ng breeder ang minerals para sa shell ng itlog at buto ng inakay:',
+                      bullets: [
+                        '🪨 Grit Mix: Laging maglagay ng fresh grit (dinikdik na shell ng talaba, uling, brick dust) sa isang hiwalay na lalagyan. Huwag ihalo sa pagkain.',
+                        '🧪 Calcium Liquid: Magdagdag ng Calcium chloride o liquid calcium (10ml/L) sa tubig 2 araw bago mangitlog ang hen para maiwasan ang "soft-shell" egg.',
+                        '🧱 Pink Mineral Block / Clay Block: Maglaan ng clay block. May taglay itong minerals at asin na nagbibigay ng electrolytes sa breeding pairs.'
+                      ]
+                    }
+                  ].map((g, i) => (
+                    <div key={i} style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '0.625rem',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        padding: '0.5rem 0.88rem',
+                        background: 'rgba(245,158,11,0.06)',
+                        borderBottom: '1px solid var(--border-default)',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        color: '#f59e0b'
+                      }}>
+                        {g.title}
+                      </div>
+                      <div style={{ padding: '0.75rem 0.88rem' }}>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0', lineHeight: 1.45, fontWeight: 600 }}>{g.desc}</p>
+                        <ul style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {g.bullets.map((b, j) => (
+                            <li key={j} style={{ fontSize: '0.71rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{b}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Nest Box & Egg Management */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
