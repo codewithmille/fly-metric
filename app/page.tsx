@@ -22,8 +22,8 @@ import { getEvents, getBirds, syncOfflineQueue, isOnline } from '@/lib/apiClient
 const RaceCalendar = dynamic(() => import('@/components/RaceCalendar'), {
   ssr: false,
   loading: () => (
-    <div className="calendar-loading" style={{ padding: '5rem' }}>
-      <div className="loading-spinner" />
+    <div className="calendar-loading" style={{ padding: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+      <img src="/icon.png" alt="Loading" style={{ width: '56px', height: '56px', objectFit: 'contain', animation: 'pulse 1.5s ease-in-out infinite' }} />
       <span>Initialising activity calendar…</span>
     </div>
   ),
@@ -226,10 +226,24 @@ export default function Home() {
     return (
       <div style={{
         position: 'fixed', inset: 0, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: '#0a0c14', flexDirection: 'column', gap: '1rem'
+        justifyContent: 'center', background: 'radial-gradient(circle at 50% 42%, #111c24 0%, #090d16 70%)',
+        flexDirection: 'column', gap: '1.1rem'
       }}>
+        <img
+          src="/icon.png"
+          alt="FlyMetric"
+          style={{
+            width: '96px',
+            height: '96px',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 6px 20px rgba(34,197,94,0.3))',
+            animation: 'pulse 1.6s ease-in-out infinite'
+          }}
+        />
         <div className="loading-spinner" />
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>Loading…</span>
+        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', fontWeight: 600, letterSpacing: '0.04em' }}>
+          Loading FlyMetric…
+        </span>
       </div>
     )
   }
@@ -238,19 +252,161 @@ export default function Home() {
     return <LandingPage />
   }
 
-  // ── Stats ─────────────────────────────────────────────────
+  // ── Stats & Visual Telemetry (2nd-Image Style Analytics) ──
   const today = new Date().toISOString().split('T')[0]
   const flightEvents = events.filter(e => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
   const totalBirds = flightEvents.reduce((sum, e) => sum + (e.extendedProps?.totalBirds || 0), 0)
   const maxSpeed = flightEvents.reduce((max, e) => Math.max(max, e.extendedProps?.maxSpeed || 0), 0)
   const totalTrainings = events.filter(e => e.extendedProps?.club === 'Training').length
   const totalRaces = events.filter(e => !e.extendedProps?.club || e.extendedProps?.club === 'Race').length
+  const totalMedications = events.filter(e => e.extendedProps?.club === 'Medication').length
+  const totalTasks = events.filter(e => e.extendedProps?.club === 'Task').length
+  const totalAllEvents = Math.max(1, totalRaces + totalTrainings + totalMedications + totalTasks)
+
+  const racePct = Math.round((totalRaces / totalAllEvents) * 100)
+  const trainingPct = Math.round((totalTrainings / totalAllEvents) * 100)
+  const medPct = Math.round((totalMedications / totalAllEvents) * 100)
+  const taskPct = Math.max(0, 100 - racePct - trainingPct - medPct)
+
+  // Donut SVG circumferences (r = 54 => C ≈ 339.29)
+  const donutC = 2 * Math.PI * 54
+  const segRace = (racePct / 100) * donutC
+  const segTrain = (trainingPct / 100) * donutC
+  const segMed = (medPct / 100) * donutC
+  const segTask = (taskPct / 100) * donutC
+
+  // Active birds vs total registered radial percentages
+  const activeBirdsCount = registeredBirds.filter(b => !b.status || b.status.toLowerCase() === 'active').length
+  const activeRegistryPct = registeredBirds.length > 0 ? Math.round((activeBirdsCount / registeredBirds.length) * 100) : 100
+  const clockedEventsCount = flightEvents.filter(e => (e.extendedProps?.maxSpeed || 0) > 0 || (e.extendedProps?.totalBirds || 0) > 0).length
+  const flightCompletionPct = flightEvents.length > 0 ? Math.round((clockedEventsCount / flightEvents.length) * 100) : 0
+
+  // Top 3 Leaderboard Pigeons
+  const leaderboardBirds = (() => {
+    const map = new Map<string, { ringNo: string; maxSpeed: number; flights: number; name?: string | null; color?: string }>()
+    flightEvents.forEach((ev) => {
+      try {
+        const list: Array<{ ringNo: string; speed?: number }> = JSON.parse(ev.extendedProps?.birds || '[]')
+        if (Array.isArray(list)) {
+          list.forEach((item) => {
+            if (!item.ringNo) return
+            const key = item.ringNo.toUpperCase()
+            const spd = Number(item.speed) || 0
+            const prev = map.get(key)
+            const reg = registeredBirds.find(r => r.ringNo.toUpperCase() === key)
+            if (!prev) {
+              map.set(key, { ringNo: item.ringNo, maxSpeed: spd, flights: 1, name: reg?.name, color: reg?.color })
+            } else {
+              prev.flights += 1
+              if (spd > prev.maxSpeed) prev.maxSpeed = spd
+            }
+          })
+        }
+      } catch {
+        // ignore
+      }
+    })
+    const sorted = Array.from(map.values()).sort((a, b) => b.maxSpeed - a.maxSpeed || b.flights - a.flights)
+    if (sorted.length > 0) return sorted.slice(0, 3)
+    // Fallback to registered birds if no clocked flights yet
+    return registeredBirds.slice(0, 3).map((b) => ({
+      ringNo: b.ringNo,
+      maxSpeed: 0,
+      flights: 0,
+      name: b.name,
+      color: b.color,
+    }))
+  })()
+
+  // 6-Bar chart data (recent flight events or activity counts)
+  const barChartItems = (() => {
+    const recent = [...flightEvents].slice(0, 6).reverse()
+    if (recent.length >= 3) {
+      // Use a consistent metric per bar (prefer distance km or bird count if speeds are 0)
+      const rawValues = recent.map((e, idx) => {
+        const spd = Number(e.extendedProps?.maxSpeed) || 0
+        const dist = Number(e.extendedProps?.distance) || 0
+        const birds = Number(e.extendedProps?.totalBirds) || 0
+        if (spd > 0) return spd
+        if (dist > 0) return dist
+        if (birds > 0) return birds * 25
+        // Visually balanced stepped height for scheduled races without telemetry yet
+        return [55, 75, 100, 68, 48, 62][idx % 6]
+      })
+      const peak = Math.max(1, ...rawValues)
+      const peakIdx = rawValues.indexOf(peak)
+      return recent.map((e, idx) => {
+        const val = rawValues[idx]
+        return {
+          label: e.title.replace(/^Race:\s*/i, '').slice(0, 7),
+          value: val,
+          heightPct: Math.max(32, Math.round((val / peak) * 100)),
+          active: idx === peakIdx,
+        }
+      })
+    }
+    const fallbackVals = [
+      { label: 'Races', value: Math.max(1, totalRaces) },
+      { label: 'Tosses', value: Math.max(1, totalTrainings) },
+      { label: 'Birds', value: Math.max(1, totalBirds) },
+      { label: 'Loft', value: Math.max(1, registeredBirds.length) },
+      { label: 'Meds', value: Math.max(1, totalMedications) },
+      { label: 'Tasks', value: Math.max(1, totalTasks) },
+    ]
+    const peak = Math.max(1, ...fallbackVals.map(v => v.value))
+    const peakIdx = fallbackVals.findIndex(v => v.value === peak)
+    return fallbackVals.map((v, i) => ({
+      ...v,
+      heightPct: Math.max(32, Math.round((v.value / peak) * 100)),
+      active: i === (peakIdx >= 0 ? peakIdx : 0),
+    }))
+  })()
 
   const STATS = [
-    { icon: <BirdIcon size={22} />, iconClass: 'stat-icon-gold', value: totalBirds.toLocaleString(), label: 'Total Birds Flown' },
-    { icon: <LightningIcon size={22} />, iconClass: 'stat-icon-blue', value: maxSpeed > 0 ? maxSpeed.toLocaleString() : '0', label: 'Max Speed (m/min)' },
-    { icon: <TrainingIcon size={22} />, iconClass: 'stat-icon-green', value: totalTrainings.toLocaleString(), label: 'Training tosses' },
-    { icon: <TrophyIcon size={22} />, iconClass: 'stat-icon-purple', value: totalRaces.toLocaleString(), label: 'Races Competed' },
+    {
+      icon: <BirdIcon size={20} />,
+      iconClass: 'stat-icon-gold',
+      value: totalBirds.toLocaleString(),
+      prefix: '+',
+      label: 'Total Birds Flown',
+      badge: 'Flown',
+      valueColor: '#FFC107',
+      ringBg: 'rgba(255, 193, 7, 0.14)',
+      ringBorder: 'rgba(255, 193, 7, 0.35)',
+    },
+    {
+      icon: <LightningIcon size={20} />,
+      iconClass: 'stat-icon-blue',
+      value: maxSpeed > 0 ? maxSpeed.toLocaleString() : '0',
+      prefix: '',
+      label: 'Max Speed (m/min)',
+      badge: 'Velocity',
+      valueColor: '#38bdf8',
+      ringBg: 'rgba(56, 189, 248, 0.14)',
+      ringBorder: 'rgba(56, 189, 248, 0.35)',
+    },
+    {
+      icon: <TrainingIcon size={20} />,
+      iconClass: 'stat-icon-green',
+      value: totalTrainings.toLocaleString(),
+      prefix: '+',
+      label: 'Training Tosses',
+      badge: 'Tosses',
+      valueColor: '#10b981',
+      ringBg: 'rgba(16, 185, 129, 0.14)',
+      ringBorder: 'rgba(16, 185, 129, 0.35)',
+    },
+    {
+      icon: <TrophyIcon size={20} />,
+      iconClass: 'stat-icon-purple',
+      value: totalRaces.toLocaleString(),
+      prefix: '+',
+      label: 'Races Competed',
+      badge: 'Season',
+      valueColor: '#c084fc',
+      ringBg: 'rgba(192, 132, 252, 0.14)',
+      ringBorder: 'rgba(192, 132, 252, 0.35)',
+    },
   ]
 
   const user: User = session.user
@@ -260,12 +416,12 @@ export default function Home() {
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div className="dashboard">
+    <div data-theme="dark" className="dashboard bg-base-100 text-base-content">
       {/* ── Navigation ────────────────────────────────── */}
-      <nav className="dashboard-nav">
+      <nav className="dashboard-nav border-b border-white/10 bg-base-200/80 backdrop-blur-xl">
         <div className="nav-brand">
-          <div className="nav-logo" aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/icon.png" alt="FlyMetric" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+          <div className="nav-logo" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', boxShadow: '0 0 14px rgba(16, 185, 129, 0.2)' }}>
+            <img src="/icon.png" alt="FlyMetric" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
           </div>
           <h1 className="nav-title">
             Fly<span>Metric</span>
@@ -576,22 +732,473 @@ export default function Home() {
       {/* ── Main Content ──────────────────────────────── */}
       <main className="dashboard-content">
 
-        {/* Stats Bar */}
-        <section className="stats-bar" aria-label="Loft statistics">
-          {STATS.map((s) => (
-            <div key={s.label} className="stat-card">
-              <div className={`stat-icon ${s.iconClass}`}>{s.icon}</div>
-              <div className="stat-info">
-                <div className="stat-value">{s.value}</div>
-                <div className="stat-label">{s.label}</div>
+        {/* ── 2nd-Image Style Loft Telemetry & Stats Dashboard ── */}
+        <section
+          aria-label="Loft statistics"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.35rem',
+            marginBottom: '1.85rem',
+          }}
+        >
+          {/* Top Row: 4 Sleek Circular-Badge Stat Cards with generous breathing room */}
+          <div
+            className="stats-bar"
+            style={{
+              marginBottom: 0,
+              gap: '1.15rem',
+            }}
+          >
+            {STATS.map((s) => (
+              <div
+                key={s.label}
+                className="stat-card group rounded-2xl bg-base-200/85 border border-white/10 hover:border-primary/50 shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  padding: '1.15rem 1.35rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.9rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', minWidth: 0 }}>
+                  <div
+                    className={`stat-icon ${s.iconClass} transition-transform duration-200 group-hover:scale-105`}
+                    style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '9999px',
+                      background: s.ringBg,
+                      border: `1px solid ${s.ringBorder}`,
+                      color: s.valueColor,
+                      boxShadow: `0 6px 18px ${s.ringBg}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {s.icon}
+                  </div>
+                  <div className="stat-info" style={{ minWidth: 0 }}>
+                    <div
+                      className="stat-value font-mono font-extrabold tracking-tight"
+                      style={{
+                        color: s.valueColor,
+                        fontSize: '1.55rem',
+                        lineHeight: 1.15,
+                      }}
+                    >
+                      {s.prefix}{s.value}
+                    </div>
+                    <div
+                      className="stat-label font-medium text-base-content/60"
+                      style={{
+                        fontSize: '0.76rem',
+                        marginTop: '0.2rem',
+                      }}
+                    >
+                      {s.label}
+                    </div>
+                  </div>
+                </div>
+
+                <span
+                  style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '0.22rem 0.55rem',
+                    borderRadius: '9999px',
+                    background: s.ringBg,
+                    border: `1px solid ${s.ringBorder}`,
+                    color: s.valueColor,
+                    flexShrink: 0,
+                  }}
+                >
+                  {s.badge}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Second Row: 3-Column Visual Telemetry Cards (Donut Ring + Radial Gauges + Bar Chart & Leaderboard) */}
+          <div
+            className="grid grid-cols-1 lg:grid-cols-12"
+            style={{ gap: '1.25rem' }}
+          >
+            {/* Card 1: Multi-Segment Donut Ring Chart (matches "Merchant +1092" ring card in 2nd image) */}
+            <div
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
+              style={{ padding: '1.35rem 1.5rem', gap: '1rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="h-2.5 w-2.5 rounded-full bg-info shadow-[0_0_8px_#38bdf8]" />
+                  <span className="text-sm font-extrabold text-base-content">Loft Activity Mix</span>
+                </div>
+                <span className="text-[11px] font-semibold text-base-content/50">Unit: Events</span>
+              </div>
+
+              {/* Multi-Color SVG Donut Gauge */}
+              <div className="relative mx-auto flex h-44 w-44 items-center justify-center" style={{ margin: '0.35rem auto' }}>
+                <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90 transform">
+                  {/* Track */}
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r="54"
+                    fill="transparent"
+                    stroke="rgba(255,255,255,0.06)"
+                    strokeWidth="12"
+                  />
+                  {/* Segment 1: Races (Amber #FFC107) */}
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r="54"
+                    fill="transparent"
+                    stroke="#FFC107"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeDasharray={`${segRace} ${donutC}`}
+                    strokeDashoffset={0}
+                  />
+                  {/* Segment 2: Training (Emerald #10b981) */}
+                  {segTrain > 0 && (
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="54"
+                      fill="transparent"
+                      stroke="#10b981"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      strokeDasharray={`${segTrain} ${donutC}`}
+                      strokeDashoffset={-segRace}
+                    />
+                  )}
+                  {/* Segment 3: Medical (Blue #38bdf8) */}
+                  {segMed > 0 && (
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="54"
+                      fill="transparent"
+                      stroke="#38bdf8"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      strokeDasharray={`${segMed} ${donutC}`}
+                      strokeDashoffset={-(segRace + segTrain)}
+                    />
+                  )}
+                  {/* Segment 4: Tasks (Purple #c084fc) */}
+                  {segTask > 0 && (
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="54"
+                      fill="transparent"
+                      stroke="#c084fc"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      strokeDasharray={`${segTask} ${donutC}`}
+                      strokeDashoffset={-(segRace + segTrain + segMed)}
+                    />
+                  )}
+                </svg>
+
+                {/* Center Readout */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400">
+                    ↑ {racePct}% Race
+                  </span>
+                  <span className="font-mono text-2xl font-black text-base-content tracking-tight leading-tight">
+                    +{events.length}
+                  </span>
+                  <span className="text-[11px] text-base-content/50 font-medium">
+                    Total Logs
+                  </span>
+                </div>
+              </div>
+
+              {/* 4-Category Legend with Percentages */}
+              <div
+                className="grid grid-cols-4 border-t border-white/5 text-center"
+                style={{ gap: '0.5rem', paddingTop: '0.85rem' }}
+              >
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
+                    <span className="h-2 w-2 rounded-xs bg-[#FFC107]" />
+                    <span>Races</span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{racePct}%</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
+                    <span className="h-2 w-2 rounded-xs bg-[#10b981]" />
+                    <span>Tosses</span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{trainingPct}%</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
+                    <span className="h-2 w-2 rounded-xs bg-[#38bdf8]" />
+                    <span>Medical</span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{medPct}%</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
+                    <span className="h-2 w-2 rounded-xs bg-[#c084fc]" />
+                    <span>Tasks</span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{taskPct}%</div>
+                </div>
               </div>
             </div>
-          ))}
+
+            {/* Card 2: Active Telemetry Bar Chart + Dual Radial Progress Rings (matches middle-bottom & right-top in 2nd image) */}
+            <div
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
+              style={{ padding: '1.35rem 1.5rem', gap: '1.15rem' }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_#FFC107]" />
+                    <span className="text-sm font-extrabold text-base-content">Active Loft Telemetry</span>
+                  </div>
+                  <span className="badge badge-ghost badge-xs border-white/10" style={{ padding: '0.35rem 0.55rem' }}>Season</span>
+                </div>
+
+                {/* 3 Summary Columns */}
+                <div className="grid grid-cols-3 text-left" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div>
+                    <div className="font-mono text-base font-extrabold text-base-content">
+                      {events.length}
+                    </div>
+                    <div className="text-[11px] text-base-content/50">Total Events</div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-base font-extrabold text-info">
+                      +{registeredBirds.length}
+                    </div>
+                    <div className="text-[11px] text-base-content/50">Loft Birds</div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-base font-extrabold text-emerald-400">
+                      {activeBirdsCount}
+                    </div>
+                    <div className="text-[11px] text-base-content/50">Active Flyers</div>
+                  </div>
+                </div>
+
+                {/* 6-Bar Vertical Chart (matches soft sky-blue + bright active bar in 2nd image) */}
+                <div
+                  className="flex items-end justify-between border-b border-white/5"
+                  style={{ height: '6.5rem', gap: '0.5rem', padding: '0.25rem 0.25rem 0.6rem' }}
+                >
+                  {barChartItems.map((bar, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center h-full justify-end" style={{ gap: '0.4rem' }}>
+                      <div className="w-full flex items-end justify-center" style={{ height: '4.4rem' }}>
+                        <div
+                          className="w-full max-w-[22px] rounded-t-md transition-all duration-300"
+                          style={{
+                            height: `${bar.heightPct}%`,
+                            background: bar.active
+                              ? 'linear-gradient(180deg, #38bdf8 0%, #0284c7 100%)'
+                              : 'rgba(56, 189, 248, 0.24)',
+                            boxShadow: bar.active ? '0 0 14px rgba(56, 189, 248, 0.45)' : 'none',
+                          }}
+                          title={`${bar.label}: ${bar.value}`}
+                        />
+                      </div>
+                      <span
+                        className={`text-[9px] font-semibold truncate max-w-full rounded ${
+                          bar.active ? 'bg-primary text-primary-content font-extrabold' : 'text-base-content/55'
+                        }`}
+                        style={{ padding: bar.active ? '0.1rem 0.35rem' : '0 0.15rem' }}
+                      >
+                        {bar.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Dual Radial Progress Rings (matches "Smart device 68.24% / 44.04%" in 2nd image) */}
+              <div className="grid grid-cols-2" style={{ gap: '0.75rem' }}>
+                <div
+                  onClick={() => setIsRegistryOpen(true)}
+                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-info/40 flex items-center transition-all"
+                  style={{ padding: '0.75rem 0.85rem', gap: '0.7rem' }}
+                >
+                  <div
+                    className="radial-progress text-info text-[10px] font-mono font-bold shrink-0"
+                    style={{ '--value': activeRegistryPct, '--size': '2.9rem', '--thickness': '4px' } as React.CSSProperties}
+                    role="progressbar"
+                  >
+                    {activeRegistryPct}%
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-base-content truncate">Loft Ready</div>
+                    <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
+                      {registeredBirds.length} Registered
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-emerald-500/40 flex items-center transition-all"
+                  style={{ padding: '0.75rem 0.85rem', gap: '0.7rem' }}
+                >
+                  <div
+                    className="radial-progress text-emerald-400 text-[10px] font-mono font-bold shrink-0"
+                    style={{ '--value': flightCompletionPct, '--size': '2.9rem', '--thickness': '4px' } as React.CSSProperties}
+                    role="progressbar"
+                  >
+                    {flightCompletionPct}%
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-base-content truncate">Clocked</div>
+                    <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
+                      {clockedEventsCount} Flights
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Top Performers Leaderboard (matches "Leaderboard #1 #2 #3" card in 2nd image) */}
+            <div
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
+              style={{ padding: '1.35rem 1.5rem', gap: '1rem' }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                    <span className="text-sm font-extrabold text-base-content">Loft Leaderboard</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="text-xs font-semibold text-base-content/50 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
+                  >
+                    More &gt;
+                  </button>
+                </div>
+
+                {leaderboardBirds.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {leaderboardBirds.map((bird, idx) => {
+                      const rankColors = [
+                        { badge: 'bg-rose-500 text-white', speed: 'text-rose-400' },
+                        { badge: 'bg-amber-400 text-black', speed: 'text-amber-400' },
+                        { badge: 'bg-sky-400 text-black', speed: 'text-sky-400' },
+                      ][idx] || { badge: 'bg-base-300 text-white', speed: 'text-base-content' }
+
+                      return (
+                        <div
+                          key={bird.ringNo}
+                          onClick={() => setIsRegistryOpen(true)}
+                          className="cursor-pointer flex items-center justify-between rounded-xl bg-base-100/75 border border-white/5 hover:border-white/15 transition-all"
+                          style={{ padding: '0.7rem 0.9rem', gap: '0.75rem' }}
+                        >
+                          <div className="flex items-center min-w-0" style={{ gap: '0.75rem' }}>
+                            <div className="relative shrink-0">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-base-200 border border-white/10">
+                                <img src="/icon.png" alt={bird.ringNo} className="h-7 w-7 object-contain" />
+                              </div>
+                              <span
+                                className={`absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-black shadow ${rankColors.badge}`}
+                              >
+                                {idx + 1}
+                              </span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-extrabold text-base-content truncate">
+                                {bird.name ? `${bird.name} (${bird.ringNo})` : bird.ringNo}
+                              </div>
+                              <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
+                                {bird.color || 'Registered Racer'} • Total of {bird.flights} {bird.flights === 1 ? 'flight' : 'flights'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={`font-mono text-xs font-extrabold shrink-0 ${rankColors.speed}`}>
+                            {bird.maxSpeed > 0 ? `+${bird.maxSpeed.toFixed(1)}` : 'Active'}
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* If fewer than 3 birds exist, show subtle open rank slots so the card stays balanced */}
+                    {leaderboardBirds.length < 3 &&
+                      Array.from({ length: 3 - leaderboardBirds.length }).map((_, emptyIdx) => {
+                        const slotNum = leaderboardBirds.length + emptyIdx + 1
+                        return (
+                          <div
+                            key={`open-slot-${slotNum}`}
+                            onClick={() => setIsRegistryOpen(true)}
+                            className="cursor-pointer flex items-center justify-between rounded-xl bg-base-100/35 border border-dashed border-white/10 hover:border-primary/40 transition-all"
+                            style={{ padding: '0.65rem 0.9rem', gap: '0.75rem' }}
+                          >
+                            <div className="flex items-center min-w-0" style={{ gap: '0.75rem' }}>
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-base-200/60 border border-white/5 text-[11px] font-black text-base-content/40">
+                                #{slotNum}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-semibold text-base-content/50 truncate">
+                                  Open Leaderboard Slot
+                                </div>
+                                <div className="text-[10px] text-base-content/35 truncate">
+                                  Click to register or clock another racer
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-primary/70">+ Add</span>
+                          </div>
+                        )
+                      })}
+                  </div>
+                ) : (
+                  <div
+                    className="flex flex-col items-center justify-center text-center rounded-xl bg-base-100/50 border border-dashed border-white/10"
+                    style={{ padding: '1.75rem 1rem' }}
+                  >
+                    <img src="/icon.png" alt="No birds" className="h-10 w-10 object-contain opacity-60 mb-2" />
+                    <div className="text-xs font-bold text-base-content/80">No Pigeons Ranked Yet</div>
+                    <p className="text-[11px] text-base-content/50 mt-0.5 mb-3">
+                      Register birds or clock a race to populate your speed leaderboard.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistryOpen(true)}
+                      className="btn btn-primary btn-xs font-bold"
+                    >
+                      + Register Birds
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="border-t border-white/5 flex items-center justify-between text-[11px] text-base-content/50"
+                style={{ paddingTop: '0.85rem' }}
+              >
+                <span>Top Velocity Unit</span>
+                <span className="font-mono font-bold text-primary">meters / min (m/min)</span>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Activities List / Calendar Card */}
-        <section className="calendar-card" aria-label="Loft activities and calendar">
-          <div className="calendar-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <section className="calendar-card bg-base-200/70 border border-white/10 shadow-xl" aria-label="Loft activities and calendar">
+          <div className="calendar-card-header border-b border-white/10" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ minWidth: '180px' }}>
               <div className="calendar-card-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
                 Loft Activities & Flights
@@ -603,46 +1210,21 @@ export default function Home() {
 
             {/* Toggle view and Add Activity buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              {/* Segmented Control Switcher */}
-              <div style={{
-                display: 'flex',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-default)',
-                borderRadius: '0.5rem',
-                padding: '2px',
-                gap: '2px'
-              }}>
+              {/* daisyUI Segmented Control Switcher */}
+              <div role="tablist" className="tabs tabs-box tabs-xs bg-base-100/80 border border-white/10 p-1 gap-1">
                 <button
                   type="button"
+                  role="tab"
                   onClick={() => setViewMode('list')}
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: viewMode === 'list' ? 'var(--brand-gold)' : 'transparent',
-                    color: viewMode === 'list' ? '#000' : 'var(--text-secondary)',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`tab font-bold px-3 ${viewMode === 'list' ? 'tab-active !bg-primary !text-primary-content' : 'text-base-content/70'}`}
                 >
                   📝 List
                 </button>
                 <button
                   type="button"
+                  role="tab"
                   onClick={() => setViewMode('calendar')}
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: viewMode === 'calendar' ? 'var(--brand-gold)' : 'transparent',
-                    color: viewMode === 'calendar' ? '#000' : 'var(--text-secondary)',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`tab font-bold px-3 ${viewMode === 'calendar' ? 'tab-active !bg-primary !text-primary-content' : 'text-base-content/70'}`}
                 >
                   📅 Calendar
                 </button>
@@ -678,8 +1260,8 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <div className="loading-spinner" style={{ margin: '0 auto 1rem auto' }} />
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+              <img src="/icon.png" alt="Loading" style={{ width: '56px', height: '56px', objectFit: 'contain', animation: 'pulse 1.5s ease-in-out infinite' }} />
               <span>Loading activities...</span>
             </div>
           ) : viewMode === 'calendar' ? (
@@ -922,6 +1504,9 @@ export default function Home() {
       <PigeonChatModal
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+        registeredBirds={registeredBirds}
+        events={events}
+        loftName={loftName}
       />
 
       {/* ── Results History Modal ──────────────────────── */}
@@ -1082,19 +1667,18 @@ export default function Home() {
             width: '46px', height: '46px',
             borderRadius: '50%',
             background: isChatOpen
-              ? 'linear-gradient(135deg, #047857, #065f46)'
-              : 'linear-gradient(135deg, #10b981, #047857)',
+              ? 'linear-gradient(135deg, #064e3b, #022c22)'
+              : 'linear-gradient(135deg, #111c24, #090d16)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: isChatOpen
-              ? '0 0 0 3px rgba(16,185,129,0.4), 0 4px 16px rgba(16,185,129,0.4)'
-              : '0 0 0 3px rgba(16,185,129,0.25), 0 4px 12px rgba(16,185,129,0.3)',
-            fontSize: '1.35rem',
+              ? '0 0 0 3px rgba(16,185,129,0.5), 0 4px 16px rgba(16,185,129,0.4)'
+              : '0 0 0 2px rgba(16,185,129,0.35), 0 4px 12px rgba(16,185,129,0.25)',
             marginTop: '-18px',
-            border: '3px solid #0d1117',
+            border: '2px solid rgba(16,185,129,0.4)',
             transition: 'all 0.2s ease',
             flexShrink: 0,
           }}>
-            🕊️
+            <img src="/icon.png" alt="FlyMetric AI" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           </div>
           <span style={{ marginTop: '2px' }}>AI Chat</span>
         </button>

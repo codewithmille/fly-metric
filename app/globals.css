@@ -1,4 +1,37 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+  themes: dark --default;
+}
+@plugin "daisyui/theme" {
+  name: "dark";
+  default: true;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: #090d16;
+  --color-base-200: #111622;
+  --color-base-300: #1b2232;
+  --color-base-content: #e6edf3;
+  --color-primary: #FFC107;
+  --color-primary-content: #090d16;
+  --color-secondary: #3b82f6;
+  --color-secondary-content: #ffffff;
+  --color-accent: #10b981;
+  --color-accent-content: #052e16;
+  --color-neutral: #1e2433;
+  --color-neutral-content: #d0d7de;
+  --color-info: #38bdf8;
+  --color-info-content: #082f49;
+  --color-success: #22c55e;
+  --color-success-content: #052e16;
+  --color-warning: #FFC107;
+  --color-warning-content: #090d16;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.625rem;
+  --radius-box: 1rem;
+  --border: 1px;
+}
 
 /* ============================================================
    DESIGN TOKENS

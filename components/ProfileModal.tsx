@@ -150,12 +150,17 @@ export default function ProfileModal({
   }, 0)
   const clockInRate = totalExpected > 0 ? Math.round((totalClocked / totalExpected) * 100) : 0
 
-  // Avg Pigeons per Event/Season
-  const avgPigeons = flightEvents.length > 0 ? Math.round(totalExpected / flightEvents.length) : 0
-  
   // Unique seasons (years)
-  const years = Array.from(new Set(flightEvents.map(e => new Date(e.date).getFullYear())))
-  const seasonsCount = years.length || 0
+  const years = Array.from(new Set(flightEvents.map(e => new Date(e.date).getFullYear()).filter(Boolean)))
+  const seasonsCount = Math.max(years.length, registeredBirds.length > 0 || flightEvents.length > 0 ? 1 : 0)
+
+  // Avg Pigeons per Season (uses active loft count or total entries per season so it never falsely shows 0 when birds exist)
+  const avgPigeons = seasonsCount > 0
+    ? Math.max(registeredBirds.length, Math.round(totalExpected / seasonsCount))
+    : registeredBirds.length
+
+  const cocksCount = registeredBirds.filter(b => b.gender?.toLowerCase() === 'cock').length
+  const hensCount = registeredBirds.filter(b => b.gender?.toLowerCase() === 'hen').length
 
   // ── ACTIONS ────────────────────────────────────────────────
   const handleUseDeviceGps = () => {
@@ -642,597 +647,1034 @@ export default function ProfileModal({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        style={{ maxWidth: '580px', padding: 0 }}
+        style={{
+          maxWidth: '610px',
+          padding: 0,
+          background: '#0d121d',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 28px 64px rgba(0, 0, 0, 0.7)',
+        }}
       >
-        {/* Banner area */}
-        <div style={{
-          position: 'relative',
-          height: '110px',
-          background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            opacity: 0.25,
-            backgroundImage: 'radial-gradient(circle at 80% 20%, var(--brand-gold) 0%, transparent 60%)'
-          }} />
-          {/* Settings button */}
-          <button 
-            type="button"
-            className="profile-settings-btn"
-            onClick={() => setIsSettingsMenuOpen(true)}
+        {/* ── Pro Telemetry Banner Area ── */}
+        <div
+          style={{
+            position: 'relative',
+            height: '118px',
+            background: 'linear-gradient(135deg, #0f172a 0%, #111827 50%, #1e1b4b 100%)',
+            overflow: 'hidden',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          {/* Subtle Grid + Radial Gold & Emerald Glow */}
+          <div
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '54px',
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.5)',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 20
+              inset: 0,
+              backgroundImage:
+                'radial-gradient(circle at 82% 22%, rgba(255, 193, 7, 0.25) 0%, transparent 55%), radial-gradient(circle at 18% 80%, rgba(16, 185, 129, 0.18) 0%, transparent 50%)',
             }}
-            aria-label="Settings"
-            title="Settings"
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.12,
+              backgroundSize: '24px 24px',
+              backgroundImage:
+                'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)',
+            }}
+          />
+
+          {/* Top Left Verified Loft Badge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '14px',
+              left: '18px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.25rem 0.65rem',
+              borderRadius: '9999px',
+              background: 'rgba(16, 185, 129, 0.14)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#34d399',
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              backdropFilter: 'blur(8px)',
+            }}
           >
-            <SettingsIcon size={18} />
-          </button>
-          
-          <button 
-            onClick={onClose}
-            className="profile-close-btn"
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+            FlyMetric Loft Profile
+          </div>
+
+          {/* Quick Edit Profile Pill + Settings Gear + Close Button */}
+          <div
             style={{
               position: 'absolute',
               top: '12px',
               right: '12px',
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.5)',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              zIndex: 20
+              gap: '0.45rem',
+              zIndex: 20,
             }}
-            aria-label="Close"
           >
-            ✕
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsSettingsModalOpen(true)}
+              style={{
+                height: '34px',
+                padding: '0 0.75rem',
+                borderRadius: '9999px',
+                background: 'rgba(255, 193, 7, 0.14)',
+                border: '1px solid rgba(255, 193, 7, 0.35)',
+                color: '#FFC107',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.15s ease',
+              }}
+              title="Edit Loft Name & GPS"
+            >
+              ✏️ Edit Loft
+            </button>
+
+            <button
+              type="button"
+              className="profile-settings-btn"
+              onClick={() => setIsSettingsMenuOpen(true)}
+              style={{
+                position: 'static',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(8px)',
+              }}
+              aria-label="Settings"
+              title="Loft Options"
+            >
+              <SettingsIcon size={17} />
+            </button>
+
+            <button
+              onClick={onClose}
+              className="profile-close-btn"
+              style={{
+                position: 'static',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                backdropFilter: 'blur(8px)',
+              }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Profile Card Header overlay */}
-        <div style={{
-          padding: '0 1.25rem 1rem 1.25rem',
-          position: 'relative',
-          borderBottom: '1px solid var(--border-default)',
-          background: 'var(--bg-surface)'
-        }}>
-          {/* Overlapping Avatar */}
-          <div style={{
-            position: 'absolute',
-            left: '1.25rem',
-            top: '-55px',
-            width: '88px',
-            height: '88px',
-            borderRadius: '50%',
-            border: '4px solid #0d1117',
-            overflow: 'hidden',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-            zIndex: 10,
-            backgroundColor: '#161b22'
-          }}>
-            <img
-              src={session.user.user_metadata?.avatar_url || "/icon.png"}
-              alt="Loft Avatar"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={(e) => {
-                e.currentTarget.src = "/icon.png"
+        {/* ── Profile Identity Header Overlay ── */}
+        <div
+          style={{
+            padding: '0 1.5rem 1.15rem 1.5rem',
+            position: 'relative',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'linear-gradient(180deg, rgba(22, 27, 38, 0.95) 0%, rgba(13, 18, 29, 0.95) 100%)',
+          }}
+        >
+          {/* Overlapping Avatar with Glowing Ring */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '1.5rem',
+              top: '-48px',
+              width: '92px',
+              height: '92px',
+              borderRadius: '50%',
+              padding: '3px',
+              background: 'linear-gradient(135deg, #FFC107, #10b981)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+              zIndex: 10,
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '3px solid #0d121d',
+                backgroundColor: '#161b22',
               }}
+            >
+              <img
+                src={session.user.user_metadata?.avatar_url || '/icon.png'}
+                alt="Loft Avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.currentTarget.src = '/icon.png'
+                }}
+              />
+            </div>
+            {/* Online Indicator Dot */}
+            <span
+              style={{
+                position: 'absolute',
+                bottom: '4px',
+                right: '4px',
+                width: '14px',
+                height: '14px',
+                borderRadius: '50%',
+                background: '#10b981',
+                border: '2.5px solid #0d121d',
+                boxShadow: '0 0 8px #10b981',
+              }}
+              title="Active Loft"
             />
           </div>
 
-          {/* Details align to the right of Avatar */}
-          <div style={{ marginLeft: '104px', paddingTop: '0.6rem', minHeight: '65px' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-              {displayName || 'Loft Fancier'}
-            </h2>
-            <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--brand-gold)', margin: '0.1rem 0 0 0', textTransform: 'uppercase' }}>
-              {loftName || 'My Loft'}
-            </h3>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
-              <span>📍</span>
-              <span style={{ borderBottom: '1px solid rgba(255,255,255,0.18)', paddingBottom: '1px' }}>
-                {locationText || 'No location configured'}
-              </span>
+          {/* Fancier & Loft Info aligned next to Avatar */}
+          <div
+            style={{
+              marginLeft: '108px',
+              paddingTop: '0.65rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.22rem',
+                  fontWeight: 900,
+                  color: '#fff',
+                  margin: 0,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
+                }}
+              >
+                {displayName || 'Loft Fancier'}
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                <h3
+                  style={{
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    color: '#FFC107',
+                    margin: 0,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  {loftName || 'My Racing Loft'}
+                </h3>
+                <span
+                  style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '0.12rem 0.45rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.28)',
+                    color: '#38bdf8',
+                  }}
+                >
+                  {registeredBirds.length} Birds
+                </span>
+              </div>
+
+              {/* Clickable Location / GPS Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsSettingsModalOpen(true)}
+                style={{
+                  marginTop: '0.4rem',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '9999px',
+                  padding: '0.22rem 0.65rem',
+                  fontSize: '0.72rem',
+                  color: locationText ? '#cbd5e1' : '#94a3b8',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Click to configure Loft GPS location"
+              >
+                <span>📍</span>
+                <span>{locationText || 'No location configured — Set GPS'}</span>
+                {latitude && longitude && (
+                  <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.65rem' }}>
+                    ({Number(latitude).toFixed(2)}°N, {Number(longitude).toFixed(2)}°E)
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="modal-scroll-body" style={{ overflowY: 'auto', padding: '1.2rem' }}>
-          
-          {/* 📊 Overview Statistics Section */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ color: '#9C27B0' }}>📊</span> Statistics
-            </h3>
-            
-            {/* 2x2 Grid Layout */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '0.75rem'
-            }}>
-              {/* Card 1: Clock-In Rate */}
-              <div style={{
-                background: '#161b22',
-                border: '1px solid var(--border-default)',
-                borderRadius: '0.75rem',
-                padding: '0.88rem',
+        {/* ── Modal Scrollable Body ── */}
+        <div className="modal-scroll-body" style={{ overflowY: 'auto', padding: '1.35rem 1.5rem' }}>
+          {/* 📊 2nd-Image Style Loft Telemetry Statistics */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div
+              style={{
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                textAlign: 'center',
-                gap: '0.35rem'
-              }}>
-                <span style={{
-                  backgroundColor: 'rgba(76, 175, 80, 0.08)',
-                  color: '#4CAF50',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
+                justifyContent: 'space-between',
+                marginBottom: '0.85rem',
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  color: '#fff',
+                  margin: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  fontWeight: 'bold'
-                }}>✓</span>
-                <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#4CAF50', marginTop: '0.2rem' }}>{clockInRate}%</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>Clock-In Rate</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{totalClocked}/{totalExpected} entries</span>
+                  gap: '0.45rem',
+                }}
+              >
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#FFC107',
+                    boxShadow: '0 0 8px #FFC107',
+                  }}
+                />
+                Loft Telemetry & Statistics
+              </h3>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+                Live Overview
+              </span>
+            </div>
+
+            {/* 2x2 Sleek Analytics Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '0.85rem',
+              }}
+            >
+              {/* Card 1: Clock-In Rate with Radial Progress Ring */}
+              <div
+                style={{
+                  background: 'rgba(22, 27, 38, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '1rem',
+                  padding: '1rem 1.15rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                  <div
+                    className="radial-progress font-mono font-extrabold shrink-0"
+                    style={
+                      {
+                        '--value': clockInRate,
+                        '--size': '3.1rem',
+                        '--thickness': '4px',
+                        color: '#10b981',
+                        fontSize: '0.72rem',
+                      } as React.CSSProperties
+                    }
+                    role="progressbar"
+                  >
+                    {clockInRate}%
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="font-mono"
+                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#10b981', lineHeight: 1.1 }}
+                    >
+                      {clockInRate}%
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
+                      Clock-In Rate
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                      {totalClocked}/{totalExpected || 0} entries clocked
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Card 2: Avg Pigeons/Season */}
-              <div style={{
-                background: '#161b22',
-                border: '1px solid var(--border-default)',
-                borderRadius: '0.75rem',
-                padding: '0.88rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: '0.35rem'
-              }}>
-                <span style={{
-                  backgroundColor: 'rgba(255, 193, 7, 0.08)',
-                  color: 'var(--brand-gold)',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
+              {/* Card 2: Avg Pigeons / Season */}
+              <div
+                style={{
+                  background: 'rgba(22, 27, 38, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '1rem',
+                  padding: '1rem 1.15rem',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem'
-                }}>✈️</span>
-                <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--brand-gold)', marginTop: '0.2rem' }}>{avgPigeons}</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>Avg Pigeons/Season</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Across {seasonsCount} seasons</span>
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: '3.1rem',
+                      height: '3.1rem',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 193, 7, 0.14)',
+                      border: '1px solid rgba(255, 193, 7, 0.35)',
+                      boxShadow: '0 6px 16px rgba(255, 193, 7, 0.15)',
+                      color: '#FFC107',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.15rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    ✈️
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="font-mono"
+                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FFC107', lineHeight: 1.1 }}
+                    >
+                      +{avgPigeons}
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
+                      Avg Pigeons/Season
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                      Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Card 3: Total Seasons */}
-              <div style={{
-                background: '#161b22',
-                border: '1px solid var(--border-default)',
-                borderRadius: '0.75rem',
-                padding: '0.88rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: '0.35rem'
-              }}>
-                <span style={{
-                  backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                  color: '#9C27B0',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
+              {/* Card 3: Total Seasons & Flights */}
+              <div
+                style={{
+                  background: 'rgba(22, 27, 38, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '1rem',
+                  padding: '1rem 1.15rem',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem'
-                }}>🚩</span>
-                <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#9C27B0', marginTop: '0.2rem' }}>{seasonsCount}</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>Total Seasons</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Participated</span>
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: '3.1rem',
+                      height: '3.1rem',
+                      borderRadius: '50%',
+                      background: 'rgba(192, 132, 252, 0.14)',
+                      border: '1px solid rgba(192, 132, 252, 0.35)',
+                      boxShadow: '0 6px 16px rgba(192, 132, 252, 0.15)',
+                      color: '#c084fc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.1rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    🚩
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="font-mono"
+                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#c084fc', lineHeight: 1.1 }}
+                    >
+                      +{seasonsCount}
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
+                      Total Seasons
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                      {flightEvents.length} {flightEvents.length === 1 ? 'flight logged' : 'flights logged'}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Card 4: Total Pigeons */}
-              <div style={{
-                background: '#161b22',
-                border: '1px solid var(--border-default)',
-                borderRadius: '0.75rem',
-                padding: '0.88rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: '0.35rem'
-              }}>
-                <span style={{
-                  backgroundColor: 'rgba(33, 150, 243, 0.08)',
-                  color: '#2196F3',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
+              {/* Card 4: Total Pigeons Registered */}
+              <div
+                style={{
+                  background: 'rgba(22, 27, 38, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '1rem',
+                  padding: '1rem 1.15rem',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <BirdIcon size={16} />
-                </span>
-                <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2196F3', marginTop: '0.2rem' }}>{registeredBirds.length}</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>Total Pigeons</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Registered</span>
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: '3.1rem',
+                      height: '3.1rem',
+                      borderRadius: '50%',
+                      background: 'rgba(56, 189, 248, 0.14)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      boxShadow: '0 6px 16px rgba(56, 189, 248, 0.15)',
+                      color: '#38bdf8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <BirdIcon size={20} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="font-mono"
+                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#38bdf8', lineHeight: 1.1 }}
+                    >
+                      +{registeredBirds.length}
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
+                      Total Pigeons
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
+                      {cocksCount} Cocks • {hensCount} Hens
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Main Birds Registry (Rendered directly) */}
-          <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-default)', paddingTop: '1.25rem' }}>
-              {selectedHistoryBird ? (
-                /* INDIVIDUAL BIRD PERFORMANCE HISTORY */
-                <div>
-                  {/* Back button */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedHistoryBird(null)}
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid var(--border-default)',
-                      borderRadius: '0.5rem',
-                      color: 'var(--text-primary)',
-                      padding: '0.35rem 0.75rem',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      marginBottom: '0.88rem'
-                    }}
-                  >
-                    ← Back to Registry
-                  </button>
+          {/* ── Main Birds Registry Section ── */}
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1.25rem' }}>
+            {selectedHistoryBird ? (
+              /* INDIVIDUAL BIRD PERFORMANCE HISTORY */
+              <div>
+                {/* Back button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedHistoryBird(null)}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '0.5rem',
+                    color: 'var(--text-primary)',
+                    padding: '0.4rem 0.85rem',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    marginBottom: '0.9rem',
+                  }}
+                >
+                  ← Back to Loft Pigeons
+                </button>
 
-                  {/* Header card for the bird */}
-                  <div style={{
-                    background: '#161b22',
-                    border: '1px solid var(--border-default)',
-                    borderRadius: '0.75rem',
-                    padding: '0.88rem',
+                {/* Header card for the bird */}
+                <div
+                  style={{
+                    background: 'rgba(22, 27, 38, 0.95)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.85rem',
+                    padding: '1rem 1.15rem',
                     marginBottom: '1rem',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.3rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '1.05rem', color: 'var(--brand-gold)' }}>
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.85rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '0.75rem',
+                        background: 'rgba(255, 193, 7, 0.12)',
+                        border: '1px solid rgba(255, 193, 7, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <img src="/icon.png" alt={selectedHistoryBird.ringNo} style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                    </div>
+                    <div>
+                      <strong style={{ fontSize: '1.05rem', color: 'var(--brand-gold)', fontFamily: 'monospace' }}>
                         {selectedHistoryBird.ringNo}
                       </strong>
-                      <span style={{
-                        padding: '0.1rem 0.4rem',
-                        borderRadius: '3px',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        background: selectedHistoryBird.gender === 'Hen' ? 'rgba(233, 30, 99, 0.12)' : selectedHistoryBird.gender === 'Cock' ? 'rgba(33, 150, 243, 0.12)' : 'rgba(255,255,255,0.05)',
-                        color: selectedHistoryBird.gender === 'Hen' ? '#E91E63' : selectedHistoryBird.gender === 'Cock' ? '#2196F3' : 'var(--text-muted)'
-                      }}>
-                        {selectedHistoryBird.gender}
-                      </span>
-                    </div>
-                    {selectedHistoryBird.name && (
-                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        Alias: {selectedHistoryBird.name}
+                      <div style={{ fontSize: '0.76rem', color: '#cbd5e1', marginTop: '0.15rem' }}>
+                        {selectedHistoryBird.name ? `${selectedHistoryBird.name} • ` : ''}
+                        {selectedHistoryBird.color}
                       </div>
-                    )}
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                      Color: {selectedHistoryBird.color}
                     </div>
                   </div>
+                  <span
+                    style={{
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      background:
+                        selectedHistoryBird.gender === 'Hen'
+                          ? 'rgba(236, 72, 153, 0.15)'
+                          : selectedHistoryBird.gender === 'Cock'
+                          ? 'rgba(56, 189, 248, 0.15)'
+                          : 'rgba(255,255,255,0.06)',
+                      border:
+                        selectedHistoryBird.gender === 'Hen'
+                          ? '1px solid rgba(236, 72, 153, 0.35)'
+                          : selectedHistoryBird.gender === 'Cock'
+                          ? '1px solid rgba(56, 189, 248, 0.35)'
+                          : '1px solid rgba(255,255,255,0.1)',
+                      color:
+                        selectedHistoryBird.gender === 'Hen'
+                          ? '#f472b6'
+                          : selectedHistoryBird.gender === 'Cock'
+                          ? '#38bdf8'
+                          : 'var(--text-muted)',
+                    }}
+                  >
+                    {selectedHistoryBird.gender || 'Unsexed'}
+                  </span>
+                </div>
 
-                  {/* Timeline section */}
-                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff', marginBottom: '0.6rem' }}>
-                    Flight Performance Logs ({getBirdHistory(selectedHistoryBird.ringNo).length})
-                  </h4>
+                {/* Timeline section */}
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff', marginBottom: '0.6rem' }}>
+                  Flight Performance Logs ({getBirdHistory(selectedHistoryBird.ringNo).length})
+                </h4>
 
-                  {getBirdHistory(selectedHistoryBird.ringNo).length === 0 ? (
-                    <div style={{
+                {getBirdHistory(selectedHistoryBird.ringNo).length === 0 ? (
+                  <div
+                    style={{
                       padding: '2rem 1rem',
                       textAlign: 'center',
                       color: 'var(--text-secondary)',
-                      background: 'rgba(255,255,255,0.01)',
-                      border: '1px dotted var(--border-default)',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.75rem'
-                    }}>
-                      This bird hasn't clocked in any activities yet.
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                      {getBirdHistory(selectedHistoryBird.ringNo).map((row, idx) => {
-                        const photo = localPhotos[selectedHistoryBird.id]?.[row.eventId]
-                        const video = localVideos[selectedHistoryBird.id]?.[row.eventId]
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px dashed rgba(255,255,255,0.12)',
+                      borderRadius: '0.75rem',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    This bird hasn&apos;t clocked in any activities yet.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {getBirdHistory(selectedHistoryBird.ringNo).map((row, idx) => {
+                      const photo = localPhotos[selectedHistoryBird.id]?.[row.eventId]
+                      const video = localVideos[selectedHistoryBird.id]?.[row.eventId]
 
-                        return (
-                          <div
-                            key={idx}
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.02)',
-                              border: '1px solid var(--border-default)',
-                              borderRadius: '0.5rem',
-                              padding: '0.75rem',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.35rem'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
-                                📅 {row.date}
-                              </span>
-                              <span style={{
-                                fontSize: '0.65rem',
-                                fontWeight: 700,
-                                padding: '0.1rem 0.35rem',
-                                borderRadius: '3px',
-                                background: row.type === 'Training' ? 'rgba(33, 150, 243, 0.12)' : 'rgba(255, 193, 7, 0.12)',
-                                color: row.type === 'Training' ? '#2196F3' : 'var(--brand-gold)'
-                              }}>
-                                {row.type}
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <div>
-                                <strong style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                                  {row.title}
-                                </strong>
-                                <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '0.05rem' }}>
-                                  📍 {row.location} · 📏 {row.distance} km
-                                </div>
-                              </div>
-                              <div style={{ textAlign: 'right' }}>
-                                <strong style={{ fontSize: '0.82rem', color: 'var(--brand-gold)', display: 'block' }}>
-                                  {row.speed.toLocaleString()} m/min
-                                </strong>
-                                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
-                                  Rank #{row.rank} of {row.totalClocked}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem', paddingTop: '0.35rem', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-                                Clocked: <strong>{row.clockInTime}</strong>
-                              </span>
-                              
-                              <div style={{ display: 'flex', gap: '0.3rem' }}>
-                                {photo && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedMedia({ type: 'photo', url: photo })}
-                                    style={{
-                                      background: 'rgba(33, 150, 243, 0.08)',
-                                      border: '1px solid rgba(33, 150, 243, 0.2)',
-                                      borderRadius: '3px',
-                                      color: '#2196F3',
-                                      padding: '0.1rem 0.35rem',
-                                      fontSize: '0.58rem',
-                                      cursor: 'pointer',
-                                      fontWeight: 700
-                                    }}
-                                  >
-                                    📷 Photo
-                                  </button>
-                                )}
-                                {video && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedMedia({ type: 'video', url: video })}
-                                    style={{
-                                      background: 'rgba(76, 175, 80, 0.08)',
-                                      border: '1px solid rgba(76, 175, 80, 0.2)',
-                                      borderRadius: '3px',
-                                      color: '#4CAF50',
-                                      padding: '0.1rem 0.35rem',
-                                      fontSize: '0.58rem',
-                                      cursor: 'pointer',
-                                      fontWeight: 700
-                                    }}
-                                  >
-                                    📹 Video
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* MAIN BIRD REGISTRY LIST */
-                <>
-
-
-                  {/* Birds List */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                          Loft Pigeons ({filteredBirds.length})
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (onOpenRegistryTrigger) {
-                              onOpenRegistryTrigger()
-                            }
-                          }}
+                      return (
+                        <div
+                          key={idx}
                           style={{
+                            background: 'rgba(22, 27, 38, 0.85)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '0.75rem',
+                            padding: '0.85rem 1rem',
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                            padding: '0.2rem 0.5rem',
-                            background: 'rgba(255, 193, 7, 0.08)',
-                            border: '1px solid var(--brand-gold)',
-                            borderRadius: '0.25rem',
-                            color: 'var(--brand-gold)',
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
+                            flexDirection: 'column',
+                            gap: '0.35rem',
                           }}
                         >
-                          <PlusIcon size={10} /> Add
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={registrySearch}
-                        onChange={(e) => setRegistrySearch(e.target.value)}
-                        style={{
-                          padding: '0.3rem 0.6rem',
-                          background: 'var(--bg-input)',
-                          border: '1px solid var(--border-default)',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.72rem',
-                          color: 'var(--text-primary)',
-                          width: '100px'
-                        }}
-                      />
-                    </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                              📅 {row.date}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                padding: '0.1rem 0.45rem',
+                                borderRadius: '9999px',
+                                background: row.type === 'Training' ? 'rgba(56, 189, 248, 0.14)' : 'rgba(255, 193, 7, 0.14)',
+                                color: row.type === 'Training' ? '#38bdf8' : 'var(--brand-gold)',
+                              }}
+                            >
+                              {row.type}
+                            </span>
+                          </div>
 
-                    {filteredBirds.length === 0 ? (
-                      <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-                        No matching birds found.
-                      </div>
-                    ) : (
-                      <div style={{ overflowX: 'auto', border: '1px solid var(--border-default)', borderRadius: '0.5rem' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
-                          <thead>
-                            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-default)' }}>
-                              <th style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>Ring Number</th>
-                              <th style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>Color</th>
-                              <th style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>Name/Alias</th>
-                              <th style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>Gender</th>
-                              <th style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)', width: '4.5rem' }}>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredBirds.map((b) => (
-                              <tr key={b.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700 }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedHistoryBird(b)}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: 'var(--brand-gold)',
-                                      fontWeight: 700,
-                                      cursor: 'pointer',
-                                      padding: 0,
-                                      textAlign: 'left',
-                                      textDecoration: 'underline',
-                                      fontSize: 'inherit',
-                                      fontFamily: 'inherit'
-                                    }}
-                                    title="View Bird Performance History"
-                                  >
-                                    {b.ringNo}
-                                  </button>
-                                </td>
-                                <td style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>{b.color}</td>
-                                <td style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>{b.name || '—'}</td>
-                                <td style={{ padding: '0.4rem 0.6rem' }}>
-                                  <span style={{
-                                    padding: '0.1rem 0.3rem',
-                                    borderRadius: '3px',
-                                    background: b.gender === 'Hen' ? 'rgba(233, 30, 99, 0.12)' : b.gender === 'Cock' ? 'rgba(33, 150, 243, 0.12)' : 'rgba(255,255,255,0.05)',
-                                    color: b.gender === 'Hen' ? '#E91E63' : b.gender === 'Cock' ? '#2196F3' : 'var(--text-muted)'
-                                  }}>
-                                    {b.gender}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '0.4rem 0.6rem', display: 'flex', gap: '0.35rem' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedHistoryBird(b)}
-                                    style={{
-                                      background: 'rgba(255, 193, 7, 0.08)',
-                                      border: '1px solid rgba(255, 193, 7, 0.2)',
-                                      borderRadius: '4px',
-                                      color: 'var(--brand-gold)',
-                                      padding: '0.2rem',
-                                      width: '1.5rem',
-                                      height: '1.5rem',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                    }}
-                                    title="View Performance History"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteBird(b.id)}
-                                    style={{
-                                      background: 'rgba(239, 68, 68, 0.08)',
-                                      border: '1px solid rgba(239, 68, 68, 0.2)',
-                                      borderRadius: '4px',
-                                      color: '#EF4444',
-                                      padding: '0.2rem',
-                                      width: '1.5rem',
-                                      height: '1.5rem',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                    }}
-                                    title="Delete Bird"
-                                  >
-                                    <TrashIcon size={12} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                              <strong style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{row.title}</strong>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                                📍 {row.location} · 📏 {row.distance} km
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--brand-gold)', display: 'block', fontFamily: 'monospace' }}>
+                                {row.speed.toLocaleString()} m/min
+                              </strong>
+                              <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                                Rank #{row.rank} of {row.totalClocked}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginTop: '0.2rem',
+                              paddingTop: '0.35rem',
+                              borderTop: '1px solid rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
+                              Clocked: <strong>{row.clockInTime}</strong>
+                            </span>
+
+                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                              {photo && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMedia({ type: 'photo', url: photo })}
+                                  style={{
+                                    background: 'rgba(56, 189, 248, 0.1)',
+                                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                                    borderRadius: '4px',
+                                    color: '#38bdf8',
+                                    padding: '0.15rem 0.45rem',
+                                    fontSize: '0.62rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  📷 Photo
+                                </button>
+                              )}
+                              {video && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMedia({ type: 'video', url: video })}
+                                  style={{
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                                    borderRadius: '4px',
+                                    color: '#10b981',
+                                    padding: '0.15rem 0.45rem',
+                                    fontSize: '0.62rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  📹 Video
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              /* MAIN BIRD REGISTRY LIST */
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.85rem',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: '#38bdf8',
+                        boxShadow: '0 0 8px #38bdf8',
+                      }}
+                    />
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                      Loft Pigeons ({filteredBirds.length})
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenRegistryTrigger) {
+                          onOpenRegistryTrigger()
+                        }
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.28rem 0.65rem',
+                        background: 'rgba(255, 193, 7, 0.12)',
+                        border: '1px solid rgba(255, 193, 7, 0.4)',
+                        borderRadius: '9999px',
+                        color: '#FFC107',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <PlusIcon size={11} /> Add Bird
+                    </button>
+                  </div>
 
+                  {/* Sleek Search Input */}
+                  <div style={{ position: 'relative', width: '190px' }}>
+                    <input
+                      type="text"
+                      placeholder="Search ring, name, color..."
+                      value={registrySearch}
+                      onChange={(e) => setRegistrySearch(e.target.value)}
+                      style={{
+                        padding: '0.38rem 0.75rem',
+                        background: 'rgba(15, 23, 42, 0.8)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '9999px',
+                        fontSize: '0.72rem',
+                        color: 'var(--text-primary)',
+                        width: '100%',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {filteredBirds.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '2rem 1.5rem',
+                      textAlign: 'center',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.76rem',
+                      background: 'rgba(22, 27, 38, 0.5)',
+                      border: '1px dashed rgba(255, 255, 255, 0.1)',
+                      borderRadius: '0.85rem',
+                    }}
+                  >
+                    No matching pigeons found in your loft registry.
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      overflowX: 'auto',
+                      background: 'rgba(22, 27, 38, 0.75)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '0.85rem',
+                    }}
+                  >
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          }}
+                        >
+                          <th style={{ padding: '0.6rem 0.85rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Ring Number
+                          </th>
+                          <th style={{ padding: '0.6rem 0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Color
+                          </th>
+                          <th style={{ padding: '0.6rem 0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Name / Alias
+                          </th>
+                          <th style={{ padding: '0.6rem 0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Gender
+                          </th>
+                          <th style={{ padding: '0.6rem 0.85rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredBirds.map((b) => (
+                          <tr
+                            key={b.id}
+                            style={{
+                              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                              transition: 'background 0.15s ease',
+                            }}
+                          >
+                            <td style={{ padding: '0.55rem 0.85rem', fontWeight: 700 }}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedHistoryBird(b)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#FFC107',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  textAlign: 'left',
+                                  fontSize: '0.76rem',
+                                  fontFamily: 'monospace',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.45rem',
+                                }}
+                                title="View Bird Performance History"
+                              >
+                                <span
+                                  style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255, 193, 7, 0.1)',
+                                    border: '1px solid rgba(255, 193, 7, 0.25)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <img src="/icon.png" alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                                </span>
+                                <span style={{ textDecoration: 'underline', textUnderlineOffset: '3px' }}>{b.ringNo}</span>
+                              </button>
+                            </td>
+                            <td style={{ padding: '0.55rem 0.75rem', color: '#cbd5e1', fontWeight: 500 }}>{b.color}</td>
+                            <td style={{ padding: '0.55rem 0.75rem', color: '#e2e8f0', fontWeight: 600 }}>{b.name || '—'}</td>
+                            <td style={{ padding: '0.55rem 0.75rem' }}>
+                              <span
+                                style={{
+                                  padding: '0.16rem 0.5rem',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.66rem',
+                                  fontWeight: 800,
+                                  background:
+                                    b.gender === 'Hen'
+                                      ? 'rgba(236, 72, 153, 0.14)'
+                                      : b.gender === 'Cock'
+                                      ? 'rgba(56, 189, 248, 0.14)'
+                                      : 'rgba(255,255,255,0.06)',
+                                  border:
+                                    b.gender === 'Hen'
+                                      ? '1px solid rgba(236, 72, 153, 0.3)'
+                                      : b.gender === 'Cock'
+                                      ? '1px solid rgba(56, 189, 248, 0.3)'
+                                      : '1px solid rgba(255,255,255,0.1)',
+                                  color:
+                                    b.gender === 'Hen' ? '#f472b6' : b.gender === 'Cock' ? '#38bdf8' : 'var(--text-muted)',
+                                }}
+                              >
+                                {b.gender || '—'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.55rem 0.85rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedHistoryBird(b)}
+                                  style={{
+                                    background: 'rgba(255, 193, 7, 0.1)',
+                                    border: '1px solid rgba(255, 193, 7, 0.28)',
+                                    borderRadius: '6px',
+                                    color: 'var(--brand-gold)',
+                                    width: '1.65rem',
+                                    height: '1.65rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                  title="View Performance History"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBird(b.id)}
+                                  style={{
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.28)',
+                                    borderRadius: '6px',
+                                    color: '#f87171',
+                                    width: '1.65rem',
+                                    height: '1.65rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                  title="Delete Bird"
+                                >
+                                  <TrashIcon size={12} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

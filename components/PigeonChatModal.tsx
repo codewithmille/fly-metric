@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import type { RaceEvent } from '@/app/api/race-events/route'
 
 interface Message {
   role: 'user' | 'model'
@@ -9,19 +10,158 @@ interface Message {
   isTyping?: boolean   // true while typewriter is animating
 }
 
+export interface LoftBirdInfo {
+  id: string
+  ringNo: string
+  color: string
+  name: string | null
+  gender: string | null
+  birthdate?: string | null
+  strain?: string | null
+  status?: string | null
+  notes?: string | null
+  sire?: string | null
+  dam?: string | null
+}
+
 interface PigeonChatModalProps {
   isOpen: boolean
   onClose: () => void
+  registeredBirds?: LoftBirdInfo[]
+  events?: RaceEvent[]
+  loftName?: string
 }
 
 const QUICK_QUESTIONS = [
+  '🏆 What is my best performing pigeon?',
+  '📊 Summarize my loft birds & race stats',
   '🏁 What do I feed pigeons after a race?',
   '💊 What supplements on Wednesday?',
-  '🌾 Best grain mix for racing?',
-  '🛁 When should I give bath?',
-  '⚡ How to build stamina?',
-  '🦠 Signs of Canker disease?',
+  '⚡ How to build stamina for 300km+?',
+  '🦠 Signs of Canker & respiratory disease?',
 ]
+
+function buildLoftContext(
+  birds: LoftBirdInfo[] = [],
+  events: RaceEvent[] = [],
+  loftName?: string
+): string {
+  const lines: string[] = []
+  lines.push(`Loft Name: ${loftName || 'My Loft'}`)
+  lines.push(`Total Registered Birds: ${birds.length}`)
+  lines.push(`Total Logged Activities/Events: ${events.length}`)
+
+  // Aggregate per-bird race/training performance across all events
+  const perfMap = new Map<
+    string,
+    {
+      ringNo: string
+      flights: number
+      races: number
+      trainings: number
+      maxSpeed: number
+      totalSpeed: number
+      bestEvent: string
+      history: string[]
+    }
+  >()
+
+  for (const ev of events) {
+    const type = ev.extendedProps?.club || 'Race'
+    if (type !== 'Race' && type !== 'Training') continue
+    const dist = ev.extendedProps?.distance || 0
+    try {
+      const clocked: Array<{ ringNo: string; clockInTime?: string; speed?: number }> = JSON.parse(
+        ev.extendedProps?.birds || '[]'
+      )
+      if (!Array.isArray(clocked)) continue
+      for (const rec of clocked) {
+        if (!rec.ringNo) continue
+        const key = rec.ringNo.trim().toUpperCase()
+        const spd = Number(rec.speed) || 0
+        const existing = perfMap.get(key) || {
+          ringNo: rec.ringNo,
+          flights: 0,
+          races: 0,
+          trainings: 0,
+          maxSpeed: 0,
+          totalSpeed: 0,
+          bestEvent: '',
+          history: [],
+        }
+        existing.flights += 1
+        if (type === 'Race') existing.races += 1
+        if (type === 'Training') existing.trainings += 1
+        if (spd > 0) {
+          existing.totalSpeed += spd
+          if (spd > existing.maxSpeed) {
+            existing.maxSpeed = spd
+            existing.bestEvent = `${ev.title} (${ev.date}${dist ? `, ${dist}km` : ''})`
+          }
+        }
+        existing.history.push(
+          `${ev.date} [${type}] ${ev.title}: ${spd > 0 ? `${spd.toFixed(2)} m/min` : 'clocked'}`
+        )
+        perfMap.set(key, existing)
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+
+  // Sort performers by maxSpeed descending, then flights descending
+  const rankedPerformers = Array.from(perfMap.values()).sort(
+    (a, b) => b.maxSpeed - a.maxSpeed || b.flights - a.flights
+  )
+
+  if (rankedPerformers.length > 0) {
+    lines.push('\n--- TOP PERFORMING PIGEONS (RANKED BY VELOCITY m/min) ---')
+    rankedPerformers.slice(0, 25).forEach((p, idx) => {
+      const reg = birds.find((b) => b.ringNo.trim().toUpperCase() === p.ringNo.trim().toUpperCase())
+      const avgSpeed = p.flights > 0 ? (p.totalSpeed / p.flights).toFixed(2) : '0'
+      const details = reg
+        ? `Name: ${reg.name || 'Unnamed'} | Color: ${reg.color} | Gender: ${reg.gender || 'N/A'} | Strain: ${reg.strain || 'N/A'} | Sire: ${reg.sire || 'N/A'} | Dam: ${reg.dam || 'N/A'} | Status: ${reg.status || 'Active'}`
+        : 'Not in registry'
+      lines.push(
+        `#${idx + 1} Ring: ${p.ringNo} | Max Speed: ${p.maxSpeed.toFixed(2)} m/min | Avg Speed: ${avgSpeed} m/min | Flights: ${p.flights} (${p.races} Races, ${p.trainings} Tosses) | Best Flight: ${p.bestEvent || 'N/A'} | ${details}`
+      )
+      if (p.history.length > 0) {
+        lines.push(`   Flight Logs: ${p.history.slice(0, 5).join(' ; ')}`)
+      }
+    })
+  } else {
+    lines.push('\n--- TOP PERFORMING PIGEONS ---')
+    lines.push('No clocked race or training velocities recorded yet.')
+  }
+
+  if (birds.length > 0) {
+    lines.push('\n--- REGISTERED LOFT BIRDS LEDGER ---')
+    birds.slice(0, 50).forEach((b) => {
+      lines.push(
+        `- Ring: ${b.ringNo} | Name: ${b.name || 'None'} | Color: ${b.color} | Gender: ${b.gender || 'Unknown'} | Strain: ${b.strain || 'N/A'} | Sire: ${b.sire || 'N/A'} | Dam: ${b.dam || 'N/A'} | Status: ${b.status || 'Active'}${b.notes ? ` | Notes: ${b.notes}` : ''}`
+      )
+    })
+  }
+
+  if (events.length > 0) {
+    lines.push('\n--- RECENT LOFT EVENTS (RACES, TRAININGS, MEDICATIONS, TASKS) ---')
+    const sortedEvents = [...events]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 20)
+    sortedEvents.forEach((ev) => {
+      const type = ev.extendedProps?.club || 'Race'
+      const loc = ev.extendedProps?.location || ''
+      const dist = ev.extendedProps?.distance ? `${ev.extendedProps.distance}km` : ''
+      const maxSpd = ev.extendedProps?.maxSpeed ? `Max Speed: ${ev.extendedProps.maxSpeed} m/min` : ''
+      const win = ev.extendedProps?.winner ? `Details/Winner: ${ev.extendedProps.winner}` : ''
+      lines.push(
+        `- ${ev.date} [${type}] "${ev.title}" ${loc ? `@ ${loc}` : ''} ${dist} ${maxSpd} ${win}`.trim()
+      )
+    })
+  }
+
+  return lines.join('\n')
+}
 
 function formatText(text: string): string {
   return text
@@ -93,10 +233,11 @@ function MessageBubble({
         fontSize: '0.85rem',
         background: msg.role === 'user'
           ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
-          : 'linear-gradient(135deg, #10b981, #047857)',
-        boxShadow: msg.role === 'model' ? '0 0 8px rgba(16,185,129,0.3)' : 'none',
+          : 'rgba(16, 185, 129, 0.14)',
+        border: msg.role === 'model' ? '1px solid rgba(16,185,129,0.35)' : 'none',
+        boxShadow: msg.role === 'model' ? '0 0 8px rgba(16,185,129,0.25)' : 'none',
       }}>
-        {msg.role === 'user' ? '👤' : '🕊️'}
+        {msg.role === 'user' ? '👤' : <img src="/icon.png" alt="AI" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
       </div>
 
       {/* Bubble */}
@@ -133,7 +274,13 @@ function MessageBubble({
   )
 }
 
-export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProps) {
+export default function PigeonChatModal({
+  isOpen,
+  onClose,
+  registeredBirds = [],
+  events = [],
+  loftName,
+}: PigeonChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -144,6 +291,12 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
   const inputAreaRef = useRef<HTMLDivElement>(null)
+
+  // Memoize the compiled loft database summary
+  const loftContext = useMemo(
+    () => buildLoftContext(registeredBirds, events, loftName),
+    [registeredBirds, events, loftName]
+  )
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -196,9 +349,6 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
 
   if (!isOpen) return null
 
-  // Dynamically cap modal height to visual viewport (shrinks when keyboard opens)
-  const modalHeight = viewportHeight ? `${viewportHeight}px` : '92dvh'
-
   const markTypingDone = (idx: number) => {
     setMessages(prev => prev.map((m, i) =>
       i === idx ? { ...m, isTyping: false } : m
@@ -222,7 +372,8 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, text: m.text }))
+          messages: newMessages.map(m => ({ role: m.role, text: m.text })),
+          loftContext,
         })
       })
 
@@ -330,12 +481,14 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 1 }}>
             <div style={{
               width: '42px', height: '42px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #10b981, #047857)',
+              background: 'rgba(13, 17, 23, 0.75)',
+              border: '1.5px solid rgba(16, 185, 129, 0.45)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.3rem',
-              boxShadow: '0 0 16px rgba(16,185,129,0.4)',
+              boxShadow: '0 0 16px rgba(16,185,129,0.35)',
               flexShrink: 0,
-            }}>🕊️</div>
+            }}>
+              <img src="/icon.png" alt="FlyMetric AI" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+            </div>
             <div>
               <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>
                 FlyMetric AI
@@ -343,7 +496,7 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.1rem' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', animation: 'pulse 2s infinite' }} />
                 <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 600 }}>
-                  {isLoading ? 'Typing…' : 'Pigeon Racing Expert • Online'}
+                  {isLoading ? 'Analyzing loft data…' : `Connected to Loft (${registeredBirds.length} birds)`}
                 </span>
               </div>
             </div>
@@ -386,12 +539,23 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
           {!hasStarted && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', paddingTop: '1.5rem' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3.5rem', marginBottom: '0.5rem', filter: 'drop-shadow(0 0 12px rgba(16,185,129,0.5))' }}>🕊️</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
+                  <img
+                    src="/icon.png"
+                    alt="FlyMetric AI"
+                    style={{
+                      width: '78px',
+                      height: '78px',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 0 16px rgba(16,185,129,0.45))',
+                    }}
+                  />
+                </div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.35rem' }}>
                   FlyMetric AI Assistant
                 </h2>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '280px', margin: '0 auto' }}>
-                  Your expert companion for pigeon racing, loft management, feeding, health, and training.
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' }}>
+                  Connected to your live loft database. Ask about your fastest pigeons, bloodlines, race speeds, feeding, or health.
                 </p>
               </div>
 
@@ -405,26 +569,26 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
                       key={i}
                       onClick={() => sendMessage(q.replace(/^[^\s]+\s/, ''))}
                       style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        border: '1px solid rgba(255,255,255,0.07)',
+                        background: i < 2 ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
+                        border: i < 2 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(255,255,255,0.07)',
                         borderRadius: '0.5rem',
                         padding: '0.5rem 0.6rem',
                         textAlign: 'left',
                         cursor: 'pointer',
-                        color: 'var(--text-secondary)',
+                        color: i < 2 ? '#e6edf3' : 'var(--text-secondary)',
                         fontSize: '0.72rem',
                         lineHeight: 1.3,
                         transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.06)'
-                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(16,185,129,0.2)'
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(16,185,129,0.35)'
                         ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.02)'
-                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'
-                        ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'
+                        (e.currentTarget as HTMLButtonElement).style.background = i < 2 ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = i < 2 ? 'rgba(16,185,129,0.22)' : 'rgba(255,255,255,0.07)'
+                        ;(e.currentTarget as HTMLButtonElement).style.color = i < 2 ? '#e6edf3' : 'var(--text-secondary)'
                       }}
                     >
                       {q}
@@ -450,12 +614,14 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #10b981, #047857)',
+                background: 'rgba(16, 185, 129, 0.14)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem',
-                boxShadow: '0 0 8px rgba(16,185,129,0.3)',
+                boxShadow: '0 0 8px rgba(16,185,129,0.25)',
                 flexShrink: 0,
-              }}>🕊️</div>
+              }}>
+                <img src="/icon.png" alt="AI" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+              </div>
               <div style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.07)',
@@ -503,7 +669,7 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
               onChange={e => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={handleInputFocus}
-              placeholder="Ask about pigeon racing, feeding, health…"
+              placeholder="Ask about your pigeons, best racer, feeding, health…"
               disabled={isLoading}
               rows={1}
               style={{
@@ -545,7 +711,7 @@ export default function PigeonChatModal({ isOpen, onClose }: PigeonChatModalProp
             </button>
           </div>
           <p style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '0.4rem' }}>
-            Powered by Gemini AI • Pigeon racing expert
+            Powered by Gemini AI • Synced with your Loft Registry &amp; Race History
           </p>
         </div>
       </div>
