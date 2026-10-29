@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam } = body
+    const { ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam, rfidTag } = body
 
     if (!ringNo || !color) {
       return NextResponse.json({ error: 'Ring Number and Color are required' }, { status: 400 })
@@ -93,6 +93,7 @@ export async function POST(request: Request) {
         notes: notes ? notes.trim() : null,
         sire: sire ? sire.trim() : null,
         dam: dam ? dam.trim() : null,
+        rfidTag: rfidTag ? rfidTag.trim() : null,
       },
     })
 
@@ -113,7 +114,7 @@ export async function PUT(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { id, ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam } = body
+    const { id, ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam, rfidTag } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Bird ID is required for editing' }, { status: 400 })
@@ -149,6 +150,7 @@ export async function PUT(request: Request) {
         notes: notes ? notes.trim() : null,
         sire: sire ? sire.trim() : null,
         dam: dam ? dam.trim() : null,
+        rfidTag: rfidTag ? rfidTag.trim() : null,
       },
     })
 

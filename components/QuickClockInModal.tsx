@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, TrophyIcon, TagIcon, TimerIcon, PlusIcon, CalendarIcon } from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
+import { useRfidScanner } from '@/hooks/useRfidScanner'
 
 interface LoftBird {
   id: string
@@ -17,6 +18,7 @@ interface LoftBird {
   notes?: string | null
   sire?: string | null
   dam?: string | null
+  rfidTag?: string | null
 }
 
 interface QuickClockInModalProps {
@@ -49,6 +51,8 @@ export default function QuickClockInModal({
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [autoSubmitOnScan, setAutoSubmitOnScan] = useState(true)
+  const [rfidFlash, setRfidFlash] = useState<{ status: 'success' | 'warning'; message: string } | null>(null)
 
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -91,6 +95,161 @@ export default function QuickClockInModal({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
+
+  const handleClockIn = async (overrideRing?: string, overrideTime?: string, overrideEventId?: string) => {
+    const finalEventId = overrideEventId || selectedEventId
+    const finalRing = (overrideRing || ringNo).trim()
+    const finalTime = overrideTime || clockInTime
+
+    setError('')
+    setSuccess(false)
+
+    if (!finalEventId) {
+      setError('Please select a race or training event first.')
+      return
+    }
+
+    if (!finalRing) {
+      setError('Please enter a bird Ring Number.')
+      return
+    }
+
+    if (!finalTime) {
+      setError('Please select a clock-in arrival time.')
+      return
+    }
+
+    const event = events.find((e) => e.id === finalEventId)
+    if (!event) {
+      setError('Selected event not found.')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      // Calculate speed
+      const distanceKm = event.extendedProps.distance || 0
+      const releaseTime = event.extendedProps.releaseTime || '06:00'
+      
+      const [rH, rM] = releaseTime.split(':').map(Number)
+      const [cH, cM] = finalTime.split(':').map(Number)
+      const releaseMinutes = rH * 60 + rM
+      const clockInMinutes = cH * 60 + cM
+
+      if (clockInMinutes <= releaseMinutes) {
+        throw new Error(`Clock-in time must be after release time (${releaseTime}).`)
+      }
+
+      const flyingTotalMins = clockInMinutes - releaseMinutes
+      const distanceMeters = distanceKm * 1000
+      const calculatedSpeed = Math.round(distanceMeters / flyingTotalMins)
+
+      // Read existing clocked birds
+      let birdsList: BirdRecord[] = []
+      try {
+        birdsList = JSON.parse(event.extendedProps.birds || '[]')
+      } catch (e) {
+        birdsList = []
+      }
+
+      // Check if ring number is already clocked
+      if (birdsList.some((b) => b.ringNo.toUpperCase() === finalRing.toUpperCase())) {
+        throw new Error(`Bird with Ring No. "${finalRing.toUpperCase()}" is already clocked in for this event.`)
+      }
+
+      // Append new bird
+      const newBird: BirdRecord = {
+        ringNo: finalRing.toUpperCase(),
+        clockInTime: finalTime,
+        speed: calculatedSpeed,
+      }
+      birdsList.push(newBird)
+
+      // Recalculate stats
+      const totalBirds = birdsList.length
+      const speeds = birdsList.map((b) => b.speed)
+      const maxSpeed = Math.max(...speeds)
+      const avgSpeed = Math.round(speeds.reduce((sum, s) => sum + s, 0) / totalBirds)
+      
+      // Find winner ring number (fastest speed)
+      const fastestBird = birdsList.reduce((fastest, current) => 
+        current.speed > fastest.speed ? current : fastest
+      , birdsList[0])
+      
+      const winnerRing = event.extendedProps.club === 'Training' ? 'N/A' : fastestBird.ringNo
+
+      // Update the event in local database (syncs to Supabase when online)
+      const res = await saveEvent(authToken, {
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        totalBirds,
+        maxSpeed,
+        avgSpeed,
+        location: event.extendedProps.location,
+        club: event.extendedProps.club,
+        distance: distanceKm,
+        winner: winnerRing,
+        releaseTime,
+        clockInTime: finalTime,
+        birds: JSON.stringify(birdsList),
+      }, true)
+
+      if (!res.success) {
+        throw new Error('Failed to clock in bird')
+      }
+
+      setSuccess(true)
+      onClockInSaved()
+
+      setTimeout(() => {
+        setSuccess(false)
+        onClose()
+      }, 1200)
+
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during clock-in.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Handle incoming RFID Proximity scans from 125kHz USB Reader
+  useRfidScanner({
+    enabled: isOpen && flightEvents.length > 0,
+    onScan: (scannedTag) => {
+      const now = new Date()
+      const hrs = String(now.getHours()).padStart(2, '0')
+      const mins = String(now.getMinutes()).padStart(2, '0')
+      const timeNow = `${hrs}:${mins}`
+
+      const matched = registeredBirds.find((b) => 
+        (b.rfidTag && b.rfidTag.toLowerCase() === scannedTag.toLowerCase()) ||
+        b.ringNo.toLowerCase() === scannedTag.toLowerCase()
+      )
+
+      if (matched) {
+        setRingNo(matched.ringNo)
+        setClockInTime(timeNow)
+        setRfidFlash({
+          status: 'success',
+          message: `📡 RFID Scanned: ${matched.ringNo} (${matched.name || matched.color}) at ${timeNow}`
+        })
+        setTimeout(() => setRfidFlash(null), 4000)
+
+        if (autoSubmitOnScan && selectedEventId) {
+          handleClockIn(matched.ringNo, timeNow, selectedEventId)
+        }
+      } else {
+        setRfidFlash({
+          status: 'warning',
+          message: `⚠️ Unrecognized RFID "${scannedTag}". Pair this blue ring in Bird Registry first.`
+        })
+        setTimeout(() => setRfidFlash(null), 5000)
+      }
+    }
+  })
 
   if (!isOpen) return null
 
@@ -152,121 +311,6 @@ export default function QuickClockInModal({
     const newH = String(Math.floor(total / 60)).padStart(2, '0')
     const newM = String(total % 60).padStart(2, '0')
     setClockInTime(`${newH}:${newM}`)
-  }
-
-  const handleClockIn = async () => {
-    setError('')
-    setSuccess(false)
-
-    if (!selectedEventId) {
-      setError('Please select a race or training event first.')
-      return
-    }
-
-    if (!ringNo.trim()) {
-      setError('Please enter a bird Ring Number.')
-      return
-    }
-
-    if (!clockInTime) {
-      setError('Please select a clock-in arrival time.')
-      return
-    }
-
-    const event = events.find((e) => e.id === selectedEventId)
-    if (!event) {
-      setError('Selected event not found.')
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      // Calculate speed
-      const distanceKm = event.extendedProps.distance || 0
-      const releaseTime = event.extendedProps.releaseTime || '06:00'
-      
-      const [rH, rM] = releaseTime.split(':').map(Number)
-      const [cH, cM] = clockInTime.split(':').map(Number)
-      const releaseMinutes = rH * 60 + rM
-      const clockInMinutes = cH * 60 + cM
-
-      if (clockInMinutes <= releaseMinutes) {
-        throw new Error(`Clock-in time must be after release time (${releaseTime}).`)
-      }
-
-      const flyingTotalMins = clockInMinutes - releaseMinutes
-      const distanceMeters = distanceKm * 1000
-      const calculatedSpeed = Math.round(distanceMeters / flyingTotalMins)
-
-      // Read existing clocked birds
-      let birdsList: BirdRecord[] = []
-      try {
-        birdsList = JSON.parse(event.extendedProps.birds || '[]')
-      } catch (e) {
-        birdsList = []
-      }
-
-      // Check if ring number is already clocked
-      if (birdsList.some((b) => b.ringNo.toUpperCase() === ringNo.trim().toUpperCase())) {
-        throw new Error(`Bird with Ring No. "${ringNo.trim().toUpperCase()}" is already clocked in for this event.`)
-      }
-
-      // Append new bird
-      const newBird: BirdRecord = {
-        ringNo: ringNo.trim().toUpperCase(),
-        clockInTime,
-        speed: calculatedSpeed,
-      }
-      birdsList.push(newBird)
-
-      // Recalculate stats
-      const totalBirds = birdsList.length
-      const speeds = birdsList.map((b) => b.speed)
-      const maxSpeed = Math.max(...speeds)
-      const avgSpeed = Math.round(speeds.reduce((sum, s) => sum + s, 0) / totalBirds)
-      
-      // Find winner ring number (fastest speed)
-      const fastestBird = birdsList.reduce((fastest, current) => 
-        current.speed > fastest.speed ? current : fastest
-      , birdsList[0])
-      
-      const winnerRing = event.extendedProps.club === 'Training' ? 'N/A' : fastestBird.ringNo
-
-      // Update the event in local database (syncs to Supabase when online)
-      const res = await saveEvent(authToken, {
-        id: event.id,
-        title: event.title,
-        date: event.date,
-        totalBirds,
-        maxSpeed,
-        avgSpeed,
-        location: event.extendedProps.location,
-        club: event.extendedProps.club,
-        distance: distanceKm,
-        winner: winnerRing,
-        releaseTime,
-        clockInTime, // Set latest clocked bird arrival time
-        birds: JSON.stringify(birdsList),
-      }, true)
-
-      if (!res.success) {
-        throw new Error('Failed to clock in bird')
-      }
-
-      setSuccess(true)
-      onClockInSaved()
-
-      setTimeout(() => {
-        setSuccess(false)
-        onClose()
-      }, 1000)
-
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during clock-in.')
-    } finally {
-      setSaving(false)
-    }
   }
 
   return (
@@ -394,6 +438,65 @@ export default function QuickClockInModal({
             </div>
           ) : (
             <>
+              {/* ── 125kHz RFID Proximity Reader Sensor Bar ── */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '0.65rem',
+                  border: '1px solid rgba(255, 193, 7, 0.25)',
+                  background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.09) 0%, rgba(255, 193, 7, 0.02) 100%)',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <span style={{ position: 'relative', display: 'flex', width: '10px', height: '10px' }}>
+                    <span style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '50%', background: '#FFC107', opacity: 0.75 }}></span>
+                    <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '50%', height: '10px', width: '10px', background: '#FFC107' }}></span>
+                  </span>
+                  <div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#FFC107', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      📡 125kHz RFID Loft Scanner Live
+                    </div>
+                    <div style={{ fontSize: '0.66rem', color: 'rgba(255, 255, 255, 0.55)' }}>
+                      Swipe pigeon's blue leg tag across USB reader
+                    </div>
+                  </div>
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.7rem', color: '#cbd5e1', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={autoSubmitOnScan}
+                    onChange={(e) => setAutoSubmitOnScan(e.target.checked)}
+                    style={{ accentColor: '#FFC107', cursor: 'pointer', width: '14px', height: '14px' }}
+                  />
+                  <span style={{ fontWeight: 600 }}>Auto-Save on Scan</span>
+                </label>
+              </div>
+
+              {rfidFlash && (
+                <div
+                  style={{
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.65rem',
+                    border: rfidFlash.status === 'success' ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                    background: rfidFlash.status === 'success' ? 'rgba(76, 175, 80, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                    color: rfidFlash.status === 'success' ? '#81C784' : '#FBBF24',
+                    fontSize: '0.76rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                  }}
+                >
+                  <span>{rfidFlash.message}</span>
+                </div>
+              )}
+
               {/* Event Select Dropdown */}
               <div className="form-group">
                 <label htmlFor="event-select" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.78rem', color: '#cbd5e1' }}>
@@ -490,7 +593,7 @@ export default function QuickClockInModal({
                     >
                       {registeredBirds.map((b) => (
                         <option key={b.id} value={b.ringNo}>
-                          {b.ringNo} {b.name ? `(${b.name})` : ''} · {b.color} · {b.gender || 'Racer'}
+                          {b.ringNo} {b.name ? `(${b.name})` : ''} {b.rfidTag ? `[📡 RFID: ${b.rfidTag}]` : ''} · {b.color} · {b.gender || 'Racer'}
                         </option>
                       ))}
                     </select>
@@ -525,8 +628,24 @@ export default function QuickClockInModal({
                             <img src="/icon.png" alt="" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-gold)', fontFamily: 'monospace' }}>
-                              {selectedBird.ringNo}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-gold)', fontFamily: 'monospace' }}>
+                                {selectedBird.ringNo}
+                              </span>
+                              {selectedBird.rfidTag && (
+                                <span style={{
+                                  fontSize: '0.62rem',
+                                  padding: '0.05rem 0.35rem',
+                                  borderRadius: '3px',
+                                  background: 'rgba(255,193,7,0.12)',
+                                  color: '#FFC107',
+                                  border: '1px solid rgba(255,193,7,0.3)',
+                                  fontFamily: 'monospace',
+                                  fontWeight: 600
+                                }} title={`125kHz RFID: ${selectedBird.rfidTag}`}>
+                                  📡 {selectedBird.rfidTag}
+                                </span>
+                              )}
                             </div>
                             <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
                               {selectedBird.name ? `${selectedBird.name} • ` : ''}{selectedBird.color}
@@ -760,7 +879,7 @@ export default function QuickClockInModal({
                 <button
                   type="button"
                   className="btn-primary"
-                  onClick={handleClockIn}
+                  onClick={() => handleClockIn()}
                   disabled={saving || success}
                   style={{
                     background: success

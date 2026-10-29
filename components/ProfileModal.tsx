@@ -20,6 +20,7 @@ interface LoftBird {
   notes?: string | null
   sire?: string | null
   dam?: string | null
+  rfidTag?: string | null
   createdAt?: string
 }
 
@@ -685,26 +686,9 @@ export default function ProfileModal({
             }}
           />
 
-          {/* Top Left Verified Loft Badge */}
+          {/* Top Left Verified Loft Badge (hidden on mobile to give room) */}
           <div
-            style={{
-              position: 'absolute',
-              top: '14px',
-              left: '18px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0.25rem 0.65rem',
-              borderRadius: '9999px',
-              background: 'rgba(16, 185, 129, 0.14)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              color: '#34d399',
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="hidden sm:inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md absolute top-3.5 left-4.5"
           >
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
             FlyMetric Loft Profile
@@ -712,38 +696,15 @@ export default function ProfileModal({
 
           {/* Quick Edit Profile Pill + Settings Gear + Close Button */}
           <div
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              zIndex: 20,
-            }}
+            className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 flex items-center gap-1.5 z-20"
           >
             <button
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
-              style={{
-                height: '34px',
-                padding: '0 0.75rem',
-                borderRadius: '9999px',
-                background: 'rgba(255, 193, 7, 0.14)',
-                border: '1px solid rgba(255, 193, 7, 0.35)',
-                color: '#FFC107',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.15s ease',
-              }}
+              className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-amber-400 text-xs font-bold inline-flex items-center gap-1 backdrop-blur-md transition-all"
               title="Edit Loft Name & GPS"
             >
-              ✏️ Edit Loft
+              ✏️ <span className="hidden xs:inline">Edit</span> Loft
             </button>
 
             <button
@@ -752,8 +713,8 @@ export default function ProfileModal({
               onClick={() => setIsSettingsMenuOpen(true)}
               style={{
                 position: 'static',
-                width: '34px',
-                height: '34px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 background: 'rgba(15, 23, 42, 0.65)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -767,7 +728,7 @@ export default function ProfileModal({
               aria-label="Settings"
               title="Loft Options"
             >
-              <SettingsIcon size={17} />
+              <SettingsIcon size={16} />
             </button>
 
             <button
@@ -775,8 +736,8 @@ export default function ProfileModal({
               className="profile-close-btn"
               style={{
                 position: 'static',
-                width: '34px',
-                height: '34px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 background: 'rgba(15, 23, 42, 0.65)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -785,7 +746,7 @@ export default function ProfileModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1rem',
+                fontSize: '0.95rem',
                 fontWeight: 'bold',
                 backdropFilter: 'blur(8px)',
               }}
@@ -798,23 +759,15 @@ export default function ProfileModal({
 
         {/* ── Profile Identity Header Overlay ── */}
         <div
+          className="px-3.5 sm:px-6 pb-3.5 sm:pb-5 pt-0 relative border-b border-white/10"
           style={{
-            padding: '0 1.5rem 1.15rem 1.5rem',
-            position: 'relative',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             background: 'linear-gradient(180deg, rgba(22, 27, 38, 0.95) 0%, rgba(13, 18, 29, 0.95) 100%)',
           }}
         >
           {/* Overlapping Avatar with Glowing Ring */}
           <div
+            className="absolute left-3.5 sm:left-6 -top-9 sm:-top-12 w-18 h-18 sm:w-23 sm:h-23 rounded-full p-0.5 sm:p-1"
             style={{
-              position: 'absolute',
-              left: '1.5rem',
-              top: '-48px',
-              width: '92px',
-              height: '92px',
-              borderRadius: '50%',
-              padding: '3px',
               background: 'linear-gradient(135deg, #FFC107, #10b981)',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
               zIndex: 10,
@@ -826,7 +779,7 @@ export default function ProfileModal({
                 height: '100%',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '3px solid #0d121d',
+                border: '2.5px solid #0d121d',
                 backgroundColor: '#161b22',
               }}
             >
@@ -843,13 +796,13 @@ export default function ProfileModal({
             <span
               style={{
                 position: 'absolute',
-                bottom: '4px',
-                right: '4px',
-                width: '14px',
-                height: '14px',
+                bottom: '3px',
+                right: '3px',
+                width: '12px',
+                height: '12px',
                 borderRadius: '50%',
                 background: '#10b981',
-                border: '2.5px solid #0d121d',
+                border: '2px solid #0d121d',
                 boxShadow: '0 0 8px #10b981',
               }}
               title="Active Loft"
@@ -858,53 +811,22 @@ export default function ProfileModal({
 
           {/* Fancier & Loft Info aligned next to Avatar */}
           <div
-            style={{
-              marginLeft: '108px',
-              paddingTop: '0.65rem',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: '0.75rem',
-            }}
+            className="ml-21 sm:ml-27 pt-2 sm:pt-3 flex flex-wrap items-start justify-between gap-1.5 sm:gap-2"
           >
-            <div>
+            <div className="min-w-0 flex-1">
               <h2
-                style={{
-                  fontSize: '1.22rem',
-                  fontWeight: 900,
-                  color: '#fff',
-                  margin: 0,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.2,
-                }}
+                className="text-sm sm:text-lg font-black text-white uppercase tracking-tight m-0 leading-tight truncate"
               >
                 {displayName || 'Loft Fancier'}
               </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
                 <h3
-                  style={{
-                    fontSize: '0.88rem',
-                    fontWeight: 800,
-                    color: '#FFC107',
-                    margin: 0,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.03em',
-                  }}
+                  className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wide m-0 truncate"
                 >
                   {loftName || 'My Racing Loft'}
                 </h3>
                 <span
-                  style={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    padding: '0.12rem 0.45rem',
-                    borderRadius: '9999px',
-                    background: 'rgba(56, 189, 248, 0.12)',
-                    border: '1px solid rgba(56, 189, 248, 0.28)',
-                    color: '#38bdf8',
-                  }}
+                  className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-sky-400/15 border border-sky-400/30 text-sky-400 shrink-0"
                 >
                   {registeredBirds.length} Birds
                 </span>
@@ -914,27 +836,14 @@ export default function ProfileModal({
               <button
                 type="button"
                 onClick={() => setIsSettingsModalOpen(true)}
-                style={{
-                  marginTop: '0.4rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '9999px',
-                  padding: '0.22rem 0.65rem',
-                  fontSize: '0.72rem',
-                  color: locationText ? '#cbd5e1' : '#94a3b8',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
+                className="mt-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full py-0.5 sm:py-1 px-2 sm:px-2.5 text-[11px] sm:text-xs text-slate-300 inline-flex items-center gap-1 max-w-full truncate transition-all"
                 title="Click to configure Loft GPS location"
               >
-                <span>📍</span>
-                <span>{locationText || 'No location configured — Set GPS'}</span>
+                <span className="shrink-0">📍</span>
+                <span className="truncate">{locationText || 'Set GPS'}</span>
                 {latitude && longitude && (
-                  <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.65rem' }}>
-                    ({Number(latitude).toFixed(2)}°N, {Number(longitude).toFixed(2)}°E)
+                  <span className="text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">
+                    ({Number(latitude).toFixed(2)}°, {Number(longitude).toFixed(2)}°)
                   </span>
                 )}
               </button>
@@ -943,20 +852,20 @@ export default function ProfileModal({
         </div>
 
         {/* ── Modal Scrollable Body ── */}
-        <div className="modal-scroll-body" style={{ overflowY: 'auto', padding: '1.35rem 1.5rem' }}>
+        <div className="modal-scroll-body" style={{ overflowY: 'auto', padding: '1rem 1rem calc(6.5rem + env(safe-area-inset-bottom, 0px)) 1rem' }}>
           {/* 📊 2nd-Image Style Loft Telemetry Statistics */}
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '0.85rem',
+                marginBottom: '0.65rem',
               }}
             >
               <h3
                 style={{
-                  fontSize: '0.88rem',
+                  fontSize: '0.85rem',
                   fontWeight: 800,
                   color: '#fff',
                   margin: 0,
@@ -976,211 +885,109 @@ export default function ProfileModal({
                 />
                 Loft Telemetry & Statistics
               </h3>
-              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
                 Live Overview
               </span>
             </div>
 
             {/* 2x2 Sleek Analytics Cards */}
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '0.85rem',
-              }}
+              className="grid grid-cols-2 gap-2 sm:gap-3.5"
             >
               {/* Card 1: Clock-In Rate with Radial Progress Ring */}
               <div
-                style={{
-                  background: 'rgba(22, 27, 38, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '1rem',
-                  padding: '1rem 1.15rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.85rem',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
-                }}
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                <div
+                  className="radial-progress font-mono font-extrabold shrink-0 text-emerald-400 [--size:2.4rem] sm:[--size:3.1rem] [--thickness:3px] sm:[--thickness:4px] text-[9px] sm:text-xs"
+                  style={{ '--value': clockInRate } as React.CSSProperties}
+                  role="progressbar"
+                >
+                  {clockInRate}%
+                </div>
+                <div className="text-center sm:text-left min-w-0">
                   <div
-                    className="radial-progress font-mono font-extrabold shrink-0"
-                    style={
-                      {
-                        '--value': clockInRate,
-                        '--size': '3.1rem',
-                        '--thickness': '4px',
-                        color: '#10b981',
-                        fontSize: '0.72rem',
-                      } as React.CSSProperties
-                    }
-                    role="progressbar"
+                    className="font-mono text-sm sm:text-2xl font-black text-emerald-400 leading-tight"
                   >
                     {clockInRate}%
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      className="font-mono"
-                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#10b981', lineHeight: 1.1 }}
-                    >
-                      {clockInRate}%
-                    </div>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
-                      Clock-In Rate
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                      {totalClocked}/{totalExpected || 0} entries clocked
-                    </div>
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
+                    Clock-In Rate
+                  </div>
+                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                    {totalClocked}/{totalExpected || 0} clocked
                   </div>
                 </div>
               </div>
 
               {/* Card 2: Avg Pigeons / Season */}
               <div
-                style={{
-                  background: 'rgba(22, 27, 38, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '1rem',
-                  padding: '1rem 1.15rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.85rem',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
-                }}
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                <div
+                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-amber-400/15 border border-amber-400/35 text-amber-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                >
+                  ✈️
+                </div>
+                <div className="text-center sm:text-left min-w-0">
                   <div
-                    style={{
-                      width: '3.1rem',
-                      height: '3.1rem',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 193, 7, 0.14)',
-                      border: '1px solid rgba(255, 193, 7, 0.35)',
-                      boxShadow: '0 6px 16px rgba(255, 193, 7, 0.15)',
-                      color: '#FFC107',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.15rem',
-                      flexShrink: 0,
-                    }}
+                    className="font-mono text-sm sm:text-2xl font-black text-amber-400 leading-tight"
                   >
-                    ✈️
+                    +{avgPigeons}
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      className="font-mono"
-                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FFC107', lineHeight: 1.1 }}
-                    >
-                      +{avgPigeons}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
-                      Avg Pigeons/Season
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                      Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
-                    </div>
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
+                    Avg Birds/Season
+                  </div>
+                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                    Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
                   </div>
                 </div>
               </div>
 
               {/* Card 3: Total Seasons & Flights */}
               <div
-                style={{
-                  background: 'rgba(22, 27, 38, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '1rem',
-                  padding: '1rem 1.15rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.85rem',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
-                }}
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                <div
+                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-purple-400/15 border border-purple-400/35 text-purple-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                >
+                  🚩
+                </div>
+                <div className="text-center sm:text-left min-w-0">
                   <div
-                    style={{
-                      width: '3.1rem',
-                      height: '3.1rem',
-                      borderRadius: '50%',
-                      background: 'rgba(192, 132, 252, 0.14)',
-                      border: '1px solid rgba(192, 132, 252, 0.35)',
-                      boxShadow: '0 6px 16px rgba(192, 132, 252, 0.15)',
-                      color: '#c084fc',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.1rem',
-                      flexShrink: 0,
-                    }}
+                    className="font-mono text-sm sm:text-2xl font-black text-purple-400 leading-tight"
                   >
-                    🚩
+                    +{seasonsCount}
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      className="font-mono"
-                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#c084fc', lineHeight: 1.1 }}
-                    >
-                      +{seasonsCount}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
-                      Total Seasons
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                      {flightEvents.length} {flightEvents.length === 1 ? 'flight logged' : 'flights logged'}
-                    </div>
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
+                    Total Seasons
+                  </div>
+                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                    {flightEvents.length} {flightEvents.length === 1 ? 'flight' : 'flights'}
                   </div>
                 </div>
               </div>
 
               {/* Card 4: Total Pigeons Registered */}
               <div
-                style={{
-                  background: 'rgba(22, 27, 38, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '1rem',
-                  padding: '1rem 1.15rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.85rem',
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.25)',
-                }}
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0 }}>
+                <div
+                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-sky-400/15 border border-sky-400/35 text-sky-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                >
+                  <BirdIcon size={16} />
+                </div>
+                <div className="text-center sm:text-left min-w-0">
                   <div
-                    style={{
-                      width: '3.1rem',
-                      height: '3.1rem',
-                      borderRadius: '50%',
-                      background: 'rgba(56, 189, 248, 0.14)',
-                      border: '1px solid rgba(56, 189, 248, 0.35)',
-                      boxShadow: '0 6px 16px rgba(56, 189, 248, 0.15)',
-                      color: '#38bdf8',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
+                    className="font-mono text-sm sm:text-2xl font-black text-sky-400 leading-tight"
                   >
-                    <BirdIcon size={20} />
+                    +{registeredBirds.length}
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      className="font-mono"
-                      style={{ fontSize: '1.35rem', fontWeight: 900, color: '#38bdf8', lineHeight: 1.1 }}
-                    >
-                      +{registeredBirds.length}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#e2e8f0', marginTop: '0.18rem' }}>
-                      Total Pigeons
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                      {cocksCount} Cocks • {hensCount} Hens
-                    </div>
+                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
+                    Total Pigeons
+                  </div>
+                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                    {cocksCount} Cocks • {hensCount} Hens
                   </div>
                 </div>
               </div>
@@ -1418,29 +1225,14 @@ export default function ProfileModal({
             ) : (
               /* MAIN BIRD REGISTRY LIST */
               <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.85rem',
-                    gap: '0.75rem',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: '#38bdf8',
-                        boxShadow: '0 0 8px #38bdf8',
-                      }}
-                    />
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                      Loft Pigeons ({filteredBirds.length})
-                    </h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5">
+                  <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+                      <h4 className="text-sm sm:text-base font-extrabold text-white m-0">
+                        Loft Pigeons ({filteredBirds.length})
+                      </h4>
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -1448,42 +1240,20 @@ export default function ProfileModal({
                           onOpenRegistryTrigger()
                         }
                       }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.28rem 0.65rem',
-                        background: 'rgba(255, 193, 7, 0.12)',
-                        border: '1px solid rgba(255, 193, 7, 0.4)',
-                        borderRadius: '9999px',
-                        color: '#FFC107',
-                        fontSize: '0.7rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
+                      className="inline-flex items-center gap-1 py-1 px-2.5 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 rounded-full text-amber-400 text-xs font-bold transition-all cursor-pointer"
                     >
                       <PlusIcon size={11} /> Add Bird
                     </button>
                   </div>
 
                   {/* Sleek Search Input */}
-                  <div style={{ position: 'relative', width: '190px' }}>
+                  <div className="w-full sm:w-52">
                     <input
                       type="text"
                       placeholder="Search ring, name, color..."
                       value={registrySearch}
                       onChange={(e) => setRegistrySearch(e.target.value)}
-                      style={{
-                        padding: '0.38rem 0.75rem',
-                        background: 'rgba(15, 23, 42, 0.8)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
-                        borderRadius: '9999px',
-                        fontSize: '0.72rem',
-                        color: 'var(--text-primary)',
-                        width: '100%',
-                        outline: 'none',
-                      }}
+                      className="w-full py-1.5 px-3 bg-slate-900/80 border border-white/10 rounded-full text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:border-amber-400/50"
                     />
                   </div>
                 </div>
@@ -1503,14 +1273,76 @@ export default function ProfileModal({
                     No matching pigeons found in your loft registry.
                   </div>
                 ) : (
-                  <div
-                    style={{
-                      overflowX: 'auto',
-                      background: 'rgba(22, 27, 38, 0.75)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      borderRadius: '0.85rem',
-                    }}
-                  >
+                  <>
+                    {/* Mobile Pigeon Card List (sm:hidden) */}
+                    <div className="sm:hidden flex flex-col gap-2 mb-3">
+                      {filteredBirds.map((b) => (
+                        <div
+                          key={b.id}
+                          className="p-3 rounded-xl bg-slate-900/80 border border-white/10 flex items-center justify-between gap-2.5 hover:border-amber-400/30 transition-all"
+                        >
+                          <div
+                            onClick={() => setSelectedHistoryBird(b)}
+                            className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
+                              <img src="/icon.png" alt="" className="w-5 h-5 object-contain" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-mono font-extrabold text-amber-400 text-xs tracking-tight">
+                                  {b.ringNo}
+                                </span>
+                                {b.rfidTag && (
+                                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0">
+                                    📡 {b.rfidTag}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                                {b.name ? <span className="text-slate-200 font-semibold">{b.name} • </span> : ''}
+                                {b.color}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span
+                              className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                                b.gender === 'Hen'
+                                  ? 'bg-pink-500/15 text-pink-400 border border-pink-500/30'
+                                  : b.gender === 'Cock'
+                                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+                                  : 'bg-white/5 text-slate-400 border border-white/10'
+                              }`}
+                            >
+                              {b.gender || '—'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedHistoryBird(b)}
+                              className="w-7 h-7 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 flex items-center justify-center text-xs"
+                              title="View History"
+                            >
+                              ⏱️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBird(b.id)}
+                              className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 flex items-center justify-center text-xs"
+                              title="Delete Bird"
+                            >
+                              <TrashIcon size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop Pigeon Table (hidden sm:block) */}
+                    <div
+                      className="hidden sm:block overflow-x-auto bg-slate-900/75 border border-white/10 rounded-2xl"
+                    >
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem', textAlign: 'left' }}>
                       <thead>
                         <tr
@@ -1671,9 +1503,10 @@ export default function ProfileModal({
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
-            )}
+                </>
+              )}
+            </div>
+          )}
           </div>
         </div>
       </div>

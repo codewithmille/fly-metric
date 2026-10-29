@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon, CalendarIcon } from '@/components/icons'
 import { getBirds, saveBird, deleteBird } from '@/lib/apiClient'
+import { useRfidScanner } from '@/hooks/useRfidScanner'
 
 interface LoftBird {
   id: string
@@ -16,6 +17,7 @@ interface LoftBird {
   notes?: string | null
   sire?: string | null
   dam?: string | null
+  rfidTag?: string | null
   createdAt: string
 }
 
@@ -53,6 +55,7 @@ export default function BirdRegistryModal({
   const [notes, setNotes] = useState('')
   const [sire, setSire] = useState('')
   const [dam, setDam] = useState('')
+  const [rfidTag, setRfidTag] = useState('')
   const [showPedigree, setShowPedigree] = useState(false)
 
   const [error, setError] = useState('')
@@ -70,12 +73,43 @@ export default function BirdRegistryModal({
   const [editNotes, setEditNotes] = useState('')
   const [editSire, setEditSire] = useState('')
   const [editDam, setEditDam] = useState('')
+  const [editRfidTag, setEditRfidTag] = useState('')
 
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [editSuccess, setEditSuccess] = useState(false)
+  const [scanNotice, setScanNotice] = useState<string | null>(null)
 
   const modalRef = useRef<HTMLDivElement>(null)
+
+  // Handle incoming scans from 125kHz USB Reader
+  useRfidScanner({
+    enabled: isOpen,
+    onScan: (scannedTag) => {
+      if (isAddModalOpen) {
+        setRfidTag(scannedTag)
+        setScanNotice(`📡 RFID Tag ${scannedTag} captured for registration!`)
+        setTimeout(() => setScanNotice(null), 3000)
+      } else if (selectedBird) {
+        setEditRfidTag(scannedTag)
+        setScanNotice(`📡 RFID Tag ${scannedTag} linked to ${selectedBird.ringNo}!`)
+        setTimeout(() => setScanNotice(null), 3000)
+      } else {
+        // Find bird in loft with this RFID or ring
+        const matched = birds.find(b => 
+          (b.rfidTag && b.rfidTag.toLowerCase() === scannedTag.toLowerCase()) || 
+          b.ringNo.toLowerCase() === scannedTag.toLowerCase()
+        )
+        if (matched) {
+          setSelectedBird(matched)
+          setScanNotice(`🎯 Found Pigeon: ${matched.ringNo} (${matched.name || matched.color})`)
+        } else {
+          setScanNotice(`ℹ️ Tag "${scannedTag}" not paired yet. Open "Register" to pair this blue ring!`)
+        }
+        setTimeout(() => setScanNotice(null), 4000)
+      }
+    }
+  })
 
   const fetchBirds = async () => {
     try {
@@ -116,6 +150,7 @@ export default function BirdRegistryModal({
       setEditNotes(selectedBird.notes || '')
       setEditSire(selectedBird.sire || '')
       setEditDam(selectedBird.dam || '')
+      setEditRfidTag(selectedBird.rfidTag || '')
       setEditError('')
       setEditSuccess(false)
     }
@@ -132,6 +167,7 @@ export default function BirdRegistryModal({
     setNotes('')
     setSire('')
     setDam('')
+    setRfidTag('')
     setShowPedigree(false)
     setError('')
   }
@@ -174,6 +210,7 @@ export default function BirdRegistryModal({
         notes: notes.trim() || undefined,
         sire: sire.trim().toUpperCase() || undefined,
         dam: dam.trim().toUpperCase() || undefined,
+        rfidTag: rfidTag.trim() || undefined,
       }, false)
 
       if (!res.success) {
@@ -230,6 +267,7 @@ export default function BirdRegistryModal({
         notes: editNotes.trim() || null,
         sire: editSire.trim().toUpperCase() || null,
         dam: editDam.trim().toUpperCase() || null,
+        rfidTag: editRfidTag.trim() || null,
       }, true)
 
       if (!res.success) {
@@ -365,9 +403,49 @@ export default function BirdRegistryModal({
             display: 'flex', 
             flexDirection: 'column', 
             padding: '1.25rem', 
-            gap: '1rem' 
+            gap: '0.85rem' 
           }}>
             
+            {/* 125kHz RFID Proximity Reader Live Banner */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(255, 193, 7, 0.25)',
+              background: 'rgba(255, 193, 7, 0.06)',
+              fontSize: '0.72rem',
+              color: '#FFC107'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FFC107', boxShadow: '0 0 8px #FFC107', display: 'inline-block' }}></span>
+                <span style={{ fontWeight: 700 }}>125kHz RFID Reader Live</span>
+                <span style={{ opacity: 0.75, display: 'none' }} className="sm:inline">— Tap blue pigeon snap ring to auto-find or pair</span>
+              </div>
+              <span style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem', borderRadius: '3px', background: 'rgba(255,193,7,0.15)', fontWeight: 700, letterSpacing: '0.5px' }}>
+                USB HID READY
+              </span>
+            </div>
+
+            {scanNotice && (
+              <div style={{
+                padding: '0.55rem 0.75rem',
+                borderRadius: '0.5rem',
+                border: '1px solid rgba(76, 175, 80, 0.4)',
+                background: 'rgba(76, 175, 80, 0.12)',
+                color: '#81C784',
+                fontSize: '0.74rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}>
+                <span>⚡</span>
+                <span>{scanNotice}</span>
+              </div>
+            )}
+
             {/* Search, Action row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.50rem' }}>
               <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
@@ -487,7 +565,23 @@ export default function BirdRegistryModal({
                         className="table-row-hover"
                       >
                         <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)' }}>
-                          <div style={{ fontWeight: 700 }}>{bird.ringNo}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 700 }}>{bird.ringNo}</span>
+                            {bird.rfidTag ? (
+                              <span style={{
+                                fontSize: '0.62rem',
+                                padding: '0.08rem 0.35rem',
+                                borderRadius: '3px',
+                                background: 'rgba(255, 193, 7, 0.12)',
+                                color: '#FFC107',
+                                border: '1px solid rgba(255, 193, 7, 0.3)',
+                                fontFamily: 'monospace',
+                                fontWeight: 600
+                              }} title={`125kHz RFID: ${bird.rfidTag}`}>
+                                📡 {bird.rfidTag}
+                              </span>
+                            ) : null}
+                          </div>
                           {bird.name && <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{bird.name}</div>}
                         </td>
                         <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-secondary)' }}>
@@ -651,6 +745,50 @@ export default function BirdRegistryModal({
                       <option value="Unknown">Unknown</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 125kHz RFID Snap Ring Input */}
+                <div style={{
+                  background: 'rgba(255, 193, 7, 0.05)',
+                  border: '1px solid rgba(255, 193, 7, 0.25)',
+                  borderRadius: '0.5rem',
+                  padding: '0.65rem 0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label htmlFor="reg-rfid" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#FFC107', fontWeight: 700, margin: 0 }}>
+                      📡 125kHz RFID Snap Ring Tag
+                    </label>
+                    <span style={{ fontSize: '0.62rem', background: 'rgba(255,193,7,0.15)', color: '#FFC107', padding: '0.1rem 0.35rem', borderRadius: '3px', fontWeight: 600 }}>
+                      USB Scanner Ready
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      id="reg-rfid"
+                      type="text"
+                      placeholder="Tap blue ring on USB reader (or type e.g. 222647787)"
+                      className="form-input"
+                      value={rfidTag}
+                      onChange={(e) => setRfidTag(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem', flex: 1, fontFamily: 'monospace' }}
+                    />
+                    {rfidTag && (
+                      <button
+                        type="button"
+                        onClick={() => setRfidTag('')}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', padding: '0.2rem' }}
+                        title="Clear tag"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>
+                    💡 Plug your 125kHz USB reader to laptop/phone. Tapping the blue ring automatically enters the ID!
+                  </span>
                 </div>
 
                 {/* Toggle Advanced pedigree */}
@@ -920,6 +1058,50 @@ export default function BirdRegistryModal({
                       <option value="Unknown">Unknown</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 125kHz RFID Snap Ring Tag */}
+                <div style={{
+                  background: 'rgba(255, 193, 7, 0.05)',
+                  border: '1px solid rgba(255, 193, 7, 0.25)',
+                  borderRadius: '0.5rem',
+                  padding: '0.65rem 0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label htmlFor="edit-rfid" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#FFC107', fontWeight: 700, margin: 0 }}>
+                      📡 125kHz RFID Snap Ring Tag
+                    </label>
+                    <span style={{ fontSize: '0.62rem', background: 'rgba(255,193,7,0.15)', color: '#FFC107', padding: '0.1rem 0.35rem', borderRadius: '3px', fontWeight: 600 }}>
+                      USB Scanner Ready
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      id="edit-rfid"
+                      type="text"
+                      placeholder="Tap blue ring on USB reader (or type tag ID)"
+                      className="form-input"
+                      value={editRfidTag}
+                      onChange={(e) => setEditRfidTag(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem', flex: 1, fontFamily: 'monospace' }}
+                    />
+                    {editRfidTag && (
+                      <button
+                        type="button"
+                        onClick={() => setEditRfidTag('')}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', padding: '0.2rem' }}
+                        title="Clear tag"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.64rem', color: 'rgba(255,255,255,0.45)' }}>
+                    💡 Tap your 125kHz blue snap ring on the reader to update or re-link this pigeon.
+                  </span>
                 </div>
 
                 {/* Pedigree & Advanced details */}

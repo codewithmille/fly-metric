@@ -44,6 +44,7 @@ model LoftBird {
   notes     String?
   sire      String?
   dam       String?
+  rfidTag   String?  @map("rfid_tag")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([userId, ringNo])

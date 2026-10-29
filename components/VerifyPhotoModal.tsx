@@ -17,6 +17,7 @@ interface LoftBird {
   notes?: string | null
   sire?: string | null
   dam?: string | null
+  rfidTag?: string | null
 }
 
 interface VerifyPhotoModalProps {

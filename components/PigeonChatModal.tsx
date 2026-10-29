@@ -22,6 +22,7 @@ export interface LoftBirdInfo {
   notes?: string | null
   sire?: string | null
   dam?: string | null
+  rfidTag?: string | null
 }
 
 interface PigeonChatModalProps {
