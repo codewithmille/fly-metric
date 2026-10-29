@@ -84,7 +84,7 @@
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100vw; }
 
 body {
   background: var(--bg-page);
@@ -92,6 +92,8 @@ body {
   font-family: var(--font-sans, 'Geist', Arial, sans-serif);
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* ============================================================
@@ -101,6 +103,9 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 .dashboard-nav {
@@ -115,6 +120,8 @@ body {
   top: 0;
   z-index: 50;
   backdrop-filter: blur(12px);
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .nav-brand {
@@ -1131,12 +1138,14 @@ body {
   /* Hide header actions on mobile except for specific buttons like the speed calculator */
   .dashboard-nav .nav-actions {
     display: flex !important;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   #loft-registry-nav,
+  #training-prog-nav,
   #quick-clockin-nav,
   #verify-photo-nav,
+  #verify-photo-nav-icon,
   #log-new-activity-nav {
     display: none !important;
   }

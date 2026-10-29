@@ -441,14 +441,14 @@ export default function Home() {
               </span>
             )}
           </h1>
-          <span className="nav-badge">MY LOFT</span>
+          <span className="nav-badge hidden md:inline-flex">MY LOFT</span>
           {isOfflineMode ? (
-            <span className="nav-badge" style={{ backgroundColor: 'rgba(255, 143, 0, 0.15)', border: '1px solid rgba(255, 143, 0, 0.3)', color: '#FF8F00', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(255, 143, 0, 0.15)', border: '1px solid rgba(255, 143, 0, 0.3)', color: '#FF8F00', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FF8F00', display: 'inline-block' }}></span>
               Offline
             </span>
           ) : (
-            <span className="nav-badge" style={{ backgroundColor: 'rgba(76, 175, 80, 0.15)', border: '1px solid rgba(76, 175, 80, 0.3)', color: '#4CAF50', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(76, 175, 80, 0.15)', border: '1px solid rgba(76, 175, 80, 0.3)', color: '#4CAF50', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4CAF50', display: 'inline-block' }}></span>
               Online
             </span>
@@ -735,85 +735,88 @@ export default function Home() {
         {/* ── 2nd-Image Style Loft Telemetry & Stats Dashboard ── */}
         <section
           aria-label="Loft statistics"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.35rem',
-            marginBottom: '1.85rem',
-          }}
+          className="flex flex-col gap-3.5 sm:gap-5 mb-5 sm:mb-7 w-full min-w-0"
         >
-          {/* Top Row: 4 Sleek Circular-Badge Stat Cards with generous breathing room */}
+          {/* Top Row: 4 Sleek Circular-Badge Stat Cards */}
           <div
-            className="stats-bar"
-            style={{
-              marginBottom: 0,
-              gap: '1.15rem',
-            }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4.5 w-full min-w-0"
           >
             {STATS.map((s) => (
               <div
                 key={s.label}
-                className="stat-card group rounded-2xl bg-base-200/85 border border-white/10 hover:border-primary/50 shadow-xl transition-all duration-200 hover:-translate-y-0.5"
-                style={{
-                  padding: '1.15rem 1.35rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.9rem',
-                }}
+                className="group rounded-2xl bg-base-200/85 border border-white/10 hover:border-primary/50 shadow-xl transition-all duration-200 hover:-translate-y-0.5 p-3 sm:p-3.5 lg:p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 min-w-0"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', minWidth: 0 }}>
+                {/* On Mobile: Top row is Icon + Badge. On Desktop: Icon on left */}
+                <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-2.5 sm:gap-3 min-w-0">
                   <div
-                    className={`stat-icon ${s.iconClass} transition-transform duration-200 group-hover:scale-105`}
+                    className="transition-transform duration-200 group-hover:scale-105 shrink-0"
                     style={{
-                      width: '3rem',
-                      height: '3rem',
+                      width: '2.5rem',
+                      height: '2.5rem',
                       borderRadius: '9999px',
                       background: s.ringBg,
                       border: `1px solid ${s.ringBorder}`,
                       color: s.valueColor,
-                      boxShadow: `0 6px 18px ${s.ringBg}`,
+                      boxShadow: `0 4px 14px ${s.ringBg}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0,
                     }}
                   >
                     {s.icon}
                   </div>
-                  <div className="stat-info" style={{ minWidth: 0 }}>
+                  {/* Badge shown on top-right on mobile */}
+                  <span
+                    className="sm:hidden shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: s.ringBg,
+                      border: `1px solid ${s.ringBorder}`,
+                      color: s.valueColor,
+                    }}
+                  >
+                    {s.badge}
+                  </span>
+                  {/* Desktop text next to icon */}
+                  <div className="min-w-0 hidden sm:block">
                     <div
-                      className="stat-value font-mono font-extrabold tracking-tight"
+                      className="font-mono font-extrabold tracking-tight truncate text-xl lg:text-2xl"
                       style={{
                         color: s.valueColor,
-                        fontSize: '1.55rem',
                         lineHeight: 1.15,
                       }}
                     >
                       {s.prefix}{s.value}
                     </div>
                     <div
-                      className="stat-label font-medium text-base-content/60"
-                      style={{
-                        fontSize: '0.76rem',
-                        marginTop: '0.2rem',
-                      }}
+                      className="font-medium text-base-content/60 truncate text-xs mt-0.5"
                     >
                       {s.label}
                     </div>
                   </div>
                 </div>
 
+                {/* Mobile text below icon */}
+                <div className="sm:hidden min-w-0 w-full mt-0.5">
+                  <div
+                    className="font-mono font-extrabold tracking-tight truncate text-lg"
+                    style={{ color: s.valueColor, lineHeight: 1.15 }}
+                  >
+                    {s.prefix}{s.value}
+                  </div>
+                  <div
+                    className="font-medium text-base-content/60 truncate text-[11px] mt-0.5"
+                  >
+                    {s.label}
+                  </div>
+                </div>
+
+                {/* Desktop badge on far right */}
                 <span
+                  className="hidden sm:inline-flex shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full"
                   style={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    padding: '0.22rem 0.55rem',
-                    borderRadius: '9999px',
                     background: s.ringBg,
                     border: `1px solid ${s.ringBorder}`,
                     color: s.valueColor,
-                    flexShrink: 0,
                   }}
                 >
                   {s.badge}
@@ -822,18 +825,16 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Second Row: 3-Column Visual Telemetry Cards (Donut Ring + Radial Gauges + Bar Chart & Leaderboard) */}
+          {/* Second Row: 3-Column Visual Telemetry Cards */}
           <div
-            className="grid grid-cols-1 lg:grid-cols-12"
-            style={{ gap: '1.25rem' }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4.5 w-full min-w-0"
           >
-            {/* Card 1: Multi-Segment Donut Ring Chart (matches "Merchant +1092" ring card in 2nd image) */}
+            {/* Card 1: Multi-Segment Donut Ring Chart */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
-              style={{ padding: '1.35rem 1.5rem', gap: '1rem' }}
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-info shadow-[0_0_8px_#38bdf8]" />
                   <span className="text-sm font-extrabold text-base-content">Loft Activity Mix</span>
                 </div>
@@ -841,7 +842,7 @@ export default function Home() {
               </div>
 
               {/* Multi-Color SVG Donut Gauge */}
-              <div className="relative mx-auto flex h-44 w-44 items-center justify-center" style={{ margin: '0.35rem auto' }}>
+              <div className="relative mx-auto flex h-40 w-40 sm:h-44 sm:w-44 items-center justify-center my-1">
                 <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90 transform">
                   {/* Track */}
                   <circle
@@ -924,8 +925,7 @@ export default function Home() {
 
               {/* 4-Category Legend with Percentages */}
               <div
-                className="grid grid-cols-4 border-t border-white/5 text-center"
-                style={{ gap: '0.5rem', paddingTop: '0.85rem' }}
+                className="grid grid-cols-4 border-t border-white/5 text-center gap-1 sm:gap-2 pt-3"
               >
                 <div>
                   <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
@@ -958,22 +958,21 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Card 2: Active Telemetry Bar Chart + Dual Radial Progress Rings (matches middle-bottom & right-top in 2nd image) */}
+            {/* Card 2: Active Telemetry Bar Chart + Dual Radial Progress Rings */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
-              style={{ padding: '1.35rem 1.5rem', gap: '1.15rem' }}
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_#FFC107]" />
                     <span className="text-sm font-extrabold text-base-content">Active Loft Telemetry</span>
                   </div>
-                  <span className="badge badge-ghost badge-xs border-white/10" style={{ padding: '0.35rem 0.55rem' }}>Season</span>
+                  <span className="badge badge-ghost badge-xs border-white/10">Season</span>
                 </div>
 
                 {/* 3 Summary Columns */}
-                <div className="grid grid-cols-3 text-left" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="grid grid-cols-3 text-left gap-2 sm:gap-3 mb-3.5">
                   <div>
                     <div className="font-mono text-base font-extrabold text-base-content">
                       {events.length}
@@ -994,16 +993,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* 6-Bar Vertical Chart (matches soft sky-blue + bright active bar in 2nd image) */}
+                {/* 6-Bar Vertical Chart */}
                 <div
-                  className="flex items-end justify-between border-b border-white/5"
-                  style={{ height: '6.5rem', gap: '0.5rem', padding: '0.25rem 0.25rem 0.6rem' }}
+                  className="flex items-end justify-between border-b border-white/5 h-24 gap-2 pt-1 pb-2 px-0.5"
                 >
                   {barChartItems.map((bar, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center h-full justify-end" style={{ gap: '0.4rem' }}>
-                      <div className="w-full flex items-end justify-center" style={{ height: '4.4rem' }}>
+                    <div key={i} className="flex-1 flex flex-col items-center h-full justify-end gap-1.5 min-w-0">
+                      <div className="w-full flex items-end justify-center h-16">
                         <div
-                          className="w-full max-w-[22px] rounded-t-md transition-all duration-300"
+                          className="w-full max-w-[20px] rounded-t-md transition-all duration-300"
                           style={{
                             height: `${bar.heightPct}%`,
                             background: bar.active
@@ -1015,10 +1013,9 @@ export default function Home() {
                         />
                       </div>
                       <span
-                        className={`text-[9px] font-semibold truncate max-w-full rounded ${
+                        className={`text-[9px] font-semibold truncate max-w-full rounded px-1 ${
                           bar.active ? 'bg-primary text-primary-content font-extrabold' : 'text-base-content/55'
                         }`}
-                        style={{ padding: bar.active ? '0.1rem 0.35rem' : '0 0.15rem' }}
                       >
                         {bar.label}
                       </span>
@@ -1027,23 +1024,22 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Bottom Dual Radial Progress Rings (matches "Smart device 68.24% / 44.04%" in 2nd image) */}
-              <div className="grid grid-cols-2" style={{ gap: '0.75rem' }}>
+              {/* Bottom Dual Radial Progress Rings */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                 <div
                   onClick={() => setIsRegistryOpen(true)}
-                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-info/40 flex items-center transition-all"
-                  style={{ padding: '0.75rem 0.85rem', gap: '0.7rem' }}
+                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-info/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
                 >
                   <div
-                    className="radial-progress text-info text-[10px] font-mono font-bold shrink-0"
-                    style={{ '--value': activeRegistryPct, '--size': '2.9rem', '--thickness': '4px' } as React.CSSProperties}
+                    className="radial-progress text-info text-[9px] sm:text-[10px] font-mono font-bold shrink-0"
+                    style={{ '--value': activeRegistryPct, '--size': '2.6rem', '--thickness': '3.5px' } as React.CSSProperties}
                     role="progressbar"
                   >
                     {activeRegistryPct}%
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-base-content truncate">Loft Ready</div>
-                    <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
+                    <div className="text-[10px] text-base-content/50 truncate mt-0.5">
                       {registeredBirds.length} Registered
                     </div>
                   </div>
@@ -1051,19 +1047,18 @@ export default function Home() {
 
                 <div
                   onClick={() => setIsHistoryOpen(true)}
-                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-emerald-500/40 flex items-center transition-all"
-                  style={{ padding: '0.75rem 0.85rem', gap: '0.7rem' }}
+                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-emerald-500/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
                 >
                   <div
-                    className="radial-progress text-emerald-400 text-[10px] font-mono font-bold shrink-0"
-                    style={{ '--value': flightCompletionPct, '--size': '2.9rem', '--thickness': '4px' } as React.CSSProperties}
+                    className="radial-progress text-emerald-400 text-[9px] sm:text-[10px] font-mono font-bold shrink-0"
+                    style={{ '--value': flightCompletionPct, '--size': '2.6rem', '--thickness': '3.5px' } as React.CSSProperties}
                     role="progressbar"
                   >
                     {flightCompletionPct}%
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-base-content truncate">Clocked</div>
-                    <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
+                    <div className="text-[10px] text-base-content/50 truncate mt-0.5">
                       {clockedEventsCount} Flights
                     </div>
                   </div>
@@ -1071,14 +1066,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Card 3: Top Performers Leaderboard (matches "Leaderboard #1 #2 #3" card in 2nd image) */}
+            {/* Card 3: Top Performers Leaderboard */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between"
-              style={{ padding: '1.35rem 1.5rem', gap: '1rem' }}
+              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
                     <span className="text-sm font-extrabold text-base-content">Loft Leaderboard</span>
                   </div>

@@ -44,9 +44,9 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col bg-base-100 text-base-content">
+      <body className="min-h-full flex flex-col bg-base-100 text-base-content overflow-x-hidden">
         <PWARegistration />
         {children}
       </body>
