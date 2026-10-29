@@ -8,7 +8,7 @@ import BirdRegistryModal from '@/components/BirdRegistryModal'
 import LandingPage from '@/components/LandingPage'
 import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
-import ResultsHistoryModal from '@/components/ResultsHistoryModal'
+import LoftActivitiesModal from '@/components/LoftActivitiesModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
 import PigeonChatModal from '@/components/PigeonChatModal'
@@ -55,7 +55,8 @@ export default function Home() {
   const [isClockInOpen, setIsClockInOpen] = useState(false)
   const [isRegistryOpen, setIsRegistryOpen] = useState(false)
   const [isVerifyPhotoOpen, setIsVerifyPhotoOpen] = useState(false)
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isActivitiesOpen, setIsActivitiesOpen] = useState(false)
+  const [activitiesInitialTab, setActivitiesInitialTab] = useState<'activities' | 'results'>('activities')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedEvent, setSelectedEvent] = useState<RaceEvent | null>(null)
 
@@ -198,12 +199,12 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
-  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'profile' | 'home' | 'chat') => {
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat') => {
     setIsModalOpen(false)
     setIsSelectionOpen(false)
     setIsClockInOpen(false)
     setIsVerifyPhotoOpen(false)
-    setIsHistoryOpen(false)
+    setIsActivitiesOpen(false)
     setIsProfileOpen(false)
     setIsChatOpen(false)
 
@@ -213,8 +214,12 @@ export default function Home() {
       setIsClockInOpen(true)
     } else if (tabName === 'camera') {
       setIsVerifyPhotoOpen(true)
+    } else if (tabName === 'activities') {
+      setActivitiesInitialTab('activities')
+      setIsActivitiesOpen(true)
     } else if (tabName === 'history') {
-      setIsHistoryOpen(true)
+      setActivitiesInitialTab('results')
+      setIsActivitiesOpen(true)
     } else if (tabName === 'profile') {
       setIsProfileOpen(true)
     } else if (tabName === 'chat') {
@@ -1047,7 +1052,7 @@ export default function Home() {
                 </div>
 
                 <div
-                  onClick={() => setIsHistoryOpen(true)}
+                  onClick={() => navigateToTab('history')}
                   className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-emerald-500/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
                 >
                   <div
@@ -1079,7 +1084,7 @@ export default function Home() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsHistoryOpen(true)}
+                    onClick={() => navigateToTab('history')}
                     className="text-xs font-semibold text-base-content/50 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
                   >
                     More &gt;
@@ -1191,246 +1196,119 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Activities List / Calendar Card */}
-        <section className="calendar-card bg-base-200/70 border border-white/10 shadow-xl" aria-label="Loft activities and calendar">
-          <div className="calendar-card-header border-b border-white/10" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div style={{ minWidth: '180px' }}>
-              <div className="calendar-card-title" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
-                Loft Activities & Flights
-              </div>
-              <span className="calendar-card-hint">
-                {viewMode === 'calendar' ? 'Click date to log or edit events' : 'Grouped chronologically by date'}
+        {/* Compact Recent & Upcoming Activities Card on Home */}
+        <section className="rounded-2xl bg-base-200/80 border border-white/10 shadow-xl p-4 sm:p-5 w-full min-w-0" aria-label="Loft activities preview">
+          <div className="flex items-center justify-between gap-3 mb-3.5 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+              <h3 className="text-sm sm:text-base font-extrabold text-white m-0">
+                Recent & Upcoming Flights
+              </h3>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+                {events.length}
               </span>
             </div>
 
-            {/* Toggle view and Add Activity buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              {/* daisyUI Segmented Control Switcher */}
-              <div role="tablist" className="tabs tabs-box tabs-xs bg-base-100/80 border border-white/10 p-1 gap-1">
-                <button
-                  type="button"
-                  role="tab"
-                  onClick={() => setViewMode('list')}
-                  className={`tab font-bold px-3 ${viewMode === 'list' ? 'tab-active !bg-primary !text-primary-content' : 'text-base-content/70'}`}
-                >
-                  📝 List
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  onClick={() => setViewMode('calendar')}
-                  className={`tab font-bold px-3 ${viewMode === 'calendar' ? 'tab-active !bg-primary !text-primary-content' : 'text-base-content/70'}`}
-                >
-                  📅 Calendar
-                </button>
-              </div>
-
-
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setSelectedDate(today)
                   setSelectedEvent(null)
+                  setModalIsClockInOnly(false)
                   setIsModalOpen(true)
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.45rem 0.75rem',
-                  background: 'rgba(255, 193, 7, 0.08)',
-                  border: '1px solid var(--brand-gold)',
-                  borderRadius: '0.375rem',
-                  color: 'var(--brand-gold)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  height: '1.9rem'
-                }}
-                className="menu-item-hover"
+                className="inline-flex items-center gap-1.5 py-1 px-3 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 rounded-lg text-amber-400 text-xs font-bold transition-all cursor-pointer"
               >
                 <PlusIcon size={12} /> Log Activity
+              </button>
+              <button
+                type="button"
+                onClick={() => navigateToTab('activities')}
+                className="inline-flex items-center gap-1 py-1 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                View Full Calendar 📅 →
               </button>
             </div>
           </div>
 
-          {loading ? (
-            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-              <img src="/icon.png" alt="Loading" style={{ width: '56px', height: '56px', objectFit: 'contain', animation: 'pulse 1.5s ease-in-out infinite' }} />
-              <span>Loading activities...</span>
-            </div>
-          ) : viewMode === 'calendar' ? (
-            /* CALENDAR VIEW MODE */
-            <div style={{ padding: '0.5rem' }}>
-              <RaceCalendar events={events} loading={loading} onDateClick={openModal} />
-            </div>
-          ) : events.length === 0 ? (
-            /* EMPTY STATE */
-            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📅</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>No Loft Activities Logged</div>
-              <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', maxWidth: '280px', margin: '0.25rem auto 1rem auto' }}>
-                Create a training flight or official race to start tracking pigeon velocities.
-              </p>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setSelectedDate(today)
-                  setSelectedEvent(null)
-                  setIsModalOpen(true)
-                }}
-                style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-              >
-                <PlusIcon size={12} /> Log First Activity
-              </button>
+          {events.length === 0 ? (
+            <div className="py-6 px-4 text-center rounded-xl bg-base-100/40 border border-dashed border-white/10 text-slate-400 text-xs">
+              No flights or training activities logged yet.
             </div>
           ) : (
-            /* GROUPED LIST VIEW MODE WITH DATE HEADERS */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem' }}>
-              {(() => {
-                // Group events by date string
-                const groupedEvents: Record<string, RaceEvent[]> = {}
-                events.forEach((ev) => {
-                  const dateStr = ev.date || ''
-                  if (!groupedEvents[dateStr]) {
-                    groupedEvents[dateStr] = []
-                  }
-                  groupedEvents[dateStr].push(ev)
-                })
+            <div className="flex flex-col gap-2">
+              {/* Show top 3 most recent / upcoming events */}
+              {events.slice(0, 3).map((ev) => {
+                const type = ev.extendedProps?.club || 'Race'
+                const location = ev.extendedProps?.location || 'No location configured'
+                const distance = ev.extendedProps?.distance
 
-                // Get sorted dates (newest first)
-                const sortedDates = Object.keys(groupedEvents).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+                return (
+                  <div
+                    key={ev.id}
+                    onClick={() => {
+                      setModalIsClockInOnly(true)
+                      openModal(ev.date || '', ev)
+                    }}
+                    className="p-3 rounded-xl bg-base-100/70 border border-white/5 hover:border-amber-400/30 flex items-center justify-between gap-3 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          type === 'Training'
+                            ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+                            : type === 'Medication'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : type === 'Task'
+                            ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+                            : 'bg-amber-400/15 text-amber-400 border border-amber-400/30'
+                        }`}
+                      >
+                        {type === 'Training' ? <TrainingIcon size={15} /> :
+                         type === 'Medication' ? <PillIcon size={15} /> :
+                         type === 'Task' ? <NotesIcon size={15} /> : <TrophyIcon size={15} />}
+                      </span>
 
-                return sortedDates.map((dateStr) => {
-                  const dayEvents = groupedEvents[dateStr]
-                  const dateObj = new Date(dateStr)
-                  
-                  // Format nice header: e.g. "Tuesday, July 7, 2026"
-                  const formattedHeaderDate = dateObj.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })
-
-                  return (
-                    <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {/* Section Date Header */}
-                      <div style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: 'var(--brand-gold)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        padding: '0.4rem 0.25rem',
-                        borderLeft: '2px solid var(--brand-gold)',
-                        paddingLeft: '0.5rem',
-                        marginTop: '0.5rem',
-                        marginBottom: '0.2rem',
-                        background: 'rgba(255, 193, 7, 0.02)'
-                      }}>
-                        {formattedHeaderDate}
-                      </div>
-
-                      {/* Day Activities */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {dayEvents.map((ev) => {
-                          const type = ev.extendedProps?.club || 'Race'
-                          const location = ev.extendedProps?.location || 'No location configured'
-                          
-                          return (
-                            <div
-                              key={ev.id}
-                              onClick={() => {
-                                setModalIsClockInOnly(true)
-                                openModal(ev.date || '', ev)
-                              }}
-                              style={{
-                                background: 'rgba(255,255,255,0.01)',
-                                border: '1px solid var(--border-default)',
-                                borderRadius: '0.75rem',
-                                padding: '0.88rem 1rem',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '1rem',
-                                transition: 'all 0.15s ease'
-                              }}
-                              className="selection-item-card"
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
-                                <span style={{
-                                  color: type === 'Training' ? '#2196F3' :
-                                         type === 'Medication' ? '#4CAF50' :
-                                         type === 'Task' ? '#9C27B0' : 'var(--brand-gold)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: '2.2rem',
-                                  height: '2.2rem',
-                                  borderRadius: '0.5rem',
-                                  background: type === 'Training' ? 'rgba(33, 150, 243, 0.08)' :
-                                              type === 'Medication' ? 'rgba(76, 175, 80, 0.08)' :
-                                              type === 'Task' ? 'rgba(156, 39, 176, 0.08)' : 'rgba(255, 193, 7, 0.08)',
-                                  border: type === 'Training' ? '1px solid rgba(33, 150, 243, 0.2)' :
-                                          type === 'Medication' ? '1px solid rgba(76, 175, 80, 0.2)' :
-                                          type === 'Task' ? '1px solid rgba(156, 39, 176, 0.2)' : '1px solid rgba(255, 193, 7, 0.2)',
-                                  flexShrink: 0
-                                }}>
-                                  {type === 'Training' ? <TrainingIcon size={18} /> :
-                                   type === 'Medication' ? <PillIcon size={18} /> :
-                                   type === 'Task' ? <NotesIcon size={18} /> :
-                                   <TrophyIcon size={18} />}
-                                </span>
-                                
-                                <div style={{ minWidth: 0 }}>
-                                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {ev.title}
-                                  </div>
-                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.6rem', alignItems: 'center' }}>
-                                    <span style={{ fontWeight: 600, color: 'var(--brand-gold)' }}>{type}</span>
-                                    <span style={{ color: 'var(--text-muted)' }}>•</span>
-                                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>📍 {location}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation() // prevent opening in clockin mode
-                                  setModalIsClockInOnly(false)
-                                  openModal(ev.date || '', ev)
-                                }}
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid var(--border-default)',
-                                  borderRadius: '0.375rem',
-                                  padding: '0.35rem 0.5rem',
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.25rem',
-                                  transition: 'all 0.15s ease',
-                                  flexShrink: 0
-                                }}
-                                className="menu-item-hover"
-                                title="Edit Event Details"
-                              >
-                                ✏️ Edit
-                              </button>
-                            </div>
-                          )
-                        })}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-extrabold text-white truncate">
+                          {ev.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                          <span className="font-semibold text-amber-400">{type}</span>
+                          <span>•</span>
+                          <span className="font-mono text-slate-300">{ev.date}</span>
+                          <span>•</span>
+                          <span className="truncate">📍 {location}</span>
+                          {distance && distance > 0 ? <span>({distance}km)</span> : null}
+                        </div>
                       </div>
                     </div>
-                  )
-                })
-              })()}
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setModalIsClockInOnly(false)
+                        openModal(ev.date || '', ev)
+                      }}
+                      className="py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-slate-300 shrink-0 cursor-pointer"
+                    >
+                      ✏️ Edit
+                    </button>
+                  </div>
+                )
+              })}
+
+              {events.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => navigateToTab('activities')}
+                  className="w-full py-2.5 mt-1 rounded-xl bg-white/5 hover:bg-amber-400/10 border border-dashed border-white/10 hover:border-amber-400/30 text-xs font-bold text-slate-300 hover:text-amber-400 transition-all text-center cursor-pointer"
+                >
+                  View All {events.length} Loft Activities & Full Calendar 📅 →
+                </button>
+              )}
             </div>
           )}
         </section>
@@ -1504,11 +1382,35 @@ export default function Home() {
         loftName={loftName}
       />
 
-      {/* ── Results History Modal ──────────────────────── */}
-      <ResultsHistoryModal
-        isOpen={isHistoryOpen}
+      {/* ── Loft Activities & Results Modal ───────────── */}
+      <LoftActivitiesModal
+        isOpen={isActivitiesOpen}
         events={events}
-        onClose={() => setIsHistoryOpen(false)}
+        loading={loading}
+        initialTab={activitiesInitialTab}
+        today={today}
+        onClose={() => setIsActivitiesOpen(false)}
+        onDateClick={(dateStr, ev) => {
+          setIsActivitiesOpen(false)
+          if (ev) {
+            setModalIsClockInOnly(true)
+            openModal(dateStr, ev)
+          } else {
+            openModal(dateStr)
+          }
+        }}
+        onLogActivity={() => {
+          setIsActivitiesOpen(false)
+          setSelectedDate(today)
+          setSelectedEvent(null)
+          setModalIsClockInOnly(false)
+          setIsModalOpen(true)
+        }}
+        onEditActivity={(dateStr, ev) => {
+          setIsActivitiesOpen(false)
+          setModalIsClockInOnly(false)
+          openModal(dateStr, ev)
+        }}
       />
 
       {/* ── Quick Speed Calculator Modal ────────────────── */}
@@ -1636,7 +1538,7 @@ export default function Home() {
       {/* React Native-style Mobile Bottom Tab Bar */}
       <div className="mobile-tab-bar">
         <button 
-          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isHistoryOpen && !isProfileOpen && !isChatOpen) ? 'active' : ''}`}
+          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isActivitiesOpen && !isProfileOpen && !isChatOpen) ? 'active' : ''}`}
           onClick={() => navigateToTab('home')}
           aria-label="Loft Dashboard Home"
         >
@@ -1679,12 +1581,12 @@ export default function Home() {
         </button>
 
         <button 
-          className={`mobile-tab-btn ${isHistoryOpen ? 'active' : ''}`}
-          onClick={() => navigateToTab('history')}
-          aria-label="Loft Results History"
+          className={`mobile-tab-btn ${isActivitiesOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('activities')}
+          aria-label="Loft Activities & Flights"
         >
-          <TrophyIcon size={20} />
-          <span>History</span>
+          <CalendarIcon size={20} />
+          <span>Activities</span>
         </button>
         <button 
           className={`mobile-tab-btn ${isProfileOpen ? 'active' : ''}`}
