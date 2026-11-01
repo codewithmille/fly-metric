@@ -247,7 +247,8 @@ export default function BirdRegistryModal({
       return
     }
 
-    if (!editColor.trim()) {
+    const finalEditColor = editColor.trim() || 'Blue Bar'
+    if (false) {
       setEditError('Color is required.')
       return
     }
@@ -258,7 +259,7 @@ export default function BirdRegistryModal({
       const res = await saveBird(authToken, {
         id: selectedBird.id,
         ringNo: editRingNo.trim().toUpperCase(),
-        color: editColor.trim(),
+        color: finalEditColor,
         name: editName.trim() || null,
         gender: editGender,
         birthdate: editBirthdate || null,
@@ -671,7 +672,7 @@ export default function BirdRegistryModal({
             </div>
             
             <div className="modal-body modal-scroll-body" style={{ padding: '1.25rem', maxHeight: '72dvh', overflowY: 'auto' }}>
-              <form onSubmit={handleRegisterBird} style={{
+              <form onSubmit={handleRegisterBird} noValidate style={{
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border-default)',
                 borderRadius: '0.75rem',
@@ -683,33 +684,45 @@ export default function BirdRegistryModal({
                 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="reg-ring" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
-                      <TagIcon size={12} /> Ring Number
+                    {error && (
+                      <div style={{ padding: '0.6rem 0.8rem', borderRadius: '0.5rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                        <span>⚠️</span>
+                        <span>{error}</span>
+                      </div>
+                    )}
+                    {scanNotice && (
+                      <div style={{ padding: '0.6rem 0.8rem', borderRadius: '0.5rem', border: '1px solid rgba(76, 175, 80, 0.4)', background: 'rgba(76, 175, 80, 0.15)', color: '#4ade80', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                        <span>📡</span>
+                        <span>{scanNotice}</span>
+                      </div>
+                    )}
+                    <label htmlFor="reg-ring" className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><TagIcon size={12} /> Ring Number <span style={{ color: '#f87171', fontWeight: 800 }}>*</span></span><span style={{ fontSize: '0.62rem', color: '#f87171', fontWeight: 700 }}>Required</span>
                     </label>
                     <input
                       id="reg-ring"
                       type="text"
-                      placeholder="e.g. PH-2026-1001"
+                      placeholder="Type Band No. (e.g. PHA-2026-88001)"
                       className="form-input"
                       value={ringNo}
-                      onChange={(e) => setRingNo(e.target.value)}
+                      onChange={(e) => { setRingNo(e.target.value); if (error) setError(''); }}
                       style={{ height: '2.2rem', fontSize: '0.8rem' }}
-                      required
+
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="reg-color" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
-                      <NotesIcon size={12} /> Color
+                      <NotesIcon size={12} /> Color (Optional)
                     </label>
                     <input
                       id="reg-color"
                       type="text"
-                      placeholder="e.g. Blue Bar"
+                      placeholder="e.g. Blue Bar, Checkered"
                       className="form-input"
                       value={color}
                       onChange={(e) => setColor(e.target.value)}
                       style={{ height: '2.2rem', fontSize: '0.8rem' }}
-                      required
+
                     />
                   </div>
                 </div>
@@ -1000,7 +1013,7 @@ export default function BirdRegistryModal({
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="edit-ring" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
-                      <TagIcon size={12} /> Ring Number
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><TagIcon size={12} /> Ring Number <span style={{ color: '#f87171', fontWeight: 800 }}>*</span></span><span style={{ fontSize: '0.62rem', color: '#f87171', fontWeight: 700 }}>Required</span>
                     </label>
                     <input
                       id="edit-ring"
@@ -1009,12 +1022,12 @@ export default function BirdRegistryModal({
                       value={editRingNo}
                       onChange={(e) => setEditRingNo(e.target.value)}
                       style={{ height: '2.2rem', fontSize: '0.8rem' }}
-                      required
+
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="edit-color" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
-                      <NotesIcon size={12} /> Color
+                      <NotesIcon size={12} /> Color (Optional)
                     </label>
                     <input
                       id="edit-color"
@@ -1023,7 +1036,7 @@ export default function BirdRegistryModal({
                       value={editColor}
                       onChange={(e) => setEditColor(e.target.value)}
                       style={{ height: '2.2rem', fontSize: '0.8rem' }}
-                      required
+
                     />
                   </div>
                 </div>

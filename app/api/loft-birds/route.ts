@@ -66,9 +66,10 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { ringNo, color, name, gender, birthdate, strain, status, notes, sire, dam, rfidTag } = body
 
-    if (!ringNo || !color) {
-      return NextResponse.json({ error: 'Ring Number and Color are required' }, { status: 400 })
+    if (!ringNo) {
+      return NextResponse.json({ error: 'Ring Number is required' }, { status: 400 })
     }
+    const finalColor = color && color.trim() ? color.trim() : 'Blue Bar'
 
     // Check if ring number is already registered for this user
     const existing = await prisma.loftBird.findFirst({
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
         userId: user.userId,
         userEmail: user.userEmail,
         ringNo: ringNo.trim().toUpperCase(),
-        color: color.trim(),
+        color: finalColor,
         name: name ? name.trim() : null,
         gender: gender || 'Unknown',
         birthdate: birthdate ? birthdate.trim() : null,
@@ -120,9 +121,10 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Bird ID is required for editing' }, { status: 400 })
     }
 
-    if (!ringNo || !color) {
-      return NextResponse.json({ error: 'Ring Number and Color are required' }, { status: 400 })
+    if (!ringNo) {
+      return NextResponse.json({ error: 'Ring Number is required' }, { status: 400 })
     }
+    const finalColor = color && color.trim() ? color.trim() : 'Blue Bar'
 
     // Check if ringNo is taken by another bird of this user
     const existing = await prisma.loftBird.findFirst({
@@ -141,7 +143,7 @@ export async function PUT(request: Request) {
       where: { id, userId: user.userId },
       data: {
         ringNo: ringNo.trim().toUpperCase(),
-        color: color.trim(),
+        color: finalColor,
         name: name ? name.trim() : null,
         gender: gender || 'Unknown',
         birthdate: birthdate ? birthdate.trim() : null,
