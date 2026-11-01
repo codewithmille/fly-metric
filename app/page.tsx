@@ -1326,6 +1326,10 @@ export default function Home() {
         authToken={session.access_token}
         session={session}
         isClockInOnly={modalIsClockInOnly}
+        onOpenRegistry={() => {
+          setIsModalOpen(false)
+          setIsRegistryOpen(true)
+        }}
       />
 
       {/* ── Profile settings Modal ──────────────────────── */}

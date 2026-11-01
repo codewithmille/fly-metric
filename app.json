@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "d9aa3d41-e5f3-416a-b1a1-9e1cf91b99da"
+      }
+    },
+    "android": {
+      "package": "com.sapinosojpm.flymetric"
+    }
+  }
+}

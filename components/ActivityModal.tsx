@@ -6,6 +6,7 @@ import { BirdIcon, PlusIcon, TagIcon, TimerIcon, NotesIcon, RulerIcon, TrashIcon
 import { saveEvent } from '@/lib/apiClient'
 import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
+import { useRfidScanner } from '@/hooks/useRfidScanner'
 
 interface LoftBird {
   id: string
@@ -32,6 +33,7 @@ interface ActivityModalProps {
   authToken?: string
   session?: Session | null
   isClockInOnly?: boolean
+  onOpenRegistry?: () => void
 }
 
 interface BirdRecord {
@@ -53,6 +55,7 @@ export default function ActivityModal({
   authToken,
   session,
   isClockInOnly = false,
+  onOpenRegistry,
 }: ActivityModalProps) {
   const [activityType, setActivityType] = useState<ActivityType>('race')
   const [raceDate, setRaceDate] = useState(selectedDate)
@@ -89,6 +92,7 @@ export default function ActivityModal({
   const [showForecast, setShowForecast] = useState(true)
   const [forecastTargetTime, setForecastTargetTime] = useState('07:30')
   const [clockInOnly, setClockInOnly] = useState(false)
+  const [rfidFlash, setRfidFlash] = useState<{ status: 'success' | 'warning'; message: string } | null>(null)
 
   useEffect(() => {
     if (releaseTime) {
@@ -298,14 +302,51 @@ export default function ActivityModal({
     }
   }, [activityType, distanceKmStr, eventToEdit, isOpen])
 
-  const handleAddBird = () => {
+  // 125kHz Proximity RFID Scanner Hook
+  useRfidScanner({
+    enabled: isOpen && !!eventToEdit && (activityType === 'race' || activityType === 'training'),
+    onScan: (scannedTag) => {
+      const cleanTag = scannedTag.trim().toLowerCase()
+      const matched = registeredBirds.find(
+        (b) =>
+          (b.rfidTag && b.rfidTag.toLowerCase() === cleanTag) ||
+          b.ringNo.toLowerCase() === cleanTag
+      )
+
+      const targetRing = matched ? matched.ringNo : scannedTag.trim()
+      setNewRing(targetRing)
+
+      const now = new Date()
+      const hrs = String(now.getHours()).padStart(2, '0')
+      const mins = String(now.getMinutes()).padStart(2, '0')
+      const currTime = `${hrs}:${mins}`
+      setNewTime(currTime)
+
+      if (matched) {
+        setRfidFlash({
+          status: 'success',
+          message: `📡 Scanned RFID: ${matched.ringNo}${matched.name ? ` (${matched.name})` : ''} at ${currTime}!`,
+        })
+      } else {
+        setRfidFlash({
+          status: 'warning',
+          message: `📡 Scanned RFID tag ${scannedTag}. (Tip: Register in Loft Registry to link)`,
+        })
+      }
+      setTimeout(() => setRfidFlash(null), 4000)
+    },
+  })
+
+  const handleAddBird = (overrideRing?: string, overrideTime?: string) => {
     setError('')
-    if (!newRing.trim()) {
+    const targetRing = (overrideRing || newRing).trim()
+    const targetTime = overrideTime || newTime
+    if (!targetRing) {
       setError('Please enter a bird Ring Number.')
       return
     }
 
-    const ring = newRing.trim().toUpperCase()
+    const ring = targetRing.toUpperCase()
     if (birdsList.some((b) => b.ringNo.toUpperCase() === ring)) {
       setError(`Bird with Ring No. "${ring}" is already in the list.`)
       return
@@ -319,7 +360,7 @@ export default function ActivityModal({
     }
 
     const [rH, rM] = releaseTime.split(':').map(Number)
-    const [cH, cM] = newTime.split(':').map(Number)
+    const [cH, cM] = targetTime.split(':').map(Number)
     const releaseMinutes = rH * 60 + rM
     const clockInMinutes = cH * 60 + cM
 
@@ -334,7 +375,7 @@ export default function ActivityModal({
 
     const newBird: BirdRecord = {
       ringNo: ring,
-      clockInTime: newTime,
+      clockInTime: targetTime,
       speed,
     }
 
@@ -1003,8 +1044,18 @@ export default function ActivityModal({
             <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-default)', paddingTop: '1rem' }}>
               <h3 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <BirdIcon size={16} /> Clocked Birds ({birdsList.length})
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
+                  125kHz RFID Ready
+                </span>
               </h3>
               
+              {rfidFlash && (
+                <div style={{ marginBottom: '0.6rem', padding: '0.45rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: rfidFlash.status === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', border: rfidFlash.status === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)', color: rfidFlash.status === 'success' ? '#34d399' : '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>{rfidFlash.message}</span>
+                </div>
+              )}
+
               {/* Add Bird Inputs */}
               <div className="add-bird-row">
                 <div className="form-group add-bird-group">
@@ -1012,19 +1063,39 @@ export default function ActivityModal({
                     <TagIcon size={12} /> Select Bird
                   </label>
                   {registeredBirds.length === 0 ? (
-                    <div style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--brand-gold)',
-                      background: 'rgba(255, 193, 7, 0.05)',
-                      border: '1px solid rgba(255, 193, 7, 0.2)',
-                      borderRadius: '0.5rem',
-                      padding: '0.3rem 0.5rem',
-                      height: '2.2rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      lineHeight: '1.1'
-                    }}>
-                      Register birds first!
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%' }}>
+                      <input
+                        id="bird-ring"
+                        type="text"
+                        className="form-input"
+                        placeholder="Enter Ring No. (e.g. PHA-2026-88001)"
+                        value={newRing}
+                        onChange={(e) => setNewRing(e.target.value)}
+                        style={{ height: '2.2rem', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                      />
+                      {onOpenRegistry && (
+                        <button
+                          type="button"
+                          onClick={onOpenRegistry}
+                          style={{
+                            background: 'rgba(255, 193, 7, 0.12)',
+                            border: '1px solid rgba(255, 193, 7, 0.3)',
+                            color: 'var(--brand-gold)',
+                            borderRadius: '0.375rem',
+                            padding: '0.2rem 0.5rem',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            marginTop: '0.25rem',
+                            alignSelf: 'flex-start'
+                          }}
+                        >
+                          <PlusIcon size={11} /> + Register in Loft Registry
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <select
@@ -1064,7 +1135,7 @@ export default function ActivityModal({
                 </div>
                 <button
                   type="button"
-                  onClick={handleAddBird}
+                  onClick={() => handleAddBird()}
                   className="add-bird-btn"
                   style={{
                     background: activityType === 'training' ? '#2196F3' : 'var(--brand-gold)',
