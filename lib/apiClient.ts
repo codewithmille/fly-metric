@@ -95,6 +95,8 @@ export async function saveEvent(authToken: string | undefined, eventData: any, i
       releaseTime: eventData.releaseTime || '06:00',
       clockInTime: eventData.clockInTime || '09:30',
       birds: eventData.birds || '[]',
+      participatingBirds: eventData.participatingBirds || '[]',
+      isRfidActive: !!eventData.isRfidActive,
     }
   }
 

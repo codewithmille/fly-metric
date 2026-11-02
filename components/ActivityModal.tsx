@@ -94,6 +94,10 @@ export default function ActivityModal({
   const [clockInOnly, setClockInOnly] = useState(false)
   const [rfidFlash, setRfidFlash] = useState<{ status: 'success' | 'warning'; message: string } | null>(null)
 
+  // Participating birds (Kasali sa Laro) & RFID Target states
+  const [participatingRings, setParticipatingRings] = useState<string[]>([])
+  const [isRfidTarget, setIsRfidTarget] = useState<boolean>(true)
+
   useEffect(() => {
     if (releaseTime) {
       const [h, m] = releaseTime.split(':').map(Number)
@@ -245,17 +249,33 @@ export default function ActivityModal({
         } catch (e) {
           setBirdsList([])
         }
+
+        // Load participating birds (Kasali sa Laro)
+        try {
+          const enrolled = JSON.parse(eventToEdit.extendedProps?.participatingBirds || '[]')
+          if (Array.isArray(enrolled) && enrolled.length > 0) {
+            setParticipatingRings(enrolled.map((r: string) => r.toUpperCase()))
+          } else {
+            // Default to all registered birds
+            setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))
+          }
+        } catch {
+          setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))
+        }
+        setIsRfidTarget(eventToEdit.extendedProps?.isRfidActive !== false)
       } else {
         setRaceDate(selectedDate)
         setActivityType('race')
         setDistanceKmStr('90')
         setReleaseTime('06:00')
         setClockInTime('09:30')
-        setTotalBirds('0')
+        setTotalBirds(registeredBirds.length.toString())
         setWinner('TBD')
         setNotes('')
         setTitle(`🏆 90km Race`)
         setBirdsList([])
+        setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))
+        setIsRfidTarget(true)
       }
       
       // Default selection to first registered bird
@@ -314,6 +334,17 @@ export default function ActivityModal({
       )
 
       const targetRing = matched ? matched.ringNo : scannedTag.trim()
+
+      // CHECK: Is this bird participating (kasali sa laro)?
+      if (participatingRings.length > 0 && !participatingRings.includes(targetRing.toUpperCase())) {
+        setRfidFlash({
+          status: 'warning',
+          message: `⚠️ Hindi kasali sa laro: ${targetRing} is not in the entry list for this flight!`,
+        })
+        setTimeout(() => setRfidFlash(null), 5000)
+        return
+      }
+
       setNewRing(targetRing)
 
       const now = new Date()
@@ -347,6 +378,11 @@ export default function ActivityModal({
     }
 
     const ring = targetRing.toUpperCase()
+    if (participatingRings.length > 0 && !participatingRings.includes(ring)) {
+      setError(`Bird "${ring}" is not in this flight's entry list (Hindi kasali sa laro).`)
+      return
+    }
+
     if (birdsList.some((b) => b.ringNo.toUpperCase() === ring)) {
       setError(`Bird with Ring No. "${ring}" is already in the list.`)
       return
@@ -514,11 +550,12 @@ export default function ActivityModal({
 
     try {
       const isEdit = !!eventToEdit
+      const finalTotalBirds = participatingRings.length > 0 ? participatingRings.length : dbBirds
       const res = await saveEvent(authToken, {
         id: eventToEdit?.id,
         title: title || 'New Activity',
         date: raceDate,
-        totalBirds: dbBirds,
+        totalBirds: finalTotalBirds,
         maxSpeed: maxSpeed,
         avgSpeed: avgSpeed,
         location: dbLocation,
@@ -528,7 +565,13 @@ export default function ActivityModal({
         releaseTime: (activityType === 'race' || activityType === 'training') ? releaseTime : undefined,
         clockInTime: (activityType === 'race' || activityType === 'training') ? clockInTime : undefined,
         birds: (activityType === 'race' || activityType === 'training') ? JSON.stringify(birdsList) : '[]',
+        participatingBirds: (activityType === 'race' || activityType === 'training') ? JSON.stringify(participatingRings) : '[]',
+        isRfidActive: isRfidTarget,
       }, isEdit)
+
+      if (isRfidTarget && (res.data?.id || eventToEdit?.id)) {
+        localStorage.setItem('flymetric_active_rfid_event_id', res.data?.id || eventToEdit?.id || '')
+      }
 
       if (!res.success) {
         throw new Error('Failed to save activity')
@@ -600,31 +643,38 @@ export default function ActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        style={{ maxWidth: '540px' }}
+        style={{ maxWidth: '560px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}
       >
         {/* Header styling adapts to activity type */}
         <div className="modal-header" style={{
           background: activityType === 'race' ? 'linear-gradient(135deg, #FFC107, #FF8F00)' :
                       activityType === 'training' ? 'linear-gradient(135deg, #2196F3, #1565C0)' :
                       activityType === 'medication' ? 'linear-gradient(135deg, #4CAF50, #2E7D32)' :
-                      'linear-gradient(135deg, #9C27B0, #6A1B9A)'
+                      'linear-gradient(135deg, #9C27B0, #6A1B9A)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden'
         }}>
-          <div className="modal-header-left">
-            <span className="modal-pigeon-icon" style={{ display: 'flex', alignItems: 'center', color: '#fff' }}>
+          <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
+            <span className="modal-pigeon-icon" style={{ display: 'flex', alignItems: 'center', color: '#fff', flexShrink: 0 }}>
               {activityType === 'race' ? <TrophyIcon size={24} /> :
                activityType === 'training' ? <TrainingIcon size={24} /> :
                activityType === 'medication' ? <PillIcon size={24} /> : <NotesIcon size={24} />}
             </span>
-            <div>
-              <h2 id="modal-title" className="modal-title" style={{ color: '#fff' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h2 id="modal-title" className="modal-title" style={{ color: '#fff', margin: 0, fontSize: '1.05rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {eventToEdit ? 'Activity Details' : 'Add Activity'}
               </h2>
-              <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.75)' }}>
+              <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {eventToEdit ? 'Calculate speed and update records' : 'Schedule a new activity on the calendar'}
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.15)' }} onClick={onClose} aria-label="Close modal">✕</button>
+          <button className="modal-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.2)', position: 'static', margin: 0, flexShrink: 0 }} onClick={onClose} aria-label="Close modal">✕</button>
         </div>
 
         {/* Tab Selection */}
@@ -1039,6 +1089,173 @@ export default function ActivityModal({
             </>
           )}
 
+          {/* ── Participating Birds Picker (Kasali sa Laro / Entries) ── */}
+          {(activityType === 'race' || activityType === 'training') && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(13, 17, 23, 0.75) 100%)',
+              border: '1px solid rgba(255, 193, 7, 0.28)',
+              borderRadius: '0.85rem',
+              padding: '0.85rem',
+              marginTop: '0.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.6rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🕊️</span>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>Kasali sa Laro (Entries)</span>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '0.1rem 0.45rem',
+                        borderRadius: '9999px',
+                        background: 'rgba(255, 193, 7, 0.15)',
+                        color: 'var(--brand-gold)',
+                        border: '1px solid rgba(255, 193, 7, 0.3)'
+                      }}>
+                        {participatingRings.length} of {registeredBirds.length} birds
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Piliin ang mga ibong sasabak. Ang RFID sensor ay magco-clock LAMANG sa mga ibong kasali rito!
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))}
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '0.35rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setParticipatingRings([])}
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '0.35rem',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#f87171',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              {registeredBirds.length === 0 ? (
+                <div style={{ padding: '0.75rem', textAlign: 'center', background: 'rgba(0,0,0,0.25)', borderRadius: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                  Walang rehistradong ibon sa loft. Mag-rehistro muna sa Loft Registry!
+                </div>
+              ) : (
+                <div style={{
+                  maxHeight: '160px',
+                  overflowY: 'auto',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: '0.4rem',
+                  padding: '0.25rem 0',
+                }}>
+                  {registeredBirds.map((bird) => {
+                    const isSelected = participatingRings.includes(bird.ringNo.toUpperCase())
+                    return (
+                      <div
+                        key={bird.id}
+                        onClick={() => {
+                          const upper = bird.ringNo.toUpperCase()
+                          setParticipatingRings((prev) =>
+                            prev.includes(upper) ? prev.filter((r) => r !== upper) : [...prev, upper]
+                          )
+                        }}
+                        style={{
+                          padding: '0.45rem 0.6rem',
+                          borderRadius: '0.5rem',
+                          cursor: 'pointer',
+                          border: isSelected ? '1px solid rgba(16, 185, 129, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'rgba(6, 78, 59, 0.45)' : 'rgba(255, 255, 255, 0.02)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.35rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: isSelected ? '#34d399' : '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {bird.ringNo}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {bird.color || 'Racer'} {bird.rfidTag ? '· 📡 RFID' : ''}
+                          </div>
+                        </div>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          border: isSelected ? '2px solid #10b981' : '1px solid rgba(255, 255, 255, 0.25)',
+                          background: isSelected ? '#10b981' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#000',
+                          fontSize: '0.75rem',
+                          fontWeight: 900,
+                          flexShrink: 0
+                        }}>
+                          {isSelected ? '✓' : ''}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* RFID Active Target Toggle */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '0.5rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                fontSize: '0.75rem',
+                flexWrap: 'wrap',
+                gap: '0.4rem',
+              }}>
+                <label htmlFor="rfid-target-toggle" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: isRfidTarget ? '#34d399' : 'rgba(255, 255, 255, 0.65)', fontWeight: 700 }}>
+                  <input
+                    id="rfid-target-toggle"
+                    type="checkbox"
+                    checked={isRfidTarget}
+                    onChange={(e) => setIsRfidTarget(e.target.checked)}
+                    style={{ cursor: 'pointer', accentColor: '#10b981' }}
+                  />
+                  <span>📡 Aktibong Laro para sa 125kHz RFID Sensor Pad</span>
+                </label>
+                <span style={{ fontSize: '0.65rem', color: isRfidTarget ? '#34d399' : 'rgba(255,255,255,0.4)', fontWeight: 700 }}>
+                  {isRfidTarget ? 'TARGET LOCKED' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Bird Clocking List Manager (Only when editing an existing Race or Training event) */}
           {eventToEdit && (activityType === 'race' || activityType === 'training') && (
             <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-default)', paddingTop: '1rem' }}>
@@ -1112,11 +1329,14 @@ export default function ActivityModal({
                         cursor: 'pointer'
                       }}
                     >
-                      {registeredBirds.map((b) => (
-                        <option key={b.id} value={b.ringNo}>
-                          {b.ringNo} ({b.color})
-                        </option>
-                      ))}
+                      {registeredBirds.map((b) => {
+                        const isEnrolled = participatingRings.length === 0 || participatingRings.includes(b.ringNo.toUpperCase())
+                        return (
+                          <option key={b.id} value={b.ringNo}>
+                            {b.ringNo} ({b.color || 'Racer'}) {isEnrolled ? '✓ Kasali' : '— Di Kasali'}
+                          </option>
+                        )
+                      })}
                     </select>
                   )}
                 </div>

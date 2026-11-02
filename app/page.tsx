@@ -97,6 +97,14 @@ export default function Home() {
   const [isTrainingOpen, setIsTrainingOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isPadStationOpen, setIsPadStationOpen] = useState(false)
+  const [activeRfidEventId, setActiveRfidEventId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('flymetric_active_rfid_event_id')
+      if (stored) setActiveRfidEventId(stored)
+    }
+  }, [])
   const [arrivalHud, setArrivalHud] = useState<{
     bird: LoftBird
     speed: number
@@ -265,42 +273,12 @@ export default function Home() {
       }
     }
 
-    // 2. Find active flight event (Race or Training, or auto-create today's flight)
+    // 2. Select TARGET EVENT for RFID clocking (prevents clocking into wrong or all events!)
     const validFlights = events.filter(
       (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
     )
 
-    const todayStr = dateNow.toISOString().split('T')[0]
-    let targetEvent = validFlights.find((e) => e.date === todayStr || (e.date && e.date.startsWith(todayStr))) || validFlights[0]
-
-    // If no flight event exists for today, auto-create a training flight so clock-in is NEVER lost!
-    if (!targetEvent) {
-      try {
-        const newFlightRes = await saveEvent(session?.access_token, {
-          title: `Training Toss ${todayStr}`,
-          date: todayStr,
-          club: 'Training',
-          location: 'Loft Release',
-          distance: 10,
-          releaseTime: '06:00',
-          clockInTime: time24,
-          totalBirds: 0,
-          maxSpeed: 0,
-          avgSpeed: 0,
-          winner: 'TBD',
-          birds: '[]',
-        }, false)
-        if (newFlightRes.success && newFlightRes.data) {
-          targetEvent = newFlightRes.data
-          setEvents((prev) => [newFlightRes.data, ...prev])
-          fetchEvents()
-        }
-      } catch (e) {
-        console.warn('Auto create flight error:', e)
-      }
-    }
-
-    if (!targetEvent) {
+    if (validFlights.length === 0) {
       playElectronicChime(false)
       setArrivalHud({
         bird: matchedBird,
@@ -309,9 +287,45 @@ export default function Home() {
         eventTitle: 'Loft Trap Station',
         rank: 0,
         type: 'warning',
-        message: `⚠️ Unable to initialize flight event for clock-in.`
+        message: `⚠️ Walang aktibong Race o Training flight para sa RFID sensor clock-in.`
       })
       return
+    }
+
+    const todayStr = dateNow.toISOString().split('T')[0]
+    const storedActiveId = typeof window !== 'undefined' ? localStorage.getItem('flymetric_active_rfid_event_id') : null
+
+    // Find the designated active target event
+    let targetEvent = validFlights.find((e) => e.id === activeRfidEventId || e.id === storedActiveId)
+    if (!targetEvent) {
+      targetEvent = validFlights.find((e) => e.extendedProps?.isRfidActive === true)
+    }
+    if (!targetEvent) {
+      targetEvent = validFlights.find((e) => e.date === todayStr || (e.date && e.date.startsWith(todayStr)))
+    }
+    if (!targetEvent) {
+      targetEvent = validFlights[0]
+    }
+
+    // ── STRICT PARTICIPATION CHECK (Kasali sa Laro) ──
+    // The RFID works ONLY for this event, and ONLY for birds entered in this event!
+    let enteredRings: string[] = []
+    try {
+      enteredRings = JSON.parse(targetEvent.extendedProps?.participatingBirds || '[]')
+    } catch {}
+
+    if (enteredRings.length > 0 && !enteredRings.includes(matchedBird.ringNo.toUpperCase())) {
+      playElectronicChime(false)
+      setArrivalHud({
+        bird: matchedBird,
+        speed: 0,
+        time: currentTimeStr,
+        eventTitle: targetEvent.title,
+        rank: 0,
+        type: 'warning',
+        message: `⚠️ HINDI KASALI SA LARO: Si ${matchedBird.ringNo} ay hindi kasali sa "${targetEvent.title}"! Hindi ito iko-clock.`
+      })
+      return // DO NOT CLOCK IN! NEVER CLOCK IN OTHER EVENTS!
     }
 
     // 3. Check if bird is already clocked
@@ -1219,46 +1233,84 @@ export default function Home() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '0.75rem',
-            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(9, 13, 22, 0.75) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(9, 13, 22, 0.85) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
             borderRadius: '0.875rem',
-            padding: '0.65rem 1rem',
+            padding: '0.75rem 1rem',
             marginBottom: '1rem',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ position: 'relative', display: 'flex', width: '10px', height: '10px' }}>
+            <span style={{ position: 'relative', display: 'flex', width: '10px', height: '10px', flexShrink: 0 }}>
               <span style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '9999px', background: '#34d399', opacity: 0.75 }}></span>
               <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '9999px', height: '10px', width: '10px', background: '#10b981' }}></span>
             </span>
             <div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#34d399', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>📡 EBDS Trap Sensor: Active &amp; Ready</span>
-                <span style={{ fontSize: '0.68rem', background: 'rgba(16, 185, 129, 0.2)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Auto-Clock ON</span>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#34d399', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <span>📡 125kHz RFID Trap Antenna</span>
+                <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#34d399' }}>
+                  TARGET LOCKED
+                </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>
-                Pagtapak ng kalapati sa antenna pad, kusa nang magco-clock nang walang pindot!
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.15rem' }}>
+                Ang RFID ay magco-clock <strong style={{ color: '#34d399' }}>LAMANG</strong> sa napiling event at sa mga ibong kasali sa laro.
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setIsPadStationOpen(true)}
-            style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34d399',
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              padding: '0.35rem 0.75rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-            }}
-          >
-            <span>📡 Open Trap Station</span>
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {flightEvents.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Target:</span>
+                <select
+                  value={activeRfidEventId || (flightEvents.find(f => f.extendedProps?.isRfidActive)?.id) || flightEvents[0]?.id}
+                  onChange={(e) => {
+                    const chosenId = e.target.value
+                    setActiveRfidEventId(chosenId)
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('flymetric_active_rfid_event_id', chosenId)
+                    }
+                  }}
+                  style={{
+                    background: '#090d16',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    color: '#34d399',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    padding: '0.35rem 0.6rem',
+                    borderRadius: '0.5rem',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    maxWidth: '190px',
+                  }}
+                >
+                  {flightEvents.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      🎯 {ev.title} ({ev.date})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <button
+              onClick={() => setIsPadStationOpen(true)}
+              style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#34d399',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.75rem',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <span>📡 Open Station</span>
+            </button>
+          </div>
         </div>
 
         {/* ── 2nd-Image Style Loft Telemetry & Stats Dashboard ── */}

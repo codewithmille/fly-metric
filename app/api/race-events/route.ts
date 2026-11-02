@@ -18,6 +18,8 @@ export interface RaceEvent {
     releaseTime?: string
     clockInTime?: string
     birds?: string      // stringified JSON list of clocked birds
+    participatingBirds?: string // stringified JSON list of entered/participating birds
+    isRfidActive?: boolean
   }
 }
 
@@ -87,6 +89,8 @@ export async function GET(request: Request) {
         releaseTime: row.releaseTime || '06:00',
         clockInTime: row.clockInTime || '09:30',
         birds: row.birds || '[]',
+        participatingBirds: row.participatingBirds || '[]',
+        isRfidActive: !!row.isRfidActive,
       },
     }))
 
@@ -107,7 +111,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds } = body
+    const { title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds, participatingBirds, isRfidActive } = body
 
     if (!title || !date) {
       return NextResponse.json({ error: 'Title and Date are required' }, { status: 400 })
@@ -135,6 +139,8 @@ export async function POST(request: Request) {
         releaseTime: releaseTime || '06:00',
         clockInTime: clockInTime || '09:30',
         birds: birds || '[]',
+        participatingBirds: participatingBirds || '[]',
+        isRfidActive: isRfidActive === true,
       },
     })
 
@@ -155,7 +161,7 @@ export async function PUT(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { id, title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds } = body
+    const { id, title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds, participatingBirds, isRfidActive } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Event ID is required for updates' }, { status: 400 })
@@ -176,6 +182,8 @@ export async function PUT(request: Request) {
         releaseTime,
         clockInTime,
         birds: birds !== undefined ? birds : undefined,
+        participatingBirds: participatingBirds !== undefined ? participatingBirds : undefined,
+        isRfidActive: isRfidActive !== undefined ? !!isRfidActive : undefined,
         backgroundColor: club === 'Training' ? '#2196F3' :
                          club === 'Medication' ? '#4CAF50' :
                          club === 'Task' ? '#9C27B0' : '#FFC107',

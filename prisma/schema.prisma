@@ -24,6 +24,8 @@ model RaceEvent {
   releaseTime     String?  @map("release_time")
   clockInTime     String?  @map("clock_in_time")
   birds           String?
+  participatingBirds String? @map("participating_birds")
+  isRfidActive    Boolean  @default(false) @map("is_rfid_active")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([userId])
