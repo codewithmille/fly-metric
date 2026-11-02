@@ -86,27 +86,38 @@ export default function BirdRegistryModal({
   useRfidScanner({
     enabled: isOpen,
     onScan: (scannedTag) => {
+      const raw = scannedTag.trim()
+      if (!raw) return
+
       if (isAddModalOpen) {
-        setRfidTag(scannedTag)
-        setScanNotice(`📡 RFID Tag ${scannedTag} captured for registration!`)
-        setTimeout(() => setScanNotice(null), 3000)
+        setRfidTag(raw)
+        if (!ringNo) {
+          setRingNo(`PH-${new Date().getFullYear()}-${raw.slice(-5)}`)
+        }
+        setScanNotice(`📡 RFID Tag ${raw} captured for registration!`)
+        setTimeout(() => setScanNotice(null), 4000)
       } else if (selectedBird) {
-        setEditRfidTag(scannedTag)
-        setScanNotice(`📡 RFID Tag ${scannedTag} linked to ${selectedBird.ringNo}!`)
-        setTimeout(() => setScanNotice(null), 3000)
+        setEditRfidTag(raw)
+        setScanNotice(`📡 RFID Tag ${raw} linked to ${selectedBird.ringNo}!`)
+        setTimeout(() => setScanNotice(null), 4000)
       } else {
         // Find bird in loft with this RFID or ring
         const matched = birds.find(b => 
-          (b.rfidTag && b.rfidTag.toLowerCase() === scannedTag.toLowerCase()) || 
-          b.ringNo.toLowerCase() === scannedTag.toLowerCase()
+          (b.rfidTag && b.rfidTag.toLowerCase() === raw.toLowerCase()) || 
+          b.ringNo.toLowerCase() === raw.toLowerCase()
         )
         if (matched) {
           setSelectedBird(matched)
           setScanNotice(`🎯 Found Pigeon: ${matched.ringNo} (${matched.name || matched.color})`)
+          setTimeout(() => setScanNotice(null), 4000)
         } else {
-          setScanNotice(`ℹ️ Tag "${scannedTag}" not paired yet. Open "Register" to pair this blue ring!`)
+          // Unpaired tag detected! Instantly open Register form with prefilled RFID!
+          setRfidTag(raw)
+          setRingNo(`PH-${new Date().getFullYear()}-${raw.slice(-5)}`)
+          setColor('Blue Bar')
+          setIsAddModalOpen(true)
+          setScanNotice(`📡 RFID Tag ${raw} detected! Verify Ring Number and click "Register New Pigeon" to save to database.`)
         }
-        setTimeout(() => setScanNotice(null), 4000)
       }
     }
   })
@@ -181,32 +192,30 @@ export default function BirdRegistryModal({
 
   if (!isOpen) return null
 
-  const handleRegisterBird = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleRegisterBird = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     setError('')
     setSaveSuccess(false)
 
-    if (!ringNo.trim()) {
-      setError('Ring Number is required.')
+    const finalRing = ringNo.trim() || (rfidTag.trim() ? `PH-${new Date().getFullYear()}-${rfidTag.trim().slice(-5)}` : '')
+    if (!finalRing) {
+      setError('Please enter a Ring Number.')
       return
     }
 
-    if (!color.trim()) {
-      setError('Color is required.')
-      return
-    }
+    const finalColor = color.trim() || 'Blue Bar'
 
     setSaving(true)
 
     try {
       const res = await saveBird(authToken, {
-        ringNo: ringNo.trim().toUpperCase(),
-        color: color.trim(),
+        ringNo: finalRing.toUpperCase(),
+        color: finalColor,
         name: name.trim() || undefined,
-        gender,
+        gender: gender || 'Unknown',
         birthdate: birthdate || undefined,
         strain: strain.trim() || undefined,
-        status: status,
+        status: status || 'Active',
         notes: notes.trim() || undefined,
         sire: sire.trim().toUpperCase() || undefined,
         dam: dam.trim().toUpperCase() || undefined,
@@ -221,7 +230,7 @@ export default function BirdRegistryModal({
       resetRegisterForm()
       
       // Refresh registry list
-      fetchBirds()
+      await fetchBirds()
       onBirdsUpdated?.()
 
       setTimeout(() => {

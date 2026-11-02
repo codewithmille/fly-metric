@@ -17,7 +17,7 @@ import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIc
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
-import { getEvents, getBirds, syncOfflineQueue, isOnline, saveEvent } from '@/lib/apiClient'
+import { getEvents, getBirds, syncOfflineQueue, isOnline, saveEvent, saveBird } from '@/lib/apiClient'
 import { useRfidScanner, playElectronicChime, speakPigeonArrival } from '@/hooks/useRfidScanner'
 
 // RaceCalendar must be loaded client-side only (FullCalendar dependency)
@@ -205,8 +205,8 @@ export default function Home() {
     }
     lastScanDebounceRef.current[tagKey] = now
 
-    // 1. Match bird in registered birds
-    const matchedBird = registeredBirds.find(
+    // 1. Match bird in registered birds (or auto-register if new chip band)
+    let matchedBird = registeredBirds.find(
       (b) =>
         (b.rfidTag && b.rfidTag.trim().toLowerCase() === tagKey) ||
         b.ringNo.trim().toLowerCase() === tagKey
@@ -218,42 +218,79 @@ export default function Home() {
     const mins = String(dateNow.getMinutes()).padStart(2, '0')
     const time24 = `${hrs}:${mins}`
 
+    // If bird is not yet in registry, auto-enroll into database immediately!
     if (!matchedBird) {
-      playElectronicChime(false)
-      setArrivalHud({
-        bird: { id: '', ringNo: rawTag, color: '', name: 'Unpaired RFID Tag', gender: null },
-        speed: 0,
-        time: currentTimeStr,
-        eventTitle: 'Loft Trap Station',
-        rank: 0,
-        type: 'warning',
-        message: `⚠️ Unregistered RFID Tag "${rawTag}" stepped on sensor pad! Register this band in Loft Registry first.`
-      })
-      return
+      const autoRing = `PH-${dateNow.getFullYear()}-${rawTag.slice(-5)}`
+      try {
+        const regRes = await saveBird(session?.access_token, {
+          ringNo: autoRing,
+          color: 'Blue Bar',
+          name: `Racer ${rawTag.slice(-4)}`,
+          gender: 'Unknown',
+          status: 'Active',
+          rfidTag: rawTag,
+        }, false)
+        if (regRes.success && regRes.data) {
+          matchedBird = regRes.data
+          setRegisteredBirds((prev) => [...prev, regRes.data])
+          fetchBirds()
+        }
+      } catch (e) {
+        console.warn('Auto register bird error:', e)
+      }
+      if (!matchedBird) {
+        matchedBird = { id: rawTag, ringNo: autoRing, color: 'Blue Bar', name: 'Racer', gender: null, rfidTag: rawTag }
+      }
     }
 
-    // 2. Find active flight event (Race or Training)
+    // 2. Find active flight event (Race or Training, or auto-create today's flight)
     const validFlights = events.filter(
       (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
     )
 
-    if (validFlights.length === 0) {
+    const todayStr = dateNow.toISOString().split('T')[0]
+    let targetEvent = validFlights.find((e) => e.date === todayStr || (e.date && e.date.startsWith(todayStr))) || validFlights[0]
+
+    // If no flight event exists for today, auto-create a training flight so clock-in is NEVER lost!
+    if (!targetEvent) {
+      try {
+        const newFlightRes = await saveEvent(session?.access_token, {
+          title: `Training Toss ${todayStr}`,
+          date: todayStr,
+          club: 'Training',
+          location: 'Loft Release',
+          distance: 10,
+          releaseTime: '06:00',
+          clockInTime: time24,
+          totalBirds: 0,
+          maxSpeed: 0,
+          avgSpeed: 0,
+          winner: 'TBD',
+          birds: '[]',
+        }, false)
+        if (newFlightRes.success && newFlightRes.data) {
+          targetEvent = newFlightRes.data
+          setEvents((prev) => [newFlightRes.data, ...prev])
+          fetchEvents()
+        }
+      } catch (e) {
+        console.warn('Auto create flight error:', e)
+      }
+    }
+
+    if (!targetEvent) {
       playElectronicChime(false)
       setArrivalHud({
         bird: matchedBird,
         speed: 0,
         time: currentTimeStr,
-        eventTitle: 'No Active Flight',
+        eventTitle: 'Loft Trap Station',
         rank: 0,
         type: 'warning',
-        message: `⚠️ Pigeon ${matchedBird.ringNo} stepped on pad, but no active Race or Training flight is scheduled!`
+        message: `⚠️ Unable to initialize flight event for clock-in.`
       })
       return
     }
-
-    // Prioritize today's race/training, or fallback to the most recent flight
-    const todayStr = dateNow.toISOString().split('T')[0]
-    const targetEvent = validFlights.find((e) => e.date === todayStr || (e.date && e.date.startsWith(todayStr))) || validFlights[0]
 
     // 3. Check if bird is already clocked
     let birdsList: Array<{ ringNo: string; clockInTime: string; speed: number }> = []

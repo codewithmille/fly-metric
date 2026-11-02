@@ -131,23 +131,22 @@ export default function ElectronicPadModal({
         b.ringNo.toLowerCase() === tag.toLowerCase()
     )
 
-    if (!matched) {
-      playElectronicChime(false)
-      setActionNotice({
-        type: 'warning',
-        message: `⚠️ Unpaired RFID Tag "${tag}" stepped on pad. Register this tag in Loft Registry!`,
-      })
-      setTimeout(() => setActionNotice(null), 5000)
-      return
-    }
-
     const now = new Date()
     const hrs = String(now.getHours()).padStart(2, '0')
     const mins = String(now.getMinutes()).padStart(2, '0')
     const timeNow = `${hrs}:${mins}`
 
+    const birdToClock = matched || {
+      id: tag,
+      ringNo: `PH-${now.getFullYear()}-${tag.slice(-5)}`,
+      color: 'Blue Bar',
+      name: `Racer ${tag.slice(-4)}`,
+      gender: 'Unknown',
+      rfidTag: tag,
+    }
+
     try {
-      await onManualClockIn(matched.ringNo, timeNow, selectedEvent.id)
+      await onManualClockIn(birdToClock.ringNo, timeNow, selectedEvent.id)
       playElectronicChime(true)
 
       const distanceKm = selectedEvent.extendedProps?.distance || 0
@@ -161,20 +160,20 @@ export default function ElectronicPadModal({
       const calculatedSpeed = flyingMinutes > 0 ? Math.round((distanceKm * 1000) / flyingMinutes) : 0
 
       setLastArrival({
-        ringNo: matched.ringNo,
-        name: matched.name,
+        ringNo: birdToClock.ringNo,
+        name: birdToClock.name,
         time: now.toLocaleTimeString(),
         speed: calculatedSpeed,
         rank: clockedBirds.length + 1,
       })
 
       if (speechEnabled) {
-        speakPigeonArrival(`Pigeon ${matched.ringNo} clocked! Speed: ${calculatedSpeed} meters per minute!`)
+        speakPigeonArrival(`Pigeon ${birdToClock.ringNo} clocked! Speed: ${calculatedSpeed} meters per minute!`)
       }
 
       setActionNotice({
         type: 'success',
-        message: `🎯 PIGEON CLOCKED! ${matched.ringNo} (${matched.name || matched.color}) at ${timeNow}!`,
+        message: `🎯 PIGEON CLOCKED! ${birdToClock.ringNo} (${birdToClock.name || birdToClock.color}) at ${timeNow}!`,
       })
       setTimeout(() => setActionNotice(null), 6000)
       setTestTagInput('')
