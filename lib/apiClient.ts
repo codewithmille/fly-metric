@@ -182,8 +182,12 @@ export async function getBirds(authToken?: string): Promise<any[]> {
       if (res.ok) {
         const data = await res.json()
         if (Array.isArray(data)) {
-          setCache(CACHE_KEYS.BIRDS, data)
-          return data
+          const cached = getCache(CACHE_KEYS.BIRDS)
+          // Keep local unsynced birds so an empty server response never wipes user's birds
+          const unsynced = cached.filter((c: any) => !data.some((d: any) => (d.ringNo && c.ringNo && d.ringNo.toUpperCase() === c.ringNo.toUpperCase()) || (d.id && c.id && d.id === c.id)))
+          const merged = [...data, ...unsynced]
+          setCache(CACHE_KEYS.BIRDS, merged)
+          return merged
         }
       }
     } catch (e) {
@@ -199,18 +203,23 @@ export async function saveBird(authToken: string | undefined, birdData: any, isE
   const localBird = {
     ...birdData,
     id: birdData.id || generateLocalId(),
+    createdAt: birdData.createdAt || new Date().toISOString(),
   }
 
-  if (!isOnline()) {
-    const cachedBirds = getCache(CACHE_KEYS.BIRDS)
-    if (isEdit) {
-      const idx = cachedBirds.findIndex((b: any) => b.id === localBird.id)
-      if (idx !== -1) cachedBirds[idx] = localBird
-    } else {
-      cachedBirds.push(localBird)
-    }
-    setCache(CACHE_KEYS.BIRDS, cachedBirds)
+  // Instantly update local cache so the bird appears in UI immediately without waiting
+  const cachedBirds = getCache(CACHE_KEYS.BIRDS)
+  const existingIdx = cachedBirds.findIndex((b: any) => 
+    (b.ringNo && localBird.ringNo && b.ringNo.toUpperCase() === localBird.ringNo.toUpperCase()) || 
+    (b.id && localBird.id && b.id === localBird.id)
+  )
+  if (existingIdx !== -1) {
+    cachedBirds[existingIdx] = { ...cachedBirds[existingIdx], ...localBird }
+  } else {
+    cachedBirds.push(localBird)
+  }
+  setCache(CACHE_KEYS.BIRDS, cachedBirds)
 
+  if (!isOnline()) {
     queueSync({
       id: localBird.id,
       action: isEdit ? 'PUT' : 'POST',
@@ -237,27 +246,21 @@ export async function saveBird(authToken: string | undefined, birdData: any, isE
     if (!res.ok) throw new Error(result.error || 'Failed to save bird')
 
     const savedData = result.data || localBird
-    const cachedBirds = getCache(CACHE_KEYS.BIRDS)
-    if (isEdit) {
-      const idx = cachedBirds.findIndex((b: any) => b.id === savedData.id)
-      if (idx !== -1) cachedBirds[idx] = savedData
+    const updatedCache = getCache(CACHE_KEYS.BIRDS)
+    const idx = updatedCache.findIndex((b: any) => 
+      (b.ringNo && savedData.ringNo && b.ringNo.toUpperCase() === savedData.ringNo.toUpperCase()) || 
+      (b.id && savedData.id && b.id === savedData.id)
+    )
+    if (idx !== -1) {
+      updatedCache[idx] = savedData
     } else {
-      cachedBirds.push(savedData)
+      updatedCache.push(savedData)
     }
-    setCache(CACHE_KEYS.BIRDS, cachedBirds)
+    setCache(CACHE_KEYS.BIRDS, updatedCache)
 
     return { success: true, data: savedData }
   } catch (e) {
     console.warn('Online save bird failed, queuing for sync:', e)
-    const cachedBirds = getCache(CACHE_KEYS.BIRDS)
-    if (isEdit) {
-      const idx = cachedBirds.findIndex((b: any) => b.id === localBird.id)
-      if (idx !== -1) cachedBirds[idx] = localBird
-    } else {
-      cachedBirds.push(localBird)
-    }
-    setCache(CACHE_KEYS.BIRDS, cachedBirds)
-
     queueSync({
       id: localBird.id,
       action: isEdit ? 'PUT' : 'POST',

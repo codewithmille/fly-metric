@@ -71,17 +71,26 @@ export async function POST(request: Request) {
     }
     const finalColor = color && color.trim() ? color.trim() : 'Blue Bar'
 
-    // Check if ring number is already registered for this user
-    const existing = await prisma.loftBird.findFirst({
-      where: { userId: user.userId, ringNo: ringNo.trim().toUpperCase() }
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: `Bird with Ring No. "${ringNo.trim().toUpperCase()}" is already registered in your loft.` }, { status: 400 })
-    }
-
-    const data = await prisma.loftBird.create({
-      data: {
+    const data = await prisma.loftBird.upsert({
+      where: {
+        userId_ringNo: {
+          userId: user.userId,
+          ringNo: ringNo.trim().toUpperCase(),
+        },
+      },
+      update: {
+        color: finalColor,
+        name: name ? name.trim() : null,
+        gender: gender || 'Unknown',
+        birthdate: birthdate ? birthdate.trim() : null,
+        strain: strain ? strain.trim() : null,
+        status: status || 'Active',
+        notes: notes ? notes.trim() : null,
+        sire: sire ? sire.trim() : null,
+        dam: dam ? dam.trim() : null,
+        rfidTag: rfidTag ? rfidTag.trim() : null,
+      },
+      create: {
         userId: user.userId,
         userEmail: user.userEmail,
         ringNo: ringNo.trim().toUpperCase(),

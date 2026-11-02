@@ -50,8 +50,30 @@ export default function Home() {
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
 
-  const [events, setEvents] = useState<RaceEvent[]>([])
-  const [registeredBirds, setRegisteredBirds] = useState<LoftBird[]>([])
+  const [events, setEvents] = useState<RaceEvent[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('flymetric_events_cache')
+        if (cached) {
+          const list = JSON.parse(cached)
+          if (Array.isArray(list)) return list
+        }
+      } catch {}
+    }
+    return []
+  })
+  const [registeredBirds, setRegisteredBirds] = useState<LoftBird[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('flymetric_birds_cache')
+        if (cached) {
+          const list = JSON.parse(cached)
+          if (Array.isArray(list)) return list
+        }
+      } catch {}
+    }
+    return []
+  })
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isClockInOpen, setIsClockInOpen] = useState(false)
