@@ -14,26 +14,80 @@ interface UseRfidScannerOptions {
  * Play an electronic clocking beep using Web Audio API
  */
 export function playClockInBeep(frequency = 1400, duration = 0.14) {
+  playElectronicChime(true)
+}
+
+/**
+ * Play a crisp dual-tone Unikon/Benzing electronic clocking chime
+ */
+export function playElectronicChime(success = true) {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
     if (!AudioContextClass) return
     const audioCtx = new AudioContextClass()
-    const osc = audioCtx.createOscillator()
-    const gain = audioCtx.createGain()
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {})
+    }
 
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime)
+    if (success) {
+      // High pitch double-chime (1400Hz -> 1900Hz)
+      const now = audioCtx.currentTime
+      const osc1 = audioCtx.createOscillator()
+      const gain1 = audioCtx.createGain()
+      osc1.type = 'sine'
+      osc1.frequency.setValueAtTime(1400, now)
+      gain1.gain.setValueAtTime(0.3, now)
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12)
+      osc1.connect(gain1)
+      gain1.connect(audioCtx.destination)
+      osc1.start(now)
+      osc1.stop(now + 0.12)
 
-    gain.gain.setValueAtTime(0.2, audioCtx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration)
-
-    osc.connect(gain)
-    gain.connect(audioCtx.destination)
-
-    osc.start()
-    osc.stop(audioCtx.currentTime + duration)
+      const osc2 = audioCtx.createOscillator()
+      const gain2 = audioCtx.createGain()
+      osc2.type = 'sine'
+      osc2.frequency.setValueAtTime(1900, now + 0.1)
+      gain2.gain.setValueAtTime(0.35, now + 0.1)
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
+      osc2.connect(gain2)
+      gain2.connect(audioCtx.destination)
+      osc2.start(now + 0.1)
+      osc2.stop(now + 0.28)
+    } else {
+      // Warning double tone (550Hz -> 420Hz)
+      const now = audioCtx.currentTime
+      const osc = audioCtx.createOscillator()
+      const gain = audioCtx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(550, now)
+      osc.frequency.setValueAtTime(420, now + 0.12)
+      gain.gain.setValueAtTime(0.25, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
+      osc.connect(gain)
+      gain.connect(audioCtx.destination)
+      osc.start(now)
+      osc.stop(now + 0.28)
+    }
   } catch {
     // Audio context may require user interaction first
+  }
+}
+
+/**
+ * Text-to-speech announcement for loft arrivals
+ */
+export function speakPigeonArrival(text: string) {
+  try {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel() // clear any preceding speech
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 1.05
+      utterance.pitch = 1.05
+      utterance.volume = 1
+      window.speechSynthesis.speak(utterance)
+    }
+  } catch {
+    // Speech synthesis unsupported or blocked
   }
 }
 
@@ -69,9 +123,11 @@ export function useRfidScanner({
       if (e.key === 'Enter') {
         const tag = bufferRef.current.trim()
         if (tag.length >= minTagLength) {
-          // Valid RFID sequence captured
+          // Prevent submitting any active focused form or button
+          e.preventDefault()
+          e.stopPropagation()
           if (playAudioBeep) {
-            playClockInBeep()
+            playElectronicChime(true)
           }
           onScanRef.current(tag)
         }

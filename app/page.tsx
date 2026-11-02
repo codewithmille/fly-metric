@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import ActivityModal from '@/components/ActivityModal'
 import QuickClockInModal from '@/components/QuickClockInModal'
@@ -12,11 +12,13 @@ import LoftActivitiesModal from '@/components/LoftActivitiesModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
 import PigeonChatModal from '@/components/PigeonChatModal'
+import ElectronicPadModal from '@/components/ElectronicPadModal'
 import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
-import { getEvents, getBirds, syncOfflineQueue, isOnline } from '@/lib/apiClient'
+import { getEvents, getBirds, syncOfflineQueue, isOnline, saveEvent } from '@/lib/apiClient'
+import { useRfidScanner, playElectronicChime, speakPigeonArrival } from '@/hooks/useRfidScanner'
 
 // RaceCalendar must be loaded client-side only (FullCalendar dependency)
 const RaceCalendar = dynamic(() => import('@/components/RaceCalendar'), {
@@ -72,6 +74,27 @@ export default function Home() {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
   const [isTrainingOpen, setIsTrainingOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isPadStationOpen, setIsPadStationOpen] = useState(false)
+  const [arrivalHud, setArrivalHud] = useState<{
+    bird: LoftBird
+    speed: number
+    time: string
+    eventTitle: string
+    rank: number
+    type: 'success' | 'warning' | 'info'
+    message?: string
+  } | null>(null)
+  const lastScanDebounceRef = useRef<{ [tag: string]: number }>({})
+
+  // Auto-dismiss Grand Arrival HUD after 9 seconds
+  useEffect(() => {
+    if (arrivalHud) {
+      const timer = setTimeout(() => {
+        setArrivalHud(null)
+      }, 9000)
+      return () => clearTimeout(timer)
+    }
+  }, [arrivalHud])
 
   const refreshSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -168,6 +191,253 @@ export default function Home() {
     }
   }, [session, fetchEvents, fetchBirds])
 
+  // ── Global Hands-Free 125kHz RFID Electronic Pad Clocking ──
+  const handleGlobalAutoClock = useCallback(async (scannedTag: string) => {
+    const rawTag = scannedTag.trim()
+    if (!rawTag) return
+
+    const now = Date.now()
+    const tagKey = rawTag.toLowerCase()
+
+    // 8-second debounce per bird tag so continuous landing / stepping on pad doesn't spam errors
+    if (lastScanDebounceRef.current[tagKey] && now - lastScanDebounceRef.current[tagKey] < 8000) {
+      return
+    }
+    lastScanDebounceRef.current[tagKey] = now
+
+    // 1. Match bird in registered birds
+    const matchedBird = registeredBirds.find(
+      (b) =>
+        (b.rfidTag && b.rfidTag.trim().toLowerCase() === tagKey) ||
+        b.ringNo.trim().toLowerCase() === tagKey
+    )
+
+    const dateNow = new Date()
+    const currentTimeStr = dateNow.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    const hrs = String(dateNow.getHours()).padStart(2, '0')
+    const mins = String(dateNow.getMinutes()).padStart(2, '0')
+    const time24 = `${hrs}:${mins}`
+
+    if (!matchedBird) {
+      playElectronicChime(false)
+      setArrivalHud({
+        bird: { id: '', ringNo: rawTag, color: '', name: 'Unpaired RFID Tag', gender: null },
+        speed: 0,
+        time: currentTimeStr,
+        eventTitle: 'Loft Trap Station',
+        rank: 0,
+        type: 'warning',
+        message: `⚠️ Unregistered RFID Tag "${rawTag}" stepped on sensor pad! Register this band in Loft Registry first.`
+      })
+      return
+    }
+
+    // 2. Find active flight event (Race or Training)
+    const validFlights = events.filter(
+      (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
+    )
+
+    if (validFlights.length === 0) {
+      playElectronicChime(false)
+      setArrivalHud({
+        bird: matchedBird,
+        speed: 0,
+        time: currentTimeStr,
+        eventTitle: 'No Active Flight',
+        rank: 0,
+        type: 'warning',
+        message: `⚠️ Pigeon ${matchedBird.ringNo} stepped on pad, but no active Race or Training flight is scheduled!`
+      })
+      return
+    }
+
+    // Prioritize today's race/training, or fallback to the most recent flight
+    const todayStr = dateNow.toISOString().split('T')[0]
+    const targetEvent = validFlights.find((e) => e.date === todayStr || (e.date && e.date.startsWith(todayStr))) || validFlights[0]
+
+    // 3. Check if bird is already clocked
+    let birdsList: Array<{ ringNo: string; clockInTime: string; speed: number }> = []
+    try {
+      birdsList = JSON.parse(targetEvent.extendedProps?.birds || '[]')
+      if (!Array.isArray(birdsList)) birdsList = []
+    } catch {
+      birdsList = []
+    }
+
+    const existingRecord = birdsList.find(
+      (b) => b.ringNo.trim().toUpperCase() === matchedBird.ringNo.trim().toUpperCase()
+    )
+
+    if (existingRecord) {
+      playElectronicChime(false)
+      const rankIdx = birdsList.findIndex(b => b.ringNo.trim().toUpperCase() === matchedBird.ringNo.trim().toUpperCase()) + 1
+      setArrivalHud({
+        bird: matchedBird,
+        speed: existingRecord.speed,
+        time: existingRecord.clockInTime,
+        eventTitle: targetEvent.title,
+        rank: rankIdx,
+        type: 'info',
+        message: `ℹ️ Pigeon ${matchedBird.ringNo} is ALREADY clocked in at ${existingRecord.clockInTime} (${existingRecord.speed.toLocaleString()} m/min).`
+      })
+      return
+    }
+
+    // 4. Calculate flight telemetry & speed
+    const distanceKm = targetEvent.extendedProps?.distance || 0
+    const releaseTime = targetEvent.extendedProps?.releaseTime || '06:00'
+    const [rH, rM] = releaseTime.split(':').map(Number)
+    const [cH, cM] = time24.split(':').map(Number)
+    const releaseMinutes = (rH || 0) * 60 + (rM || 0)
+    let clockInMinutes = (cH || 0) * 60 + (cM || 0)
+    if (clockInMinutes <= releaseMinutes) {
+      clockInMinutes += 24 * 60
+    }
+    const flyingMins = Math.max(1, clockInMinutes - releaseMinutes)
+    const distanceMeters = distanceKm * 1000
+    const calculatedSpeed = distanceMeters > 0 ? Math.round(distanceMeters / flyingMins) : 0
+
+    const newRecord = {
+      ringNo: matchedBird.ringNo.trim().toUpperCase(),
+      clockInTime: time24,
+      speed: calculatedSpeed,
+    }
+
+    const updatedBirdsList = [...birdsList, newRecord]
+    const speeds = updatedBirdsList.map((b) => b.speed)
+    const maxSpeed = Math.max(...speeds)
+    const avgSpeed = Math.round(speeds.reduce((sum, s) => sum + s, 0) / updatedBirdsList.length)
+    const fastestBird = updatedBirdsList.reduce((f, c) => (c.speed > f.speed ? c : f), updatedBirdsList[0])
+    const winnerRing = targetEvent.extendedProps?.club === 'Training' ? 'N/A' : fastestBird.ringNo
+
+    // 5. AUTO-SAVE TO SUPABASE/OFFLINE STORAGE (ZERO HUMAN CLICKS REQUIRED!)
+    try {
+      const res = await saveEvent(session?.access_token, {
+        id: targetEvent.id,
+        title: targetEvent.title,
+        date: targetEvent.date,
+        totalBirds: updatedBirdsList.length,
+        maxSpeed,
+        avgSpeed,
+        location: targetEvent.extendedProps?.location,
+        club: targetEvent.extendedProps?.club,
+        distance: distanceKm,
+        winner: winnerRing,
+        releaseTime,
+        clockInTime: time24,
+        birds: JSON.stringify(updatedBirdsList),
+      }, true)
+
+      if (res.success) {
+        // Electronic chime & Voice Announcement
+        playElectronicChime(true)
+        speakPigeonArrival(`Pigeon ${matchedBird.ringNo} clocked! Velocity ${calculatedSpeed} meters per minute!`)
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate?.([200, 100, 300])
+        }
+
+        setArrivalHud({
+          bird: matchedBird,
+          speed: calculatedSpeed,
+          time: currentTimeStr,
+          eventTitle: targetEvent.title,
+          rank: updatedBirdsList.length,
+          type: 'success',
+          message: `🎯 OFFICIAL EBDS ARRIVAL RECORDED! Speed: ${calculatedSpeed.toLocaleString()} m/min · Rank #${updatedBirdsList.length}`
+        })
+
+        fetchEvents()
+      } else {
+        playElectronicChime(false)
+        setArrivalHud({
+          bird: matchedBird,
+          speed: 0,
+          time: currentTimeStr,
+          eventTitle: targetEvent.title,
+          rank: 0,
+          type: 'warning',
+          message: `⚠️ Error saving automatic clock-in to database.`
+        })
+      }
+    } catch (err: any) {
+      playElectronicChime(false)
+      setArrivalHud({
+        bird: matchedBird,
+        speed: 0,
+        time: currentTimeStr,
+        eventTitle: targetEvent.title,
+        rank: 0,
+        type: 'warning',
+        message: err.message || 'Error executing sensor clock-in.'
+      })
+    }
+  }, [events, registeredBirds, session, fetchEvents])
+
+  // Global listener for USB 125kHz RFID proximity readers
+  useRfidScanner({
+    enabled: !isRegistryOpen,
+    onScan: handleGlobalAutoClock,
+    playAudioBeep: false,
+  })
+
+  // Manual clock-in handler used by ElectronicPadModal simulation/testing
+  const handleManualClockIn = useCallback(async (ring: string, time: string, eventId: string) => {
+    const targetEvent = events.find(e => e.id === eventId)
+    if (!targetEvent) throw new Error('Event not found')
+    
+    const distanceKm = targetEvent.extendedProps?.distance || 0
+    const releaseTime = targetEvent.extendedProps?.releaseTime || '06:00'
+    const [rH, rM] = releaseTime.split(':').map(Number)
+    const [cH, cM] = time.split(':').map(Number)
+    const releaseMinutes = (rH || 0) * 60 + (rM || 0)
+    let clockInMinutes = (cH || 0) * 60 + (cM || 0)
+    if (clockInMinutes <= releaseMinutes) clockInMinutes += 24 * 60
+    const flyingMins = Math.max(1, clockInMinutes - releaseMinutes)
+    const calculatedSpeed = distanceKm > 0 ? Math.round((distanceKm * 1000) / flyingMins) : 0
+
+    let birdsList: Array<{ ringNo: string; clockInTime: string; speed: number }> = []
+    try {
+      birdsList = JSON.parse(targetEvent.extendedProps?.birds || '[]')
+      if (!Array.isArray(birdsList)) birdsList = []
+    } catch {
+      birdsList = []
+    }
+
+    if (birdsList.some(b => b.ringNo.toUpperCase() === ring.trim().toUpperCase())) {
+      throw new Error(`Bird ${ring} is already clocked in for this event!`)
+    }
+
+    const updatedBirds = [...birdsList, { ringNo: ring.trim().toUpperCase(), clockInTime: time, speed: calculatedSpeed }]
+    const speeds = updatedBirds.map(b => b.speed)
+    const maxSpeed = Math.max(...speeds)
+    const avgSpeed = Math.round(speeds.reduce((s, c) => s + c, 0) / updatedBirds.length)
+    const fastestBird = updatedBirds.reduce((f, c) => c.speed > f.speed ? c : f, updatedBirds[0])
+    const winnerRing = targetEvent.extendedProps?.club === 'Training' ? 'N/A' : fastestBird.ringNo
+
+    const res = await saveEvent(session?.access_token, {
+      id: targetEvent.id,
+      title: targetEvent.title,
+      date: targetEvent.date,
+      totalBirds: updatedBirds.length,
+      maxSpeed,
+      avgSpeed,
+      location: targetEvent.extendedProps?.location,
+      club: targetEvent.extendedProps?.club,
+      distance: distanceKm,
+      winner: winnerRing,
+      releaseTime,
+      clockInTime: time,
+      birds: JSON.stringify(updatedBirds),
+    }, true)
+
+    if (!res.success) {
+      throw new Error('Failed to save clock-in')
+    }
+
+    await fetchEvents()
+    return res
+  }, [events, session, fetchEvents])
+
 
   // ── Modal handlers ────────────────────────────────────────
   const openModal = (dateStr: string, eventToEdit?: RaceEvent | null) => {
@@ -199,7 +469,7 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
-  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat') => {
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat' | 'trap') => {
     setIsModalOpen(false)
     setIsSelectionOpen(false)
     setIsClockInOpen(false)
@@ -207,11 +477,14 @@ export default function Home() {
     setIsActivitiesOpen(false)
     setIsProfileOpen(false)
     setIsChatOpen(false)
+    setIsPadStationOpen(false)
 
     if (tabName === 'addEvent') {
       openModal(today)
     } else if (tabName === 'clockIn') {
       setIsClockInOpen(true)
+    } else if (tabName === 'trap') {
+      setIsPadStationOpen(true)
     } else if (tabName === 'camera') {
       setIsVerifyPhotoOpen(true)
     } else if (tabName === 'activities') {
@@ -532,6 +805,30 @@ export default function Home() {
             <CalculatorIcon size={16} /> <span className="nav-btn-text">Speed Calculator</span>
           </button>
           <button
+            id="trap-antenna-nav"
+            className="nav-btn nav-btn-secondary"
+            onClick={() => setIsPadStationOpen(true)}
+            aria-label="Live Trap Station"
+            style={{
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#34d399',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              padding: '0.5rem 0.88rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.15)',
+            }}
+          >
+            <span style={{ fontSize: '1rem' }}>📡</span> <span className="nav-btn-text">Trap Station</span>
+          </button>
+          <button
             id="quick-clockin-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsClockInOpen(true)}
@@ -737,6 +1034,173 @@ export default function Home() {
 
       {/* ── Main Content ──────────────────────────────── */}
       <main className="dashboard-content">
+
+        {/* ── Grand Electronic Band Arrival HUD Overlay ── */}
+        {arrivalHud && (
+          <div
+            style={{
+              position: 'fixed',
+              top: '1.25rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 99999,
+              width: '92%',
+              maxWidth: '560px',
+              background: arrivalHud.type === 'warning' 
+                ? 'linear-gradient(135deg, #3b0707 0%, #1c0606 100%)' 
+                : arrivalHud.type === 'info'
+                ? 'linear-gradient(135deg, #0c2340 0%, #051020 100%)'
+                : 'linear-gradient(135deg, #043825 0%, #031e15 100%)',
+              border: `2px solid ${
+                arrivalHud.type === 'warning' ? '#ef4444' : arrivalHud.type === 'info' ? '#38bdf8' : '#10b981'
+              }`,
+              boxShadow: `0 0 35px ${
+                arrivalHud.type === 'warning' ? 'rgba(239, 68, 68, 0.4)' : arrivalHud.type === 'info' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(16, 185, 129, 0.5)'
+              }, 0 20px 40px rgba(0,0,0,0.85)`,
+              borderRadius: '1rem',
+              padding: '1rem 1.25rem',
+              color: '#fff',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: arrivalHud.type === 'warning' ? 'rgba(239, 68, 68, 0.2)' : arrivalHud.type === 'info' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                  border: `1px solid ${arrivalHud.type === 'warning' ? 'rgba(239, 68, 68, 0.4)' : arrivalHud.type === 'info' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(16, 185, 129, 0.5)'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.4rem',
+                  flexShrink: 0
+                }}>
+                  {arrivalHud.type === 'warning' ? '⚠️' : arrivalHud.type === 'info' ? 'ℹ️' : '🎯'}
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: arrivalHud.type === 'warning' ? '#f87171' : arrivalHud.type === 'info' ? '#7dd3fc' : '#34d399'
+                  }}>
+                    {arrivalHud.type === 'warning' ? 'SENSOR PAD ALERT' : arrivalHud.type === 'info' ? 'ALREADY RECORDED' : 'HANDS-FREE ARRIVAL CLOCKED!'}
+                  </div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--brand-gold)', letterSpacing: '0.02em', lineHeight: 1.15 }}>
+                    {arrivalHud.bird.ringNo}
+                  </div>
+                  {arrivalHud.bird.name && (
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>
+                      {arrivalHud.bird.name} {arrivalHud.bird.color ? `· ${arrivalHud.bird.color}` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setArrivalHud(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.6)',
+                  borderRadius: '6px',
+                  width: '28px',
+                  height: '28px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.1rem',
+                  fontWeight: 700
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {arrivalHud.type === 'success' && (
+              <div style={{
+                marginTop: '0.75rem',
+                paddingTop: '0.75rem',
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '0.5rem',
+                textAlign: 'center',
+              }}>
+                <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.45rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700 }}>Arrival Time</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>{arrivalHud.time}</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.45rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700 }}>Speed</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#34d399' }}>{arrivalHud.speed.toLocaleString()} m/m</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.35)', padding: '0.45rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700 }}>Rank</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--brand-gold)' }}>#{arrivalHud.rank}</div>
+                </div>
+              </div>
+            )}
+
+            {arrivalHud.message && arrivalHud.type !== 'success' && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)' }}>
+                {arrivalHud.message}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── EBDS 125kHz Trap Antenna Sensor Live Status Pill ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(9, 13, 22, 0.75) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '0.875rem',
+            padding: '0.65rem 1rem',
+            marginBottom: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <span style={{ position: 'relative', display: 'flex', width: '10px', height: '10px' }}>
+              <span style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '9999px', background: '#34d399', opacity: 0.75 }}></span>
+              <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '9999px', height: '10px', width: '10px', background: '#10b981' }}></span>
+            </span>
+            <div>
+              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#34d399', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>📡 EBDS Trap Sensor: Active &amp; Ready</span>
+                <span style={{ fontSize: '0.68rem', background: 'rgba(16, 185, 129, 0.2)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Auto-Clock ON</span>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>
+                Pagtapak ng kalapati sa antenna pad, kusa nang magco-clock nang walang pindot!
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsPadStationOpen(true)}
+            style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#34d399',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              padding: '0.35rem 0.75rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <span>📡 Open Trap Station</span>
+          </button>
+        </div>
 
         {/* ── 2nd-Image Style Loft Telemetry & Stats Dashboard ── */}
         <section
@@ -1427,6 +1891,23 @@ export default function Home() {
       <TrainingProgramModal
         isOpen={isTrainingOpen}
         onClose={() => setIsTrainingOpen(false)}
+      />
+
+      {/* ── Electronic Antenna Sensor Pad Modal ─────────── */}
+      <ElectronicPadModal
+        isOpen={isPadStationOpen}
+        events={events}
+        registeredBirds={registeredBirds}
+        onClose={() => setIsPadStationOpen(false)}
+        onManualClockIn={handleManualClockIn}
+        onOpenRegistry={() => {
+          setIsPadStationOpen(false)
+          setIsRegistryOpen(true)
+        }}
+        onOpenNewActivity={() => {
+          setIsPadStationOpen(false)
+          openModal(today)
+        }}
       />
 
       {/* ── Day Selection Modal ──────────────────────── */}
