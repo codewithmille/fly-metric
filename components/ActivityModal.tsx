@@ -97,6 +97,7 @@ export default function ActivityModal({
   // Participating birds (Kasali sa Laro) & RFID Target states
   const [participatingRings, setParticipatingRings] = useState<string[]>([])
   const [isRfidTarget, setIsRfidTarget] = useState<boolean>(true)
+  const [entriesExpanded, setEntriesExpanded] = useState<boolean>(true)
 
   useEffect(() => {
     if (releaseTime) {
@@ -655,7 +656,16 @@ export default function ActivityModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        style={{ maxWidth: '560px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}
+        style={{
+          maxWidth: '540px',
+          width: '100%',
+          maxHeight: '92dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          borderRadius: '1.25rem',
+          boxSizing: 'border-box'
+        }}
       >
         {/* Header styling adapts to activity type */}
         <div className="modal-header" style={{
@@ -669,7 +679,10 @@ export default function ActivityModal({
           gap: '0.75rem',
           width: '100%',
           boxSizing: 'border-box',
-          overflow: 'hidden'
+          padding: '1rem 1.25rem',
+          borderTopLeftRadius: '1.25rem',
+          borderTopRightRadius: '1.25rem',
+          flexShrink: 0,
         }}>
           <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
             <span className="modal-pigeon-icon" style={{ display: 'flex', alignItems: 'center', color: '#fff', flexShrink: 0 }}>
@@ -694,7 +707,8 @@ export default function ActivityModal({
           <div style={{
             display: 'flex',
             borderBottom: '1px solid var(--border-default)',
-            background: 'var(--bg-surface)'
+            background: 'var(--bg-surface)',
+            flexShrink: 0,
           }}>
             {(['race', 'training', 'medication', 'task'] as const).map((type) => (
               <button
@@ -737,14 +751,22 @@ export default function ActivityModal({
         )}
 
         {/* Body */}
-        <div className="modal-body">
+        <div
+          className="modal-body"
+          style={{
+            padding: '1rem 1.15rem',
+            gap: '0.65rem',
+            overflowY: 'auto',
+            flex: 1,
+          }}
+        >
           {clockInOnly && (
             <div style={{
               background: 'rgba(255, 255, 255, 0.02)',
               border: '1px solid var(--border-default)',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-              marginBottom: '1rem',
+              borderRadius: '0.65rem',
+              padding: '0.65rem 0.85rem',
+              marginBottom: '0.35rem',
               position: 'relative'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -1106,45 +1128,42 @@ export default function ActivityModal({
             <div style={{
               background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(13, 17, 23, 0.75) 100%)',
               border: '1px solid rgba(255, 193, 7, 0.28)',
-              borderRadius: '0.85rem',
-              padding: '0.85rem',
-              marginTop: '0.75rem',
+              borderRadius: '0.75rem',
+              padding: '0.65rem 0.85rem',
+              marginTop: '0.4rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.6rem',
+              gap: '0.45rem',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <span style={{ fontSize: '1.1rem' }}>🕊️</span>
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span>Kasali sa Laro (Entries)</span>
-                      <span style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 800,
-                        padding: '0.1rem 0.45rem',
-                        borderRadius: '9999px',
-                        background: 'rgba(255, 193, 7, 0.15)',
-                        color: 'var(--brand-gold)',
-                        border: '1px solid rgba(255, 193, 7, 0.3)'
-                      }}>
-                        {participatingRings.length} of {registeredBirds.length} birds
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Piliin ang mga ibong sasabak. Ang RFID sensor ay magco-clock LAMANG sa mga ibong kasali rito!
-                    </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '1rem' }}>🕊️</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fff' }}>
+                      Kasali sa Laro (Entries)
+                    </span>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 800,
+                      padding: '0.1rem 0.4rem',
+                      borderRadius: '9999px',
+                      background: 'rgba(255, 193, 7, 0.15)',
+                      color: 'var(--brand-gold)',
+                      border: '1px solid rgba(255, 193, 7, 0.3)'
+                    }}>
+                      {participatingRings.length} of {registeredBirds.length} birds
+                    </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
                   <button
                     type="button"
                     onClick={() => setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))}
                     style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.65rem',
                       fontWeight: 700,
-                      padding: '0.2rem 0.5rem',
+                      padding: '0.18rem 0.45rem',
                       borderRadius: '0.35rem',
                       background: 'rgba(255, 255, 255, 0.08)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -1158,9 +1177,9 @@ export default function ActivityModal({
                     type="button"
                     onClick={() => setParticipatingRings([])}
                     style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.65rem',
                       fontWeight: 700,
-                      padding: '0.2rem 0.5rem',
+                      padding: '0.18rem 0.45rem',
                       borderRadius: '0.35rem',
                       background: 'rgba(239, 68, 68, 0.1)',
                       border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -1170,74 +1189,80 @@ export default function ActivityModal({
                   >
                     Clear
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setEntriesExpanded(!entriesExpanded)}
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      padding: '0.18rem 0.45rem',
+                      borderRadius: '0.35rem',
+                      background: 'rgba(255, 193, 7, 0.12)',
+                      border: '1px solid rgba(255, 193, 7, 0.3)',
+                      color: 'var(--brand-gold)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <span>{entriesExpanded ? '▲ Itago' : '▼ Ipakita'}</span>
+                  </button>
                 </div>
               </div>
 
-              {registeredBirds.length === 0 ? (
-                <div style={{ padding: '0.75rem', textAlign: 'center', background: 'rgba(0,0,0,0.25)', borderRadius: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
-                  Walang rehistradong ibon sa loft. Mag-rehistro muna sa Loft Registry!
-                </div>
-              ) : (
-                <div style={{
-                  maxHeight: '160px',
-                  overflowY: 'auto',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  gap: '0.4rem',
-                  padding: '0.25rem 0',
-                }}>
-                  {registeredBirds.map((bird) => {
-                    const isSelected = participatingRings.includes(bird.ringNo.toUpperCase())
-                    return (
-                      <div
-                        key={bird.id}
-                        onClick={() => {
-                          const upper = bird.ringNo.toUpperCase()
-                          setParticipatingRings((prev) =>
-                            prev.includes(upper) ? prev.filter((r) => r !== upper) : [...prev, upper]
-                          )
-                        }}
-                        style={{
-                          padding: '0.45rem 0.6rem',
-                          borderRadius: '0.5rem',
-                          cursor: 'pointer',
-                          border: isSelected ? '1px solid rgba(16, 185, 129, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
-                          background: isSelected ? 'rgba(6, 78, 59, 0.45)' : 'rgba(255, 255, 255, 0.02)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '0.35rem',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: isSelected ? '#34d399' : '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {bird.ringNo}
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {bird.color || 'Racer'} {bird.rfidTag ? '· 📡 RFID' : ''}
-                          </div>
-                        </div>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '4px',
-                          border: isSelected ? '2px solid #10b981' : '1px solid rgba(255, 255, 255, 0.25)',
-                          background: isSelected ? '#10b981' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#000',
-                          fontSize: '0.75rem',
-                          fontWeight: 900,
-                          flexShrink: 0
-                        }}>
-                          {isSelected ? '✓' : ''}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+              {entriesExpanded && (
+                <>
+                  {registeredBirds.length === 0 ? (
+                    <div style={{ padding: '0.6rem', textAlign: 'center', background: 'rgba(0,0,0,0.25)', borderRadius: '0.5rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>
+                      Walang rehistradong ibon sa loft. Mag-rehistro muna sa Loft Registry!
+                    </div>
+                  ) : (
+                    <div style={{
+                      maxHeight: '110px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.35rem',
+                      padding: '0.15rem 0',
+                    }}>
+                      {registeredBirds.map((bird) => {
+                        const isSelected = participatingRings.includes(bird.ringNo.toUpperCase())
+                        return (
+                          <button
+                            key={bird.id}
+                            type="button"
+                            onClick={() => {
+                              const upper = bird.ringNo.toUpperCase()
+                              setParticipatingRings((prev) =>
+                                prev.includes(upper) ? prev.filter((r) => r !== upper) : [...prev, upper]
+                              )
+                            }}
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              padding: '0.22rem 0.55rem',
+                              borderRadius: '9999px',
+                              cursor: 'pointer',
+                              border: isSelected ? '1px solid rgba(16, 185, 129, 0.7)' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: isSelected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                              color: isSelected ? '#34d399' : '#cbd5e1',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              transition: 'all 0.12s ease',
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            <span>{isSelected ? '✓' : '+'}</span>
+                            <span>{bird.ringNo}</span>
+                            <span style={{ fontSize: '0.62rem', opacity: 0.7, fontFamily: 'sans-serif' }}>({bird.color || 'Racer'})</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </>
               )}
 
               {/* RFID Active Target Toggle */}
@@ -1245,13 +1270,13 @@ export default function ActivityModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingTop: '0.5rem',
+                paddingTop: '0.4rem',
                 borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 flexWrap: 'wrap',
-                gap: '0.4rem',
+                gap: '0.35rem',
               }}>
-                <label htmlFor="rfid-target-toggle" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: isRfidTarget ? '#34d399' : 'rgba(255, 255, 255, 0.65)', fontWeight: 700 }}>
+                <label htmlFor="rfid-target-toggle" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', color: isRfidTarget ? '#34d399' : 'rgba(255, 255, 255, 0.65)', fontWeight: 700 }}>
                   <input
                     id="rfid-target-toggle"
                     type="checkbox"
@@ -1270,7 +1295,7 @@ export default function ActivityModal({
 
           {/* Bird Clocking List Manager (Only when editing an existing Race or Training event) */}
           {eventToEdit && (activityType === 'race' || activityType === 'training') && (
-            <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-default)', paddingTop: '1rem' }}>
+            <div style={{ marginTop: '0.65rem', borderTop: '1px solid var(--border-default)', paddingTop: '0.65rem' }}>
               <h3 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <BirdIcon size={16} /> Clocked Birds ({birdsList.length})
                 <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
