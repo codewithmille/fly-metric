@@ -1,9 +1,41 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, TrophyIcon, TimerIcon, LightningIcon, CalendarIcon } from '@/components/icons'
 import { playElectronicChime, speakPigeonArrival } from '@/hooks/useRfidScanner'
+
+function LiveClock() {
+  const [currentTimeStr, setCurrentTimeStr] = useState('')
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      setCurrentTimeStr(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    }
+    updateTime()
+    const timer = setInterval(updateTime, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div
+      style={{
+        fontFamily: 'monospace',
+        fontSize: '1.05rem',
+        fontWeight: 900,
+        color: '#FFC107',
+        background: 'rgba(0, 0, 0, 0.55)',
+        border: '1px solid rgba(255, 193, 7, 0.3)',
+        padding: '0.35rem 0.75rem',
+        borderRadius: '8px',
+        letterSpacing: '0.05em',
+      }}
+    >
+      {currentTimeStr || '00:00:00'}
+    </div>
+  )
+}
 
 interface LoftBird {
   id: string
@@ -34,6 +66,8 @@ interface ElectronicPadModalProps {
   onManualClockIn: (ringNo: string, arrivalTime: string, eventId: string) => Promise<any>
   onOpenRegistry?: () => void
   onOpenNewActivity?: () => void
+  initialEventId?: string | null
+  onSelectEventId?: (eventId: string) => void
 }
 
 export default function ElectronicPadModal({
@@ -44,16 +78,19 @@ export default function ElectronicPadModal({
   onManualClockIn,
   onOpenRegistry,
   onOpenNewActivity,
+  initialEventId,
+  onSelectEventId,
 }: ElectronicPadModalProps) {
-  // Filter available flight events (Race & Training)
-  const flightEvents = events.filter(
-    (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
-  )
+  // Filter available flight events (Race & Training) - sorted latest race first!
+  const flightEvents = useMemo(() => {
+    return events
+      .filter((e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [events])
 
   const [selectedEventId, setSelectedEventId] = useState<string>('')
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [speechEnabled, setSpeechEnabled] = useState(true)
-  const [currentTimeStr, setCurrentTimeStr] = useState('')
   const [lastArrival, setLastArrival] = useState<{
     ringNo: string
     name?: string | null
@@ -66,27 +103,32 @@ export default function ElectronicPadModal({
 
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Default selected event to the first or today's event
+  // Focus modal container once on open without stealing focus from form inputs/dropdowns
   useEffect(() => {
     if (isOpen) {
-      if (flightEvents.length > 0 && !selectedEventId) {
-        setSelectedEventId(flightEvents[0].id)
-      }
       modalRef.current?.focus()
     }
-  }, [isOpen, flightEvents, selectedEventId])
-
-  // Live seconds clock
-  useEffect(() => {
-    if (!isOpen) return
-    const updateTime = () => {
-      const now = new Date()
-      setCurrentTimeStr(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    }
-    updateTime()
-    const timer = setInterval(updateTime, 1000)
-    return () => clearInterval(timer)
   }, [isOpen])
+
+  // Default selected event to target, active, today's, or latest event
+  useEffect(() => {
+    if (isOpen && flightEvents.length > 0) {
+      const storedActiveId = typeof window !== 'undefined' ? localStorage.getItem('flymetric_active_rfid_event_id') : null
+      const target =
+        (initialEventId && flightEvents.find(e => e.id === initialEventId)) ||
+        (storedActiveId && flightEvents.find(e => e.id === storedActiveId)) ||
+        flightEvents.find(e => e.extendedProps?.isRfidActive === true) ||
+        flightEvents.find(e => {
+          const todayStr = new Date().toISOString().split('T')[0]
+          return e.date === todayStr || (e.date && e.date.startsWith(todayStr))
+        }) ||
+        flightEvents[0]
+
+      if (target && (!selectedEventId || !flightEvents.some(e => e.id === selectedEventId))) {
+        setSelectedEventId(target.id)
+      }
+    }
+  }, [isOpen, initialEventId, flightEvents, selectedEventId])
 
   // Escape key to close
   useEffect(() => {
@@ -280,22 +322,8 @@ export default function ElectronicPadModal({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Live Clock Display */}
-            <div
-              style={{
-                fontFamily: 'monospace',
-                fontSize: '1.05rem',
-                fontWeight: 900,
-                color: '#FFC107',
-                background: 'rgba(0, 0, 0, 0.55)',
-                border: '1px solid rgba(255, 193, 7, 0.3)',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {currentTimeStr || '00:00:00'}
-            </div>
+            {/* Live Clock Display (Isolated from parent to avoid re-rendering modal inputs) */}
+            <LiveClock />
 
             <button
               onClick={onClose}
@@ -342,8 +370,15 @@ export default function ElectronicPadModal({
               </span>
             ) : (
               <select
-                value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                value={selectedEventId || selectedEvent?.id || ''}
+                onChange={(e) => {
+                  const chosenId = e.target.value
+                  setSelectedEventId(chosenId)
+                  onSelectEventId?.(chosenId)
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('flymetric_active_rfid_event_id', chosenId)
+                  }
+                }}
                 style={{
                   background: '#0d1527',
                   border: '1px solid rgba(16, 185, 129, 0.4)',
@@ -357,9 +392,9 @@ export default function ElectronicPadModal({
                   maxWidth: '340px',
                 }}
               >
-                {flightEvents.map((ev) => (
+                {flightEvents.map((ev, idx) => (
                   <option key={ev.id} value={ev.id}>
-                    {ev.title} ({ev.extendedProps?.distance || 0}km · Release {ev.extendedProps?.releaseTime || '06:00'})
+                    {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km · Release {ev.extendedProps?.releaseTime || '06:00'}
                   </option>
                 ))}
               </select>

@@ -2025,6 +2025,13 @@ export default function Home() {
           setIsPadStationOpen(false)
           openModal(today)
         }}
+        initialEventId={activeRfidEventId || undefined}
+        onSelectEventId={(chosenId) => {
+          setActiveRfidEventId(chosenId)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('flymetric_active_rfid_event_id', chosenId)
+          }
+        }}
       />
 
       {/* ── Day Selection Modal ──────────────────────── */}
