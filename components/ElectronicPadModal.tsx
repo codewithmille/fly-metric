@@ -126,6 +126,10 @@ export default function ElectronicPadModal({
 
       if (target && (!selectedEventId || !flightEvents.some(e => e.id === selectedEventId))) {
         setSelectedEventId(target.id)
+        onSelectEventId?.(target.id)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('flymetric_active_rfid_event_id', target.id)
+        }
       }
     }
   }, [isOpen, initialEventId, flightEvents, selectedEventId])
@@ -185,6 +189,34 @@ export default function ElectronicPadModal({
       name: `Racer ${tag.slice(-4)}`,
       gender: 'Unknown',
       rfidTag: tag,
+    }
+
+    // 1. Check if participating (Kasali sa Laro)
+    let enteredRings: string[] = []
+    try {
+      enteredRings = JSON.parse(selectedEvent.extendedProps?.participatingBirds || '[]')
+    } catch {}
+
+    if (enteredRings.length > 0 && !enteredRings.includes(birdToClock.ringNo.toUpperCase())) {
+      playElectronicChime(false)
+      setActionNotice({
+        type: 'warning',
+        message: `⚠️ HINDI KASALI SA LARO: Si ${birdToClock.ringNo} ay hindi kasali sa "${selectedEvent.title}"! Hindi ito mai-clock.`
+      })
+      setTimeout(() => setActionNotice(null), 6000)
+      return
+    }
+
+    // 2. Check if already clocked in this event
+    const already = clockedBirds.find(b => b.ringNo.toUpperCase() === birdToClock.ringNo.toUpperCase())
+    if (already) {
+      playElectronicChime(false)
+      setActionNotice({
+        type: 'info',
+        message: `ℹ️ NAKA-CLOCK NA: Si ${birdToClock.ringNo} ay naitala na kaninang ${already.clockInTime} (+${already.speed.toLocaleString()} m/min)! Ligtas na ito.`
+      })
+      setTimeout(() => setActionNotice(null), 6000)
+      return
     }
 
     try {
