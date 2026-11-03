@@ -101,6 +101,7 @@ export default function ElectronicPadModal({
   const [testTagInput, setTestTagInput] = useState('')
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'warning' | 'info'; message: string } | null>(null)
   const [isDimmed, setIsDimmed] = useState(false)
+  const [isFlightPickerOpen, setIsFlightPickerOpen] = useState(false)
 
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -401,37 +402,102 @@ export default function ElectronicPadModal({
               <span style={{ fontSize: '0.76rem', color: '#f87171', fontWeight: 700 }}>
                 No active race found!
               </span>
-            ) : (
-              <select
-                value={selectedEventId || selectedEvent?.id || ''}
-                onChange={(e) => {
-                  const chosenId = e.target.value
-                  setSelectedEventId(chosenId)
-                  onSelectEventId?.(chosenId)
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('flymetric_active_rfid_event_id', chosenId)
-                  }
-                }}
-                style={{
-                  background: '#0d1527',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  color: '#fff',
-                  borderRadius: '6px',
-                  padding: '0.35rem 0.65rem',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  outline: 'none',
-                  flex: 1,
-                  maxWidth: '340px',
-                }}
-              >
-                {flightEvents.map((ev, idx) => (
-                  <option key={ev.id} value={ev.id}>
-                    {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km · Release {ev.extendedProps?.releaseTime || '06:00'}
-                  </option>
-                ))}
-              </select>
-            )}
+            ) : (() => {
+              const currentFlight = flightEvents.find(e => e.id === (selectedEventId || selectedEvent?.id)) || flightEvents[0]
+              return (
+                <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: '360px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsFlightPickerOpen(!isFlightPickerOpen)}
+                    style={{
+                      background: '#0d1527',
+                      border: '1px solid rgba(16, 185, 129, 0.45)',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      padding: '0.38rem 0.65rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.4rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      🎯 {currentFlight?.title || 'Pumili ng Karera'} ({currentFlight?.date}) · {currentFlight?.extendedProps?.distance || 0}km
+                    </span>
+                    <span style={{ fontSize: '0.62rem', color: '#10b981', flexShrink: 0 }}>
+                      {isFlightPickerOpen ? '▲' : '▼'}
+                    </span>
+                  </button>
+
+                  {isFlightPickerOpen && (
+                    <>
+                      <div
+                        onClick={() => setIsFlightPickerOpen(false)}
+                        style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 4px)',
+                          left: 0,
+                          right: 0,
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          background: '#0d1527',
+                          border: '1px solid rgba(16, 185, 129, 0.45)',
+                          borderRadius: '6px',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.85)',
+                          zIndex: 9999,
+                          display: 'flex',
+                          flexDirection: 'column',
+                        }}
+                      >
+                        {flightEvents.map((ev, idx) => {
+                          const isSelected = ev.id === currentFlight?.id
+                          return (
+                            <div
+                              key={ev.id}
+                              onClick={() => {
+                                setSelectedEventId(ev.id)
+                                onSelectEventId?.(ev.id)
+                                if (typeof window !== 'undefined') {
+                                  localStorage.setItem('flymetric_active_rfid_event_id', ev.id)
+                                }
+                                setIsFlightPickerOpen(false)
+                              }}
+                              style={{
+                                padding: '0.5rem 0.65rem',
+                                fontSize: '0.75rem',
+                                fontWeight: isSelected ? 800 : 600,
+                                color: isSelected ? '#34d399' : '#cbd5e1',
+                                background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
+                                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.4rem',
+                              }}
+                            >
+                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km
+                              </span>
+                              {isSelected && <span style={{ color: '#10b981', fontWeight: 900 }}>✓</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Audio Toggles */}

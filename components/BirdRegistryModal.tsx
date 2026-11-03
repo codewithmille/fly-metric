@@ -36,7 +36,18 @@ export default function BirdRegistryModal({
   authToken,
   events = [],
 }: BirdRegistryModalProps) {
-  const [birds, setBirds] = useState<LoftBird[]>([])
+  const [birds, setBirds] = useState<LoftBird[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('flymetric_birds_cache')
+        if (cached) {
+          const list = JSON.parse(cached)
+          if (Array.isArray(list)) return list
+        }
+      } catch {}
+    }
+    return []
+  })
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 

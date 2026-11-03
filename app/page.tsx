@@ -100,6 +100,7 @@ export default function Home() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isPadStationOpen, setIsPadStationOpen] = useState(false)
   const [activeRfidEventId, setActiveRfidEventId] = useState<string | null>(null)
+  const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -154,10 +155,9 @@ export default function Home() {
 
   // ── Data Fetching ─────────────────────────────────────────
   const fetchEvents = useCallback(async () => {
-    if (!session) return
     try {
       setLoading(true)
-      const data = await getEvents(session.access_token)
+      const data = await getEvents(session?.access_token)
       if (Array.isArray(data)) {
         const sorted = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         setEvents(sorted)
@@ -170,9 +170,8 @@ export default function Home() {
   }, [session])
 
   const fetchBirds = useCallback(async () => {
-    if (!session) return
     try {
-      const data = await getBirds(session.access_token)
+      const data = await getBirds(session?.access_token)
       if (Array.isArray(data)) {
         setRegisteredBirds(data)
       }
@@ -218,10 +217,8 @@ export default function Home() {
   }, [session, fetchEvents, fetchBirds])
 
   useEffect(() => {
-    if (session) {
-      fetchEvents()
-      fetchBirds()
-    }
+    fetchEvents()
+    fetchBirds()
   }, [session, fetchEvents, fetchBirds])
 
   // ── Global Hands-Free 125kHz RFID Electronic Pad Clocking ──
@@ -1276,39 +1273,104 @@ export default function Home() {
               marginTop: '0.2rem',
             }}
           >
-            {flightEvents.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: '180px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, flexShrink: 0 }}>Target:</span>
-                <select
-                  value={activeRfidEventId || (flightEvents.find(f => f.extendedProps?.isRfidActive)?.id) || flightEvents[0]?.id}
-                  onChange={(e) => {
-                    const chosenId = e.target.value
-                    setActiveRfidEventId(chosenId)
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('flymetric_active_rfid_event_id', chosenId)
-                    }
-                  }}
-                  style={{
-                    background: '#090d16',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    color: '#34d399',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    padding: '0.4rem 0.65rem',
-                    borderRadius: '0.5rem',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
-                >
-                  {flightEvents.map((ev, idx) => (
-                    <option key={ev.id} value={ev.id}>
-                      {idx === 0 ? '🔥 ' : ''}{ev.title} ({ev.date})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {flightEvents.length > 0 && (() => {
+              const activeTarget = flightEvents.find(f => f.id === activeRfidEventId) || (flightEvents.find(f => f.extendedProps?.isRfidActive)) || flightEvents[0]
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: '170px', position: 'relative' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, flexShrink: 0 }}>Target:</span>
+                  <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsTargetDropdownOpen(!isTargetDropdownOpen)}
+                      style={{
+                        background: '#090d16',
+                        border: '1px solid rgba(16, 185, 129, 0.45)',
+                        color: '#34d399',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        padding: '0.38rem 0.65rem',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.4rem',
+                        textAlign: 'left',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        🎯 {activeTarget?.title || 'Pumili ng Karera'} ({activeTarget?.date})
+                      </span>
+                      <span style={{ fontSize: '0.62rem', color: '#10b981', flexShrink: 0 }}>
+                        {isTargetDropdownOpen ? '▲' : '▼'}
+                      </span>
+                    </button>
+
+                    {isTargetDropdownOpen && (
+                      <>
+                        <div
+                          onClick={() => setIsTargetDropdownOpen(false)}
+                          style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 4px)',
+                            left: 0,
+                            right: 0,
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            background: '#090d16',
+                            border: '1px solid rgba(16, 185, 129, 0.45)',
+                            borderRadius: '0.5rem',
+                            boxShadow: '0 12px 32px rgba(0,0,0,0.85)',
+                            zIndex: 9999,
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          {flightEvents.map((ev, idx) => {
+                            const isSelected = ev.id === activeTarget?.id
+                            return (
+                              <div
+                                key={ev.id}
+                                onClick={() => {
+                                  setActiveRfidEventId(ev.id)
+                                  if (typeof window !== 'undefined') {
+                                    localStorage.setItem('flymetric_active_rfid_event_id', ev.id)
+                                  }
+                                  setIsTargetDropdownOpen(false)
+                                }}
+                                style={{
+                                  padding: '0.5rem 0.65rem',
+                                  fontSize: '0.74rem',
+                                  fontWeight: isSelected ? 800 : 600,
+                                  color: isSelected ? '#34d399' : '#cbd5e1',
+                                  background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
+                                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {idx === 0 ? '🔥 ' : ''}{ev.title} ({ev.date})
+                                </span>
+                                {isSelected && <span style={{ color: '#10b981', fontWeight: 900 }}>✓</span>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
               <span
                 style={{
