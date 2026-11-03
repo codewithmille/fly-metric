@@ -63,8 +63,9 @@ export async function getEvents(authToken?: string): Promise<any[]> {
       if (res.ok) {
         const data = await res.json()
         if (Array.isArray(data)) {
-          setCache(CACHE_KEYS.EVENTS, data)
-          return data
+          const sorted = [...data].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          setCache(CACHE_KEYS.EVENTS, sorted)
+          return sorted
         }
       }
     } catch (e) {
@@ -72,7 +73,11 @@ export async function getEvents(authToken?: string): Promise<any[]> {
     }
   }
 
-  return getCache(CACHE_KEYS.EVENTS)
+  const cached = getCache(CACHE_KEYS.EVENTS)
+  if (Array.isArray(cached)) {
+    return [...cached].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }
+  return cached
 }
 
 // API save event (create or update)
@@ -107,8 +112,9 @@ export async function saveEvent(authToken: string | undefined, eventData: any, i
       const idx = cachedEvents.findIndex((e: any) => e.id === localEvent.id)
       if (idx !== -1) cachedEvents[idx] = localEvent
     } else {
-      cachedEvents.push(localEvent)
+      cachedEvents.unshift(localEvent)
     }
+    cachedEvents.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
     setCache(CACHE_KEYS.EVENTS, cachedEvents)
 
     // Add to sync queue
@@ -144,8 +150,9 @@ export async function saveEvent(authToken: string | undefined, eventData: any, i
       const idx = cachedEvents.findIndex((e: any) => e.id === savedData.id)
       if (idx !== -1) cachedEvents[idx] = savedData
     } else {
-      cachedEvents.push(savedData)
+      cachedEvents.unshift(savedData)
     }
+    cachedEvents.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
     setCache(CACHE_KEYS.EVENTS, cachedEvents)
 
     return { success: true, data: savedData }

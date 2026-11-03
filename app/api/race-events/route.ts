@@ -68,7 +68,10 @@ export async function GET(request: Request) {
 
     const data = await prisma.raceEvent.findMany({
       where: { userId: user.userId },
-      orderBy: { date: 'asc' },
+      orderBy: [
+        { date: 'desc' },
+        { createdAt: 'desc' },
+      ],
     })
 
     // Map DB rows to RaceEvent shape

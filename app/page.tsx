@@ -56,7 +56,9 @@ export default function Home() {
         const cached = localStorage.getItem('flymetric_events_cache')
         if (cached) {
           const list = JSON.parse(cached)
-          if (Array.isArray(list)) return list
+          if (Array.isArray(list)) {
+            return [...list].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          }
         }
       } catch {}
     }
@@ -157,7 +159,8 @@ export default function Home() {
       setLoading(true)
       const data = await getEvents(session.access_token)
       if (Array.isArray(data)) {
-        setEvents(data)
+        const sorted = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        setEvents(sorted)
       }
     } catch (err) {
       console.error('Error fetching activities:', err)
@@ -274,9 +277,9 @@ export default function Home() {
     }
 
     // 2. Select TARGET EVENT for RFID clocking (prevents clocking into wrong or all events!)
-    const validFlights = events.filter(
-      (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
-    )
+    const validFlights = events
+      .filter((e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     if (validFlights.length === 0) {
       playElectronicChime(false)
@@ -351,7 +354,7 @@ export default function Home() {
         eventTitle: targetEvent.title,
         rank: rankIdx,
         type: 'info',
-        message: `ℹ️ Pigeon ${matchedBird.ringNo} is ALREADY clocked in at ${existingRecord.clockInTime} (${existingRecord.speed.toLocaleString()} m/min).`
+        message: `ℹ️ NAKA-CLOCK NA: Si ${matchedBird.ringNo} ay naitala na kaninang ${existingRecord.clockInTime} (+${existingRecord.speed.toLocaleString()} m/min, Rank #${rankIdx}). Hindi na kailangan i-tap ulit.`
       })
       return
     }
@@ -606,7 +609,9 @@ export default function Home() {
 
   // ── Stats & Visual Telemetry (2nd-Image Style Analytics) ──
   const today = new Date().toISOString().split('T')[0]
-  const flightEvents = events.filter(e => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
+  const flightEvents = events
+    .filter(e => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const totalBirds = flightEvents.reduce((sum, e) => sum + (e.extendedProps?.totalBirds || 0), 0)
   const maxSpeed = flightEvents.reduce((max, e) => Math.max(max, e.extendedProps?.maxSpeed || 0), 0)
   const totalTrainings = events.filter(e => e.extendedProps?.club === 'Training').length
@@ -1284,9 +1289,9 @@ export default function Home() {
                     maxWidth: '190px',
                   }}
                 >
-                  {flightEvents.map((ev) => (
+                  {flightEvents.map((ev, idx) => (
                     <option key={ev.id} value={ev.id}>
-                      🎯 {ev.title} ({ev.date})
+                      {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date})
                     </option>
                   ))}
                 </select>
@@ -1940,6 +1945,7 @@ export default function Home() {
         onClose={() => setIsClockInOpen(false)}
         onClockInSaved={fetchEvents}
         authToken={session.access_token}
+        initialEventId={activeRfidEventId || undefined}
       />
 
       {/* ── Verify Photo Modal ───────────────────────── */}

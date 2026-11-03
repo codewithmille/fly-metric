@@ -339,7 +339,18 @@ export default function ActivityModal({
       if (participatingRings.length > 0 && !participatingRings.includes(targetRing.toUpperCase())) {
         setRfidFlash({
           status: 'warning',
-          message: `⚠️ Hindi kasali sa laro: ${targetRing} is not in the entry list for this flight!`,
+          message: `⚠️ Hindi kasali sa laro: Si ${targetRing} ay wala sa entry list ng flight na ito!`,
+        })
+        setTimeout(() => setRfidFlash(null), 5000)
+        return
+      }
+
+      // CHECK: Is this bird already clocked?
+      const already = birdsList.find((b) => b.ringNo.toUpperCase() === targetRing.toUpperCase())
+      if (already) {
+        setRfidFlash({
+          status: 'warning',
+          message: `ℹ️ NAKA-CLOCK NA: Si ${targetRing} ay naitala na kaninang ${already.clockInTime} (+${already.speed.toLocaleString()} m/min)! Hindi na kailangan i-tap ulit.`,
         })
         setTimeout(() => setRfidFlash(null), 5000)
         return
@@ -383,8 +394,9 @@ export default function ActivityModal({
       return
     }
 
-    if (birdsList.some((b) => b.ringNo.toUpperCase() === ring)) {
-      setError(`Bird with Ring No. "${ring}" is already in the list.`)
+    const existing = birdsList.find((b) => b.ringNo.toUpperCase() === ring)
+    if (existing) {
+      setError(`ℹ️ Ang ibon na "${ring}" ay naka-clock na kaninang ${existing.clockInTime} (+${existing.speed.toLocaleString()} m/min). Hindi na kailangan i-add ulit.`)
       return
     }
 

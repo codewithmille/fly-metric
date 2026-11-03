@@ -28,6 +28,7 @@ interface QuickClockInModalProps {
   onClose: () => void
   onClockInSaved: () => void
   authToken?: string
+  initialEventId?: string | null
 }
 
 interface BirdRecord {
@@ -43,6 +44,7 @@ export default function QuickClockInModal({
   onClose,
   onClockInSaved,
   authToken,
+  initialEventId,
 }: QuickClockInModalProps) {
   const [selectedEventId, setSelectedEventId] = useState('')
   const [ringNo, setRingNo] = useState('')
@@ -56,24 +58,62 @@ export default function QuickClockInModal({
 
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Filter available races and trainings
-  const flightEvents = events.filter(
-    (e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training'
-  )
+  // Filter available races and trainings, sorted latest / newest race first!
+  const flightEvents = events
+    .filter((e) => e.extendedProps?.club === 'Race' || e.extendedProps?.club === 'Training')
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-  // Default selection to first event, and time to current local time
+  // Default selection to target/latest event, and time to current local time
   useEffect(() => {
     if (isOpen) {
       if (flightEvents.length > 0) {
-        setSelectedEventId(flightEvents[0].id)
+        // Priority 1: initialEventId if passed
+        // Priority 2: Stored active RFID event from localStorage
+        // Priority 3: Event marked isRfidActive === true
+        // Priority 4: Event scheduled for today
+        // Priority 5: Latest race (flightEvents[0])
+        const storedActiveId = typeof window !== 'undefined' ? localStorage.getItem('flymetric_active_rfid_event_id') : null
+        const todayStr = new Date().toISOString().split('T')[0]
+
+        const target =
+          (initialEventId && flightEvents.find(e => e.id === initialEventId)) ||
+          (storedActiveId && flightEvents.find(e => e.id === storedActiveId)) ||
+          flightEvents.find(e => e.extendedProps?.isRfidActive === true) ||
+          flightEvents.find(e => e.date === todayStr || (e.date && e.date.startsWith(todayStr))) ||
+          flightEvents[0]
+
+        setSelectedEventId(target.id)
+
+        // Find existing clocked birds for this target
+        let alreadyClockedRings: string[] = []
+        try {
+          const list = JSON.parse(target.extendedProps?.birds || '[]')
+          if (Array.isArray(list)) alreadyClockedRings = list.map((b: any) => b.ringNo.toUpperCase())
+        } catch {}
+
+        let participatingRings: string[] = []
+        try {
+          const parts = JSON.parse(target.extendedProps?.participatingBirds || '[]')
+          if (Array.isArray(parts)) participatingRings = parts.map((r: string) => r.toUpperCase())
+        } catch {}
+
+        // Pick default bird that is NOT YET clocked and is participating if filter exists
+        const availableBird =
+          registeredBirds.find((b) => {
+            const isClocked = alreadyClockedRings.includes(b.ringNo.toUpperCase())
+            const isKasali = participatingRings.length === 0 || participatingRings.includes(b.ringNo.toUpperCase())
+            return !isClocked && isKasali
+          }) ||
+          registeredBirds.find((b) => !alreadyClockedRings.includes(b.ringNo.toUpperCase())) ||
+          registeredBirds[0]
+
+        if (availableBird) {
+          setRingNo(availableBird.ringNo)
+        } else {
+          setRingNo('')
+        }
       } else {
         setSelectedEventId('')
-      }
-      
-      // Default selection to first registered bird
-      if (registeredBirds.length > 0) {
-        setRingNo(registeredBirds[0].ringNo)
-      } else {
         setRingNo('')
       }
       
@@ -87,7 +127,7 @@ export default function QuickClockInModal({
       setSuccess(false)
       modalRef.current?.focus()
     }
-  }, [isOpen, registeredBirds])
+  }, [isOpen, registeredBirds, initialEventId])
 
   // Close on Escape key
   useEffect(() => {
@@ -154,8 +194,9 @@ export default function QuickClockInModal({
       }
 
       // Check if ring number is already clocked
-      if (birdsList.some((b) => b.ringNo.toUpperCase() === finalRing.toUpperCase())) {
-        throw new Error(`Bird with Ring No. "${finalRing.toUpperCase()}" is already clocked in for this event.`)
+      const existing = birdsList.find((b) => b.ringNo.toUpperCase() === finalRing.toUpperCase())
+      if (existing) {
+        throw new Error(`ℹ️ Ang ibon na "${finalRing.toUpperCase()}" ay naka-clock na kaninang ${existing.clockInTime} (+${existing.speed.toLocaleString()} m/min). Hindi na kailangan i-record ulit.`)
       }
 
       // Append new bird
@@ -215,6 +256,24 @@ export default function QuickClockInModal({
     }
   }
 
+  const selectedEvent = flightEvents.find((e) => e.id === selectedEventId)
+  const selectedBird = registeredBirds.find((b) => b.ringNo.toUpperCase() === ringNo.trim().toUpperCase())
+
+  // Parse existing clocked birds for selected event
+  const clockedBirds: BirdRecord[] = (() => {
+    if (!selectedEvent) return []
+    try {
+      const list = JSON.parse(selectedEvent.extendedProps?.birds || '[]')
+      return Array.isArray(list) ? [...list].sort((a, b) => b.speed - a.speed) : []
+    } catch {
+      return []
+    }
+  })()
+
+  const alreadyClockedRecord = clockedBirds.find(
+    (b) => b.ringNo.toUpperCase() === ringNo.trim().toUpperCase()
+  )
+
   // Handle incoming RFID Proximity scans from 125kHz USB Reader
   useRfidScanner({
     enabled: isOpen && flightEvents.length > 0,
@@ -232,6 +291,35 @@ export default function QuickClockInModal({
       if (matched) {
         setRingNo(matched.ringNo)
         setClockInTime(timeNow)
+
+        // 1. Participation Check (Kasali sa Laro)
+        let enteredRings: string[] = []
+        if (selectedEvent?.extendedProps?.participatingBirds) {
+          try {
+            enteredRings = JSON.parse(selectedEvent.extendedProps.participatingBirds)
+          } catch {}
+        }
+        if (enteredRings.length > 0 && !enteredRings.includes(matched.ringNo.toUpperCase())) {
+          setRfidFlash({
+            status: 'warning',
+            message: `⚠️ HINDI KASALI SA LARO: Si ${matched.ringNo} (${matched.name || matched.color}) ay hindi naka-entry sa "${selectedEvent?.title}".`
+          })
+          setTimeout(() => setRfidFlash(null), 6000)
+          return
+        }
+
+        // 2. Already Clocked Check
+        const already = clockedBirds.find(b => b.ringNo.toUpperCase() === matched.ringNo.toUpperCase())
+        if (already) {
+          setRfidFlash({
+            status: 'warning',
+            message: `ℹ️ NAKA-CLOCK NA: Si ${matched.ringNo} (${matched.name || matched.color}) ay naitala na kaninang ${already.clockInTime} (+${already.speed.toLocaleString()} m/min)! Hindi na ito i-du-duplicate.`
+          })
+          setTimeout(() => setRfidFlash(null), 6000)
+          return
+        }
+
+        // 3. Valid new arrival
         setRfidFlash({
           status: 'success',
           message: `📡 RFID Scanned: ${matched.ringNo} (${matched.name || matched.color}) at ${timeNow}`
@@ -252,20 +340,6 @@ export default function QuickClockInModal({
   })
 
   if (!isOpen) return null
-
-  const selectedEvent = flightEvents.find((e) => e.id === selectedEventId)
-  const selectedBird = registeredBirds.find((b) => b.ringNo.toUpperCase() === ringNo.trim().toUpperCase())
-
-  // Parse existing clocked birds for selected event
-  const clockedBirds: BirdRecord[] = (() => {
-    if (!selectedEvent) return []
-    try {
-      const list = JSON.parse(selectedEvent.extendedProps?.birds || '[]')
-      return Array.isArray(list) ? [...list].sort((a, b) => b.speed - a.speed) : []
-    } catch {
-      return []
-    }
-  })()
 
   // Real-time speed projection calculation
   const speedProjection = (() => {
@@ -517,9 +591,9 @@ export default function QuickClockInModal({
                     cursor: 'pointer',
                   }}
                 >
-                  {flightEvents.map((e) => (
+                  {flightEvents.map((e, idx) => (
                     <option key={e.id} value={e.id}>
-                      {e.extendedProps?.club === 'Training' ? 'Toss' : 'Race'}: {e.title} ({new Date(e.date).toLocaleDateString()}) · {e.extendedProps?.distance || 0} km
+                      {idx === 0 ? '🔥 LATEST · ' : ''}{e.extendedProps?.club === 'Training' ? 'Toss' : 'Race'}: {e.title} ({new Date(e.date).toLocaleDateString()}) · {e.extendedProps?.distance || 0} km
                     </option>
                   ))}
                 </select>
@@ -591,11 +665,24 @@ export default function QuickClockInModal({
                         cursor: 'pointer',
                       }}
                     >
-                      {registeredBirds.map((b) => (
-                        <option key={b.id} value={b.ringNo}>
-                          {b.ringNo} {b.name ? `(${b.name})` : ''} {b.rfidTag ? `[📡 RFID: ${b.rfidTag}]` : ''} · {b.color} · {b.gender || 'Racer'}
-                        </option>
-                      ))}
+                      {registeredBirds.map((b) => {
+                        const isClocked = clockedBirds.some(c => c.ringNo.toUpperCase() === b.ringNo.toUpperCase())
+                        let isKasali = true
+                        if (selectedEvent?.extendedProps?.participatingBirds) {
+                          try {
+                            const parts = JSON.parse(selectedEvent.extendedProps.participatingBirds)
+                            if (Array.isArray(parts) && parts.length > 0) {
+                              isKasali = parts.includes(b.ringNo.toUpperCase())
+                            }
+                          } catch {}
+                        }
+                        return (
+                          <option key={b.id} value={b.ringNo}>
+                            {isClocked ? '✅ [CLOCKED] ' : !isKasali ? '⚠️ [HINDI KASALI] ' : '🕊️ '}
+                            {b.ringNo} {b.name ? `(${b.name})` : ''} {b.rfidTag ? `[📡 RFID: ${b.rfidTag}]` : ''} · {b.color} {isClocked ? '— (Naka-clock na)' : !isKasali ? '— (Di kasali)' : '— (Handa)'}
+                          </option>
+                        )
+                      })}
                     </select>
 
                     {/* Selected Bird Card */}
@@ -666,6 +753,29 @@ export default function QuickClockInModal({
                         >
                           {selectedBird.gender || 'Racer'}
                         </span>
+                      </div>
+                    )}
+
+                    {/* Explanatory card if bird is already clocked */}
+                    {alreadyClockedRecord && (
+                      <div
+                        style={{
+                          marginTop: '0.45rem',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: '0.65rem',
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          color: '#38bdf8',
+                          fontSize: '0.74rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                        }}
+                      >
+                        <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>ℹ️</span>
+                        <div style={{ lineHeight: 1.4 }}>
+                          <strong style={{ color: '#fff' }}>NAKA-CLOCK NA SI {alreadyClockedRecord.ringNo}:</strong> Naitala na ang ibong ito kaninang <strong>{alreadyClockedRecord.clockInTime}</strong> na may bilis na <strong style={{ color: '#FFC107' }}>+{alreadyClockedRecord.speed.toLocaleString()} m/min</strong>. Ligtas na ang tala nito kaya hindi na kailangan i-clock ulit.
+                        </div>
                       </div>
                     )}
                   </>
@@ -880,12 +990,15 @@ export default function QuickClockInModal({
                   type="button"
                   className="btn-primary"
                   onClick={() => handleClockIn()}
-                  disabled={saving || success}
+                  disabled={saving || success || !!alreadyClockedRecord}
                   style={{
-                    background: success
+                    background: alreadyClockedRecord
+                      ? 'rgba(56, 189, 248, 0.15)'
+                      : success
                       ? 'linear-gradient(135deg, #10b981, #059669)'
                       : 'linear-gradient(135deg, #FFC107, #FF8F00)',
-                    color: '#000',
+                    color: alreadyClockedRecord ? '#38bdf8' : '#000',
+                    border: alreadyClockedRecord ? '1px solid rgba(56, 189, 248, 0.4)' : 'none',
                     fontWeight: 900,
                     borderRadius: '0.65rem',
                     padding: '0.65rem 1rem',
@@ -895,8 +1008,8 @@ export default function QuickClockInModal({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.45rem',
-                    boxShadow: '0 4px 16px rgba(255, 193, 7, 0.25)',
-                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: alreadyClockedRecord ? 'none' : '0 4px 16px rgba(255, 193, 7, 0.25)',
+                    cursor: saving || alreadyClockedRecord ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {saving ? (
@@ -906,6 +1019,8 @@ export default function QuickClockInModal({
                     </>
                   ) : success ? (
                     '✓ Clocked In!'
+                  ) : alreadyClockedRecord ? (
+                    `✓ Naka-clock na (${alreadyClockedRecord.clockInTime})`
                   ) : (
                     <>
                       <PlusIcon size={16} /> Record Arrival
