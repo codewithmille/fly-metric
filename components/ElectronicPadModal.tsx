@@ -100,6 +100,7 @@ export default function ElectronicPadModal({
   } | null>(null)
   const [testTagInput, setTestTagInput] = useState('')
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'warning' | 'info'; message: string } | null>(null)
+  const [isDimmed, setIsDimmed] = useState(false)
 
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -474,8 +475,63 @@ export default function ElectronicPadModal({
             >
               <span>{speechEnabled ? '🗣️ Voice Voice ON' : '🤐 Voice OFF'}</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setIsDimmed(true)}
+              style={{
+                background: 'rgba(255, 193, 7, 0.12)',
+                border: '1px solid rgba(255, 193, 7, 0.35)',
+                color: 'var(--brand-gold)',
+                borderRadius: '6px',
+                padding: '0.3rem 0.65rem',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+              }}
+              title="Black screen saver to save phone battery while continuously listening for 125kHz arrivals"
+            >
+              <span>🌙 Dim Screen</span>
+            </button>
           </div>
         </div>
+
+        {/* ── OLED Loft Battery Saver Overlay ── */}
+        {isDimmed && (
+          <div
+            onClick={() => setIsDimmed(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: '#020408',
+              zIndex: 100,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: '2rem',
+              textAlign: 'center',
+              borderRadius: '1.25rem',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'pulse 1.8s infinite' }}>
+              📡
+            </div>
+            <div style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+              LOFT TRAP ACTIVE · BATTERY SAVER
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.84rem', maxWidth: '340px', lineHeight: 1.5 }}>
+              Nakahinto ang ilaw ng screen upang makatipid sa baterya ng phone. Tuloy-tuloy at gising ang 125kHz RFID sensor sa pag-clock!
+            </div>
+            <div style={{ color: '#FFC107', fontSize: '0.78rem', marginTop: '1.5rem', fontWeight: 800 }}>
+              (I-tap kahit saan sa screen para buksan ulit ang display)
+            </div>
+          </div>
+        )}
 
         {/* ── Status Banners / Action Feedback ── */}
         {actionNotice && (

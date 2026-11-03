@@ -1263,10 +1263,22 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.6rem',
+              width: '100%',
+              flexWrap: 'wrap',
+              paddingTop: '0.5rem',
+              borderTop: '1px solid rgba(16, 185, 129, 0.15)',
+              marginTop: '0.2rem',
+            }}
+          >
             {flightEvents.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Target:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: '180px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, flexShrink: 0 }}>Target:</span>
                 <select
                   value={activeRfidEventId || (flightEvents.find(f => f.extendedProps?.isRfidActive)?.id) || flightEvents[0]?.id}
                   onChange={(e) => {
@@ -1280,41 +1292,62 @@ export default function Home() {
                     background: '#090d16',
                     border: '1px solid rgba(16, 185, 129, 0.4)',
                     color: '#34d399',
-                    fontSize: '0.75rem',
+                    fontSize: '0.74rem',
                     fontWeight: 800,
-                    padding: '0.35rem 0.6rem',
+                    padding: '0.4rem 0.65rem',
                     borderRadius: '0.5rem',
                     outline: 'none',
                     cursor: 'pointer',
-                    maxWidth: '190px',
+                    width: '100%',
                   }}
                 >
                   {flightEvents.map((ev, idx) => (
                     <option key={ev.id} value={ev.id}>
-                      {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date})
+                      {idx === 0 ? '🔥 ' : ''}{ev.title} ({ev.date})
                     </option>
                   ))}
                 </select>
               </div>
             )}
-            <button
-              onClick={() => setIsPadStationOpen(true)}
-              style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
-                color: '#34d399',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
-            >
-              <span>📡 Open Station</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+              <span
+                style={{
+                  fontSize: '0.64rem',
+                  fontWeight: 700,
+                  color: '#6ee7b7',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '0.4rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+                title="Screen Wake Lock is active so your phone screen will not sleep or lock while trap antenna is monitoring"
+              >
+                <span>☀️</span>
+                <span>Keep-Awake Active</span>
+              </span>
+              <button
+                onClick={() => setIsPadStationOpen(true)}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.18)',
+                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                  color: '#34d399',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  padding: '0.38rem 0.75rem',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>📡 Open Station</span>
+              </button>
+            </div>
           </div>
         </div>
 

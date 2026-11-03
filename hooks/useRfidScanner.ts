@@ -8,6 +8,38 @@ interface UseRfidScannerOptions {
   maxInterKeyMs?: number
   minTagLength?: number
   playAudioBeep?: boolean
+  keepScreenAwake?: boolean
+}
+
+let wakeLockSentinel: any = null
+
+/**
+ * Screen Wake Lock API to prevent phone/tablet screen from sleeping or locking
+ * during loft trap monitoring sessions.
+ */
+export async function requestScreenWakeLock(): Promise<boolean> {
+  try {
+    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      wakeLockSentinel = await (navigator as any).wakeLock.request('screen')
+      wakeLockSentinel.addEventListener('release', () => {
+        wakeLockSentinel = null
+      })
+      return true
+    }
+  } catch (e) {
+    // Wake Lock may fail if tab is not active or battery saver is strictly enforced
+    console.warn('Wake Lock request:', e)
+  }
+  return false
+}
+
+export function releaseScreenWakeLock() {
+  try {
+    if (wakeLockSentinel) {
+      wakeLockSentinel.release()
+      wakeLockSentinel = null
+    }
+  } catch {}
 }
 
 /**
@@ -101,6 +133,7 @@ export function useRfidScanner({
   maxInterKeyMs = 90,
   minTagLength = 5,
   playAudioBeep = true,
+  keepScreenAwake = true,
 }: UseRfidScannerOptions) {
   const bufferRef = useRef<string>('')
   const lastKeyTimeRef = useRef<number>(0)
@@ -109,6 +142,28 @@ export function useRfidScanner({
   useEffect(() => {
     onScanRef.current = onScan
   }, [onScan])
+
+  // Maintain Screen Wake Lock so mobile phone doesn't sleep or lock during loft arrival monitoring
+  useEffect(() => {
+    if (!enabled || !keepScreenAwake) {
+      releaseScreenWakeLock()
+      return
+    }
+
+    requestScreenWakeLock()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && enabled && keepScreenAwake) {
+        requestScreenWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      releaseScreenWakeLock()
+    }
+  }, [enabled, keepScreenAwake])
 
   useEffect(() => {
     if (!enabled) return
