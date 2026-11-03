@@ -894,101 +894,71 @@ export default function ProfileModal({
             <div
               className="grid grid-cols-2 gap-2 sm:gap-3.5"
             >
-              {/* Card 1: Clock-In Rate with Radial Progress Ring */}
+              {/* Card 1: Clock-In Rate */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
               >
                 <div
-                  className="radial-progress font-mono font-extrabold shrink-0 text-emerald-400 [--size:2.4rem] sm:[--size:3.1rem] [--thickness:3px] sm:[--thickness:4px] text-[9px] sm:text-xs"
-                  style={{ '--value': clockInRate } as React.CSSProperties}
-                  role="progressbar"
+                  className="font-mono text-lg sm:text-2xl font-black text-emerald-400 leading-tight"
                 >
                   {clockInRate}%
                 </div>
-                <div className="text-center sm:text-left min-w-0">
-                  <div
-                    className="font-mono text-sm sm:text-2xl font-black text-emerald-400 leading-tight"
-                  >
-                    {clockInRate}%
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
-                    Clock-In Rate
-                  </div>
-                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
-                    {totalClocked}/{totalExpected || 0} clocked
-                  </div>
+                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                  Clock-In Rate
+                </div>
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                  {totalClocked}/{totalExpected || 0} clocked
                 </div>
               </div>
 
               {/* Card 2: Avg Pigeons / Season */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
               >
                 <div
-                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-amber-400/15 border border-amber-400/35 text-amber-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                  className="font-mono text-lg sm:text-2xl font-black text-amber-400 leading-tight"
                 >
-                  ✈️
+                  +{avgPigeons}
                 </div>
-                <div className="text-center sm:text-left min-w-0">
-                  <div
-                    className="font-mono text-sm sm:text-2xl font-black text-amber-400 leading-tight"
-                  >
-                    +{avgPigeons}
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
-                    Avg Birds/Season
-                  </div>
-                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
-                    Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
-                  </div>
+                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                  Avg Birds/Season
+                </div>
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                  Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
                 </div>
               </div>
 
               {/* Card 3: Total Seasons & Flights */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
               >
                 <div
-                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-purple-400/15 border border-purple-400/35 text-purple-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                  className="font-mono text-lg sm:text-2xl font-black text-purple-400 leading-tight"
                 >
-                  🚩
+                  +{seasonsCount}
                 </div>
-                <div className="text-center sm:text-left min-w-0">
-                  <div
-                    className="font-mono text-sm sm:text-2xl font-black text-purple-400 leading-tight"
-                  >
-                    +{seasonsCount}
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
-                    Total Seasons
-                  </div>
-                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
-                    {flightEvents.length} {flightEvents.length === 1 ? 'flight' : 'flights'}
-                  </div>
+                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                  Total Seasons
+                </div>
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                  {flightEvents.length} {flightEvents.length === 1 ? 'flight' : 'flights'}
                 </div>
               </div>
 
               {/* Card 4: Total Pigeons Registered */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-start gap-2 sm:gap-3.5 shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
               >
                 <div
-                  className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-sky-400/15 border border-sky-400/35 text-sky-400 flex items-center justify-center text-xs sm:text-base shrink-0 shadow-md"
+                  className="font-mono text-lg sm:text-2xl font-black text-sky-400 leading-tight"
                 >
-                  <BirdIcon size={16} />
+                  +{registeredBirds.length}
                 </div>
-                <div className="text-center sm:text-left min-w-0">
-                  <div
-                    className="font-mono text-sm sm:text-2xl font-black text-sky-400 leading-tight"
-                  >
-                    +{registeredBirds.length}
-                  </div>
-                  <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-0.5 truncate">
-                    Total Pigeons
-                  </div>
-                  <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
-                    {cocksCount} Cocks • {hensCount} Hens
-                  </div>
+                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                  Total Pigeons
+                </div>
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                  {cocksCount} Cocks • {hensCount} Hens
                 </div>
               </div>
             </div>
