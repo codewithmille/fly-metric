@@ -333,6 +333,71 @@ export async function deleteBird(authToken: string | undefined, birdId: string):
   }
 }
 
+// Reset Loft Records (Selectively clear birds, events, or clock-ins)
+export async function resetLoftRecords(
+  authToken: string | undefined,
+  options: {
+    resetEvents?: boolean
+    resetBirds?: boolean
+    resetClockIns?: boolean
+  }
+): Promise<{ success: boolean; message?: string }> {
+  const { resetEvents, resetBirds, resetClockIns } = options
+  const headers = {
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  }
+
+  // 1. Reset Birds if selected
+  if (resetBirds) {
+    setCache(CACHE_KEYS.BIRDS, [])
+    if (isOnline()) {
+      try {
+        await fetch('/api/loft-birds?all=true', { method: 'DELETE', headers })
+      } catch (e) {
+        console.warn('API reset birds failed:', e)
+      }
+    }
+  }
+
+  // 2. Reset Events (delete all events)
+  if (resetEvents) {
+    setCache(CACHE_KEYS.EVENTS, [])
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('flymetric_active_rfid_event_id')
+    }
+    if (isOnline()) {
+      try {
+        await fetch('/api/race-events?all=true', { method: 'DELETE', headers })
+      } catch (e) {
+        console.warn('API reset events failed:', e)
+      }
+    }
+  } else if (resetClockIns) {
+    // 3. Reset Clock-ins only (keep events, clear arrival arrays)
+    const cachedEvents = getCache(CACHE_KEYS.EVENTS)
+    const updatedEvents = cachedEvents.map((ev: any) => ({
+      ...ev,
+      extendedProps: {
+        ...ev.extendedProps,
+        birds: '[]',
+        maxSpeed: 0,
+        avgSpeed: 0,
+        winner: 'TBD',
+      },
+    }))
+    setCache(CACHE_KEYS.EVENTS, updatedEvents)
+    if (isOnline()) {
+      try {
+        await fetch('/api/race-events?clearClockIns=true', { method: 'DELETE', headers })
+      } catch (e) {
+        console.warn('API clear clock-ins failed:', e)
+      }
+    }
+  }
+
+  return { success: true }
+}
+
 // Synchronize queue
 export async function syncOfflineQueue(authToken?: string): Promise<boolean> {
   if (!isOnline() || !authToken) return false

@@ -6,7 +6,7 @@ import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon, SettingsIcon } from '@/components/icons'
-import { saveBird, deleteBird, saveEvent, generateLocalId } from '@/lib/apiClient'
+import { saveBird, deleteBird, saveEvent, generateLocalId, resetLoftRecords } from '@/lib/apiClient'
 
 interface LoftBird {
   id: string
@@ -38,6 +38,7 @@ interface ProfileModalProps {
   registeredBirds: LoftBird[]
   onBirdsUpdated: () => void
   events: RaceEvent[]
+  onEventsUpdated?: () => void
   onAddEventTrigger?: () => void
   onOpenRegistryTrigger?: () => void
 }
@@ -50,10 +51,19 @@ export default function ProfileModal({
   registeredBirds,
   onBirdsUpdated,
   events,
+  onEventsUpdated,
   onAddEventTrigger,
   onOpenRegistryTrigger,
 }: ProfileModalProps) {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false)
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+  const [resetEvents, setResetEvents] = useState(false)
+  const [resetBirds, setResetBirds] = useState(false)
+  const [resetClockIns, setResetClockIns] = useState(false)
+  const [confirmResetChecked, setConfirmResetChecked] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetSuccessMsg, setResetSuccessMsg] = useState('')
+  const [resetErrorMsg, setResetErrorMsg] = useState('')
 
   // Profile Form States
   const [displayName, setDisplayName] = useState('')
@@ -582,6 +592,54 @@ export default function ProfileModal({
       onBirdsUpdated()
     } catch (e: any) {
       alert(e.message || 'Error deleting bird')
+    }
+  }
+
+  const handleExecuteReset = async () => {
+    if (!resetEvents && !resetBirds && !resetClockIns) {
+      setResetErrorMsg('Pumili ng kahit isang uri ng record na nais i-reset.')
+      return
+    }
+    if (!confirmResetChecked) {
+      setResetErrorMsg('Pakilagyan ng check ang confirmation box bago magpatuloy.')
+      return
+    }
+
+    setResetting(true)
+    setResetErrorMsg('')
+    setResetSuccessMsg('')
+
+    try {
+      const res = await resetLoftRecords(session?.access_token, {
+        resetEvents,
+        resetBirds,
+        resetClockIns,
+      })
+
+      if (!res.success) {
+        throw new Error(res.message || 'Nabigong i-reset ang mga records.')
+      }
+
+      if (resetBirds) {
+        onBirdsUpdated?.()
+      }
+      if (resetEvents || resetClockIns) {
+        onEventsUpdated?.()
+      }
+
+      setResetSuccessMsg('Matagumpay na na-reset ang mga napiling records!')
+      setTimeout(() => {
+        setResetting(false)
+        setResetSuccessMsg('')
+        setIsResetModalOpen(false)
+        setResetEvents(false)
+        setResetBirds(false)
+        setResetClockIns(false)
+        setConfirmResetChecked(false)
+      }, 1400)
+    } catch (err: any) {
+      setResetErrorMsg(err.message || 'Nabigong i-reset ang mga records.')
+      setResetting(false)
     }
   }
 
@@ -1616,6 +1674,41 @@ export default function ProfileModal({
                 </div>
               </button>
 
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSettingsMenuOpen(false)
+                  setIsResetModalOpen(true)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  width: '100%',
+                  padding: '0.88rem 1rem',
+                  background: 'rgba(239, 68, 68, 0.06)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '0.5rem',
+                  color: '#f87171',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                className="menu-item-hover"
+              >
+                <span style={{ color: '#ef4444', fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
+                  <TrashIcon size={18} />
+                </span>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#f87171' }}>Reset Records & Data</div>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(248, 113, 113, 0.75)', marginTop: '0.15rem' }}>
+                    Selectively clear races, pigeon registry, or clock-in results
+                  </div>
+                </div>
+              </button>
+
               {process.env.NODE_ENV === 'development' && (
                 <button
                   type="button"
@@ -1908,6 +2001,45 @@ export default function ProfileModal({
                   </div>
                 )}
 
+                {/* Danger Zone: Reset Records */}
+                <div style={{ borderTop: '1px solid rgba(239, 68, 68, 0.25)', marginTop: '0.8rem', paddingTop: '0.8rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#f87171' }}>
+                        Reset Loft Records & Data
+                      </span>
+                      <span style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                        Pumili at burahin ang mga karera, rehistradong ibon, o clock-in arrivals.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSettingsModalOpen(false)
+                        setIsResetModalOpen(true)
+                      }}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        borderRadius: '0.5rem',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#f87171',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        flexShrink: 0
+                      }}
+                    >
+                      <TrashIcon size={13} />
+                      <span>Reset Options</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem' }}>
                   <button
                     type="button"
@@ -1928,6 +2060,297 @@ export default function ProfileModal({
                 </div>
 
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sub-modal for Resetting Loft Records ── */}
+      {isResetModalOpen && (
+        <div 
+          className="modal-backdrop modal-floating" 
+          style={{ zIndex: 12000 }}
+          onClick={(e) => { if (e.target === e.currentTarget && !resetting) setIsResetModalOpen(false) }}
+        >
+          <div 
+            className="modal-container" 
+            style={{ maxWidth: '440px', padding: 0, borderRadius: '1rem', overflow: 'hidden' }}
+          >
+            {/* Header */}
+            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #b91c1c, #7f1d1d)', padding: '0.9rem 1.2rem' }}>
+              <div className="modal-header-left">
+                <span style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                  <TrashIcon size={18} />
+                </span>
+                <div>
+                  <h2 className="modal-title" style={{ color: '#fff', fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+                    Reset Loft Records
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '0.68rem', color: 'rgba(255,255,255,0.8)' }}>
+                    Pumili ng mga data na nais i-clear o burahin
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="modal-close-btn" 
+                disabled={resetting}
+                style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', position: 'static', margin: 0 }} 
+                onClick={() => setIsResetModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="modal-body" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              
+              <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 600 }}>
+                Pumili ng mga records na nais i-reset:
+              </div>
+
+              {/* Option 1: Flight Events & Races */}
+              <label 
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem 0.85rem',
+                  borderRadius: '0.65rem',
+                  background: resetEvents ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255,255,255,0.03)',
+                  border: resetEvents ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(255,255,255,0.08)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <input 
+                  type="checkbox"
+                  checked={resetEvents}
+                  onChange={(e) => {
+                    setResetEvents(e.target.checked)
+                    if (e.target.checked) setResetClockIns(false)
+                  }}
+                  style={{ marginTop: '0.2rem', accentColor: '#ef4444', width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
+                      🏁 Flight Events & Races
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
+                      {events.length} {events.length === 1 ? 'record' : 'records'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.35' }}>
+                    Burahin ang lahat ng scheduled races, training tosses, at flight calendar history.
+                  </p>
+                </div>
+              </label>
+
+              {/* Option 2: Clocked Arrivals Only */}
+              <label 
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem 0.85rem',
+                  borderRadius: '0.65rem',
+                  background: resetClockIns ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255,255,255,0.03)',
+                  border: resetClockIns ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid rgba(255,255,255,0.08)',
+                  cursor: resetEvents ? 'not-allowed' : 'pointer',
+                  opacity: resetEvents ? 0.45 : 1,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <input 
+                  type="checkbox"
+                  disabled={resetEvents}
+                  checked={resetClockIns}
+                  onChange={(e) => setResetClockIns(e.target.checked)}
+                  style={{ marginTop: '0.2rem', accentColor: '#f59e0b', width: '16px', height: '16px', cursor: resetEvents ? 'not-allowed' : 'pointer' }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
+                      ⏱️ Clocked Arrivals Only
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
+                      {totalClocked} clocked
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.35' }}>
+                    Mananatili ang mga karera at ibon, pero buburahin ang lahat ng clocked arrival times, speed calculations, at leaderboards.
+                  </p>
+                </div>
+              </label>
+
+              {/* Option 3: Loft Pigeon Registry */}
+              <label 
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem 0.85rem',
+                  borderRadius: '0.65rem',
+                  background: resetBirds ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255,255,255,0.03)',
+                  border: resetBirds ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(255,255,255,0.08)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <input 
+                  type="checkbox"
+                  checked={resetBirds}
+                  onChange={(e) => setResetBirds(e.target.checked)}
+                  style={{ marginTop: '0.2rem', accentColor: '#ef4444', width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
+                      🐦 Loft Pigeon Registry
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
+                      {registeredBirds.length} {registeredBirds.length === 1 ? 'bird' : 'birds'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.35' }}>
+                    Burahin ang lahat ng rehistradong ibon, ring numbers, kulay, lahi, at 125kHz RFID tag pairings.
+                  </p>
+                </div>
+              </label>
+
+              {/* Quick Select / Deselect */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEvents(true)
+                    setResetBirds(true)
+                    setResetClockIns(false)
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f87171',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Select All (Full Reset)
+                </button>
+                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.68rem' }}>•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEvents(false)
+                    setResetBirds(false)
+                    setResetClockIns(false)
+                    setConfirmResetChecked(false)
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Clear Selection
+                </button>
+              </div>
+
+              {/* Warning Notice & Confirmation Checkbox */}
+              <div 
+                style={{
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '0.5rem',
+                  padding: '0.65rem 0.75rem',
+                  marginTop: '0.2rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#f87171', fontSize: '0.72rem', fontWeight: 800 }}>
+                  <span>⚠️</span>
+                  <span>Babala: Hindi na mababawi ang mga mabuburang data.</span>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.45rem', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox"
+                    checked={confirmResetChecked}
+                    onChange={(e) => setConfirmResetChecked(e.target.checked)}
+                    style={{ accentColor: '#ef4444', width: '15px', height: '15px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontWeight: 700 }}>
+                    Kumpirmado, nais kong i-reset ang napiling records.
+                  </span>
+                </label>
+              </div>
+
+              {/* Error / Success Feedback */}
+              {resetErrorMsg && (
+                <div style={{ color: '#f87171', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0' }}>
+                  ⚠️ {resetErrorMsg}
+                </div>
+              )}
+              {resetSuccessMsg && (
+                <div style={{ color: '#34d399', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0' }}>
+                  ✓ {resetSuccessMsg}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.4rem' }}>
+                <button
+                  type="button"
+                  disabled={resetting}
+                  onClick={() => setIsResetModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    height: '2.4rem',
+                    borderRadius: '0.5rem',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#cbd5e1',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={resetting || (!resetEvents && !resetBirds && !resetClockIns) || !confirmResetChecked}
+                  onClick={handleExecuteReset}
+                  style={{
+                    flex: 1.4,
+                    height: '2.4rem',
+                    borderRadius: '0.5rem',
+                    background: (!resetEvents && !resetBirds && !resetClockIns) || !confirmResetChecked 
+                      ? 'rgba(239, 68, 68, 0.25)' 
+                      : 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: (!resetEvents && !resetBirds && !resetClockIns) || !confirmResetChecked || resetting ? 'not-allowed' : 'pointer',
+                    opacity: (!resetEvents && !resetBirds && !resetClockIns) || !confirmResetChecked ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                  }}
+                >
+                  <TrashIcon size={14} />
+                  <span>{resetting ? 'Resetting Records...' : 'Reset Selected Records'}</span>
+                </button>
+              </div>
+
             </div>
           </div>
         </div>

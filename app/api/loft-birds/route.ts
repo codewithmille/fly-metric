@@ -183,9 +183,17 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const all = searchParams.get('all')
+
+    if (all === 'true' || id === 'all') {
+      await prisma.loftBird.deleteMany({
+        where: { userId: user.userId },
+      })
+      return NextResponse.json({ success: true, message: 'All birds deleted' })
+    }
 
     if (!id) {
-      return NextResponse.json({ error: 'Bird ID is required for deletion' }, { status: 400 })
+      return NextResponse.json({ error: 'Bird ID or all=true is required for deletion' }, { status: 400 })
     }
 
     // Only delete if it belongs to this user

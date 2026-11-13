@@ -202,3 +202,53 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'DATABASE_URL env variable is not configured' }, { status: 500 })
+    }
+
+    const user = await getUserFromRequest(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const all = searchParams.get('all')
+    const clearClockIns = searchParams.get('clearClockIns')
+
+    if (clearClockIns === 'true') {
+      // Clear clocked-in arrivals only, keep events
+      await prisma.raceEvent.updateMany({
+        where: { userId: user.userId },
+        data: {
+          birds: '[]',
+          maxSpeed: 0,
+          avgSpeed: 0,
+          winner: 'TBD',
+        },
+      })
+      return NextResponse.json({ success: true, message: 'Clocked arrivals cleared' })
+    }
+
+    if (all === 'true' || id === 'all') {
+      await prisma.raceEvent.deleteMany({
+        where: { userId: user.userId },
+      })
+      return NextResponse.json({ success: true, message: 'All race events deleted' })
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Event ID or all=true is required' }, { status: 400 })
+    }
+
+    await prisma.raceEvent.deleteMany({
+      where: { id, userId: user.userId },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    console.error('Error in DELETE /api/race-events:', err)
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
+  }
+}

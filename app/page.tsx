@@ -2016,6 +2016,7 @@ export default function Home() {
         registeredBirds={registeredBirds}
         onBirdsUpdated={fetchBirds}
         events={events}
+        onEventsUpdated={fetchEvents}
         onAddEventTrigger={() => navigateToTab('addEvent')}
         onOpenRegistryTrigger={() => {
           setIsProfileOpen(false) // Close the profile modal so user doesn't have stacked modals
