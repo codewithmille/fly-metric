@@ -896,68 +896,68 @@ export default function ProfileModal({
             >
               {/* Card 1: Clock-In Rate */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center text-center shadow-lg hover:border-emerald-500/30 transition-all"
               >
                 <div
-                  className="font-mono text-lg sm:text-2xl font-black text-emerald-400 leading-tight"
+                  className="font-mono text-xl sm:text-2xl font-black text-emerald-400 leading-tight"
                 >
                   {clockInRate}%
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mt-1.5 truncate w-full">
                   Clock-In Rate
                 </div>
-                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate w-full">
                   {totalClocked}/{totalExpected || 0} clocked
                 </div>
               </div>
 
               {/* Card 2: Avg Pigeons / Season */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center text-center shadow-lg hover:border-amber-400/30 transition-all"
               >
                 <div
-                  className="font-mono text-lg sm:text-2xl font-black text-amber-400 leading-tight"
+                  className="font-mono text-xl sm:text-2xl font-black text-amber-400 leading-tight"
                 >
                   +{avgPigeons}
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mt-1.5 truncate w-full">
                   Avg Birds/Season
                 </div>
-                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate w-full">
                   Across {seasonsCount} {seasonsCount === 1 ? 'season' : 'seasons'}
                 </div>
               </div>
 
               {/* Card 3: Total Seasons & Flights */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center text-center shadow-lg hover:border-purple-400/30 transition-all"
               >
                 <div
-                  className="font-mono text-lg sm:text-2xl font-black text-purple-400 leading-tight"
+                  className="font-mono text-xl sm:text-2xl font-black text-purple-400 leading-tight"
                 >
                   +{seasonsCount}
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mt-1.5 truncate w-full">
                   Total Seasons
                 </div>
-                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate w-full">
                   {flightEvents.length} {flightEvents.length === 1 ? 'flight' : 'flights'}
                 </div>
               </div>
 
               {/* Card 4: Total Pigeons Registered */}
               <div
-                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-lg"
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center text-center shadow-lg hover:border-sky-400/30 transition-all"
               >
                 <div
-                  className="font-mono text-lg sm:text-2xl font-black text-sky-400 leading-tight"
+                  className="font-mono text-xl sm:text-2xl font-black text-sky-400 leading-tight"
                 >
                   +{registeredBirds.length}
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold text-slate-200 mt-1 truncate">
+                <div className="text-[11px] sm:text-xs font-bold text-slate-200 mt-1.5 truncate w-full">
                   Total Pigeons
                 </div>
-                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5 truncate w-full">
                   {cocksCount} Cocks • {hensCount} Hens
                 </div>
               </div>
