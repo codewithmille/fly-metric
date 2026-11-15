@@ -248,12 +248,12 @@ export default function LoftActivitiesModal({
           </button>
         </div>
 
-        {/* ── Segmented Navigation Tabs (Identical to Quick Clock-In) ── */}
+        {/* ── Segmented Navigation Tabs (Sleek Cockpit Style) ── */}
         <div
           style={{
             display: 'flex',
             gap: '0.45rem',
-            padding: '0.55rem 1.15rem 0.4rem',
+            padding: '0.5rem 1rem 0.35rem',
             background: 'rgba(15, 23, 42, 0.75)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             flexShrink: 0,
@@ -264,23 +264,27 @@ export default function LoftActivitiesModal({
             onClick={() => setActiveTab('activities')}
             style={{
               flex: 1,
-              padding: '0.5rem 0.75rem',
+              height: '38px',
+              padding: '0 0.65rem',
               borderRadius: '0.6rem',
               border: activeTab === 'activities' ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
-              background: activeTab === 'activities' ? 'rgba(255, 193, 7, 0.18)' : 'rgba(255, 255, 255, 0.03)',
+              background: activeTab === 'activities' ? 'rgba(255, 193, 7, 0.16)' : 'rgba(255, 255, 255, 0.03)',
               color: activeTab === 'activities' ? '#FFC107' : '#94a3b8',
               fontWeight: 800,
               fontSize: '0.78rem',
+              whiteSpace: 'nowrap',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.45rem',
+              gap: '0.4rem',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>📅</span>
-            <span>Activities & Flights</span>
+            <span style={{ fontSize: '0.9rem' }}>📅</span>
+            <span>
+              Activities<span className="hidden sm:inline"> & Flights</span>
+            </span>
             <span
               style={{
                 fontSize: '0.65rem',
@@ -301,23 +305,27 @@ export default function LoftActivitiesModal({
             onClick={() => setActiveTab('results')}
             style={{
               flex: 1,
-              padding: '0.5rem 0.75rem',
+              height: '38px',
+              padding: '0 0.65rem',
               borderRadius: '0.6rem',
               border: activeTab === 'results' ? '1px solid rgba(56, 189, 248, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
-              background: activeTab === 'results' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.03)',
+              background: activeTab === 'results' ? 'rgba(56, 189, 248, 0.16)' : 'rgba(255, 255, 255, 0.03)',
               color: activeTab === 'results' ? '#38bdf8' : '#94a3b8',
               fontWeight: 800,
               fontSize: '0.78rem',
+              whiteSpace: 'nowrap',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.45rem',
+              gap: '0.4rem',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>🏆</span>
-            <span>Clocked Results</span>
+            <span style={{ fontSize: '0.9rem' }}>🏆</span>
+            <span>
+              <span className="hidden sm:inline">Clocked </span>Results
+            </span>
             <span
               style={{
                 fontSize: '0.65rem',
@@ -338,7 +346,7 @@ export default function LoftActivitiesModal({
         <div
           className="modal-body modal-scroll-body"
           style={{
-            padding: '1rem 1.15rem',
+            padding: '0.85rem 1rem',
             overflowY: 'auto',
             maxHeight: '74vh',
             paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))',
@@ -346,44 +354,47 @@ export default function LoftActivitiesModal({
         >
           {/* TAB 1: ACTIVITIES & FLIGHTS */}
           {activeTab === 'activities' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {/* Secondary Sub-Toolbar: List / Calendar + Log Activity */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {/* Refined Sub-Toolbar: Minimalist View Switcher + Clean Action */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '0.6rem',
-                  padding: '0.1rem 0',
+                  gap: '0.5rem',
+                  padding: '0.1rem 0 0.35rem 0',
                 }}
               >
-                {/* List / Calendar Switcher */}
+                {/* Modern Pill View Switcher */}
                 <div
                   style={{
                     display: 'inline-flex',
-                    background: 'rgba(255, 255, 255, 0.04)',
+                    background: 'rgba(2, 6, 23, 0.6)',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '0.6rem',
-                    padding: '0.2rem',
-                    gap: '0.25rem',
+                    borderRadius: '0.55rem',
+                    padding: '2px',
+                    gap: '2px',
+                    height: '32px',
+                    alignItems: 'center',
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
                     style={{
-                      padding: '0.32rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      fontSize: '0.74rem',
+                      height: '26px',
+                      padding: '0 0.65rem',
+                      borderRadius: '0.4rem',
+                      fontSize: '0.72rem',
                       fontWeight: 700,
                       border: 'none',
                       cursor: 'pointer',
-                      background: viewMode === 'list' ? 'rgba(255, 193, 7, 0.2)' : 'transparent',
-                      color: viewMode === 'list' ? '#FFC107' : '#94a3b8',
+                      background: viewMode === 'list' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                      color: viewMode === 'list' ? '#fff' : '#94a3b8',
                       transition: 'all 0.15s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                     }}
                   >
                     <span>📋</span>
@@ -393,18 +404,19 @@ export default function LoftActivitiesModal({
                     type="button"
                     onClick={() => setViewMode('calendar')}
                     style={{
-                      padding: '0.32rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      fontSize: '0.74rem',
+                      height: '26px',
+                      padding: '0 0.65rem',
+                      borderRadius: '0.4rem',
+                      fontSize: '0.72rem',
                       fontWeight: 700,
                       border: 'none',
                       cursor: 'pointer',
-                      background: viewMode === 'calendar' ? 'rgba(255, 193, 7, 0.2)' : 'transparent',
-                      color: viewMode === 'calendar' ? '#FFC107' : '#94a3b8',
+                      background: viewMode === 'calendar' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                      color: viewMode === 'calendar' ? '#fff' : '#94a3b8',
                       transition: 'all 0.15s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                     }}
                   >
                     <span>📅</span>
@@ -412,27 +424,29 @@ export default function LoftActivitiesModal({
                   </button>
                 </div>
 
-                {/* + Log Activity Button */}
+                {/* Modern Action Button */}
                 <button
                   type="button"
                   onClick={onLogActivity}
                   style={{
+                    height: '32px',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.42rem 0.9rem',
-                    background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.18) 0%, rgba(245, 158, 11, 0.12) 100%)',
-                    border: '1px solid rgba(255, 193, 7, 0.45)',
-                    borderRadius: '0.6rem',
+                    gap: '0.35rem',
+                    padding: '0 0.85rem',
+                    background: 'rgba(255, 193, 7, 0.12)',
+                    border: '1px solid rgba(255, 193, 7, 0.35)',
+                    borderRadius: '0.55rem',
                     color: '#FFC107',
-                    fontSize: '0.75rem',
+                    fontSize: '0.74rem',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    boxShadow: '0 2px 10px rgba(255, 193, 7, 0.12)',
+                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <PlusIcon size={13} />
+                  <PlusIcon size={12} />
                   <span>Log Activity</span>
                 </button>
               </div>
