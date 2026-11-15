@@ -9,6 +9,9 @@ import LandingPage from '@/components/LandingPage'
 import ProfileModal from '@/components/ProfileModal'
 import VerifyPhotoModal from '@/components/VerifyPhotoModal'
 import LoftActivitiesModal from '@/components/LoftActivitiesModal'
+import CreateGroupRaceModal from '@/components/CreateGroupRaceModal'
+import JoinGroupRaceModal from '@/components/JoinGroupRaceModal'
+import GroupRaceCockpitModal from '@/components/GroupRaceCockpitModal'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
 import PigeonChatModal from '@/components/PigeonChatModal'
@@ -99,6 +102,9 @@ export default function Home() {
   const [isTrainingOpen, setIsTrainingOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isPadStationOpen, setIsPadStationOpen] = useState(false)
+  const [isCreateGroupRaceOpen, setIsCreateGroupRaceOpen] = useState(false)
+  const [isJoinGroupRaceOpen, setIsJoinGroupRaceOpen] = useState(false)
+  const [selectedGroupRace, setSelectedGroupRace] = useState<any | null>(null)
   const [activeRfidEventId, setActiveRfidEventId] = useState<string | null>(null)
   const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false)
 
@@ -2227,7 +2233,10 @@ export default function Home() {
         today={today}
         onClose={() => setIsActivitiesOpen(false)}
         onDateClick={(dateStr, ev) => {
-          setIsActivitiesOpen(false)
+          if (ev?.extendedProps?.isGroupRace) {
+            setSelectedGroupRace(ev)
+            return
+          }
           if (ev) {
             setModalIsClockInOnly(true)
             openModal(dateStr, ev)
@@ -2236,16 +2245,57 @@ export default function Home() {
           }
         }}
         onLogActivity={() => {
-          setIsActivitiesOpen(false)
           setSelectedDate(today)
           setSelectedEvent(null)
           setModalIsClockInOnly(false)
           setIsModalOpen(true)
         }}
         onEditActivity={(dateStr, ev) => {
-          setIsActivitiesOpen(false)
           setModalIsClockInOnly(false)
           openModal(dateStr, ev)
+        }}
+        onJoinGroupRace={() => {
+          setIsJoinGroupRaceOpen(true)
+        }}
+        onCreateGroupRace={() => {
+          setIsCreateGroupRaceOpen(true)
+        }}
+      />
+
+      {/* ── Admin Create Group Race Modal ───────────────── */}
+      <CreateGroupRaceModal
+        isOpen={isCreateGroupRaceOpen}
+        today={today}
+        onClose={() => setIsCreateGroupRaceOpen(false)}
+        onSuccess={() => {
+          fetchEvents()
+        }}
+      />
+
+      {/* ── Fancier Join Group Race Modal ────────────────── */}
+      <JoinGroupRaceModal
+        isOpen={isJoinGroupRaceOpen}
+        loftBirds={registeredBirds}
+        onClose={() => setIsJoinGroupRaceOpen(false)}
+        onSuccess={() => {
+          fetchEvents()
+        }}
+      />
+
+      {/* ── Group Race Cockpit & Leaderboard Modal ──────── */}
+      <GroupRaceCockpitModal
+        isOpen={!!selectedGroupRace}
+        race={selectedGroupRace}
+        currentUserId={session?.user?.id || 'local-dev-user-id'}
+        onClose={() => setSelectedGroupRace(null)}
+        onClockInBird={(race) => {
+          setSelectedGroupRace(null)
+          setSelectedEvent(race)
+          setIsClockInOpen(true)
+        }}
+        onRaceUpdated={(updated) => {
+          setSelectedGroupRace(updated)
+          fetchEvents()
         }}
       />
 

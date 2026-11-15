@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import {
+  parseGroupRaceMeta,
+  serializeGroupRacePayload,
+  formatGroupRaceResponse,
+} from '@/lib/groupRaces'
 
 export interface RaceEvent {
   id: string
@@ -20,6 +25,11 @@ export interface RaceEvent {
     birds?: string      // stringified JSON list of clocked birds
     participatingBirds?: string // stringified JSON list of entered/participating birds
     isRfidActive?: boolean
+    isGroupRace?: boolean
+    joinCode?: string
+    raceStatus?: string
+    loftEntries?: string
+    groupArrivals?: string
   }
 }
 
@@ -75,27 +85,35 @@ export async function GET(request: Request) {
     })
 
     // Map DB rows to RaceEvent shape
-    const formattedEvents: RaceEvent[] = data.map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      date: row.date,
-      backgroundColor: row.backgroundColor || '#FFC107',
-      borderColor: row.borderColor || '#FF8F00',
-      extendedProps: {
-        totalBirds: row.totalBirds || 0,
-        maxSpeed: row.maxSpeed || 0,
-        avgSpeed: row.avgSpeed || 0,
-        location: row.location || 'Unknown',
-        club: row.club || 'Default Club',
-        distance: row.distance || 0,
-        winner: row.winner || 'TBD',
-        releaseTime: row.releaseTime || '06:00',
-        clockInTime: row.clockInTime || '09:30',
-        birds: row.birds || '[]',
-        participatingBirds: row.participatingBirds || '[]',
-        isRfidActive: !!row.isRfidActive,
-      },
-    }))
+    const formattedEvents: RaceEvent[] = data.map((row: any) => {
+      const meta = parseGroupRaceMeta(row)
+      return {
+        id: row.id,
+        title: row.title,
+        date: row.date,
+        backgroundColor: row.backgroundColor || '#FFC107',
+        borderColor: row.borderColor || '#FF8F00',
+        extendedProps: {
+          totalBirds: row.totalBirds || 0,
+          maxSpeed: row.maxSpeed || 0,
+          avgSpeed: row.avgSpeed || 0,
+          location: row.location || 'Unknown',
+          club: row.club || 'Default Club',
+          distance: row.distance || 0,
+          winner: row.winner || 'TBD',
+          releaseTime: row.releaseTime || '06:00',
+          clockInTime: row.clockInTime || '09:30',
+          birds: row.birds || '[]',
+          participatingBirds: row.participatingBirds || '[]',
+          isRfidActive: !!row.isRfidActive,
+          isGroupRace: meta.isGroupRace,
+          joinCode: meta.joinCode || undefined,
+          raceStatus: meta.raceStatus || 'basketing',
+          loftEntries: JSON.stringify(meta.loftEntries),
+          groupArrivals: JSON.stringify(meta.groupArrivals),
+        },
+      }
+    })
 
     return NextResponse.json(formattedEvents)
   } catch (err: any) {
@@ -114,10 +132,40 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds, participatingBirds, isRfidActive } = body
+    const {
+      title,
+      date,
+      totalBirds,
+      maxSpeed,
+      avgSpeed,
+      location,
+      club,
+      distance,
+      winner,
+      releaseTime,
+      clockInTime,
+      birds,
+      participatingBirds,
+      isRfidActive,
+      isGroupRace,
+      joinCode,
+      raceStatus,
+      loftEntries,
+      groupArrivals,
+    } = body
 
     if (!title || !date) {
       return NextResponse.json({ error: 'Title and Date are required' }, { status: 400 })
+    }
+
+    let finalParticipatingBirds = participatingBirds || '[]'
+    if (isGroupRace) {
+      finalParticipatingBirds = serializeGroupRacePayload({
+        isGroupRace: true,
+        joinCode,
+        raceStatus: raceStatus || 'basketing',
+        loftEntries: loftEntries ? (typeof loftEntries === 'string' ? JSON.parse(loftEntries) : loftEntries) : [],
+      })
     }
 
     const data = await prisma.raceEvent.create({
@@ -141,13 +189,13 @@ export async function POST(request: Request) {
         winner: winner || 'TBD',
         releaseTime: releaseTime || '06:00',
         clockInTime: clockInTime || '09:30',
-        birds: birds || '[]',
-        participatingBirds: participatingBirds || '[]',
+        birds: groupArrivals || birds || '[]',
+        participatingBirds: finalParticipatingBirds,
         isRfidActive: isRfidActive === true,
       },
     })
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data: formatGroupRaceResponse(data) })
   } catch (err: any) {
     console.error('Error in POST /api/race-events:', err)
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
@@ -164,10 +212,43 @@ export async function PUT(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { id, title, date, totalBirds, maxSpeed, avgSpeed, location, club, distance, winner, releaseTime, clockInTime, birds, participatingBirds, isRfidActive } = body
+    const {
+      id,
+      title,
+      date,
+      totalBirds,
+      maxSpeed,
+      avgSpeed,
+      location,
+      club,
+      distance,
+      winner,
+      releaseTime,
+      clockInTime,
+      birds,
+      participatingBirds,
+      isRfidActive,
+      isGroupRace,
+      joinCode,
+      raceStatus,
+      loftEntries,
+      groupArrivals,
+    } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Event ID is required for updates' }, { status: 400 })
+    }
+
+    let updatedParticipatingBirds = participatingBirds
+    if (isGroupRace !== undefined || joinCode !== undefined || raceStatus !== undefined || loftEntries !== undefined) {
+      const existing = await prisma.raceEvent.findUnique({ where: { id } })
+      const meta = parseGroupRaceMeta(existing)
+      updatedParticipatingBirds = serializeGroupRacePayload({
+        isGroupRace: isGroupRace !== undefined ? !!isGroupRace : meta.isGroupRace,
+        joinCode: joinCode !== undefined ? joinCode : meta.joinCode,
+        raceStatus: raceStatus !== undefined ? raceStatus : meta.raceStatus,
+        loftEntries: loftEntries !== undefined ? (typeof loftEntries === 'string' ? JSON.parse(loftEntries) : loftEntries) : meta.loftEntries,
+      })
     }
 
     const data = await prisma.raceEvent.update({
@@ -184,8 +265,8 @@ export async function PUT(request: Request) {
         winner,
         releaseTime,
         clockInTime,
-        birds: birds !== undefined ? birds : undefined,
-        participatingBirds: participatingBirds !== undefined ? participatingBirds : undefined,
+        birds: groupArrivals !== undefined ? groupArrivals : (birds !== undefined ? birds : undefined),
+        participatingBirds: updatedParticipatingBirds !== undefined ? updatedParticipatingBirds : undefined,
         isRfidActive: isRfidActive !== undefined ? !!isRfidActive : undefined,
         backgroundColor: club === 'Training' ? '#2196F3' :
                          club === 'Medication' ? '#4CAF50' :
@@ -196,7 +277,7 @@ export async function PUT(request: Request) {
       },
     })
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data: formatGroupRaceResponse(data) })
   } catch (err: any) {
     console.error('Error in PUT /api/race-events:', err)
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })

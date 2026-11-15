@@ -244,6 +244,24 @@ export default function QuickClockInModal({
         throw new Error('Failed to clock in bird')
       }
 
+      // If this is an active group activity race, sync arrival to master group leaderboard
+      if (event.extendedProps?.isGroupRace) {
+        fetch(`/api/group-races/${event.id}/clock`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({
+            ringNo: finalRing.toUpperCase(),
+            clockInTime: finalTime,
+            speed: calculatedSpeed,
+            loftName: 'My Loft',
+            method: 'Quick Clock-In',
+          }),
+        }).catch((syncErr) => console.error('Group race live clock sync notice:', syncErr))
+      }
+
       setSuccess(true)
       onClockInSaved()
       setActiveTab('arrivals')

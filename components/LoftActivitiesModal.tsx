@@ -29,6 +29,8 @@ interface LoftActivitiesModalProps {
   onDateClick: (dateStr: string, eventToEdit?: RaceEvent | null) => void
   onLogActivity: () => void
   onEditActivity: (dateStr: string, event: RaceEvent) => void
+  onJoinGroupRace?: () => void
+  onCreateGroupRace?: () => void
 }
 
 export default function LoftActivitiesModal({
@@ -41,6 +43,8 @@ export default function LoftActivitiesModal({
   onDateClick,
   onLogActivity,
   onEditActivity,
+  onJoinGroupRace,
+  onCreateGroupRace,
 }: LoftActivitiesModalProps) {
   const [activeTab, setActiveTab] = useState<'activities' | 'results'>(initialTab)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
@@ -361,8 +365,9 @@ export default function LoftActivitiesModal({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '0.5rem',
+                  gap: '0.4rem',
                   padding: '0.1rem 0 0.35rem 0',
+                  flexWrap: 'nowrap',
                 }}
               >
                 {/* Modern Pill View Switcher */}
@@ -374,16 +379,17 @@ export default function LoftActivitiesModal({
                     borderRadius: '0.55rem',
                     padding: '2px',
                     gap: '2px',
-                    height: '32px',
+                    height: '30px',
                     alignItems: 'center',
+                    flexShrink: 0,
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
                     style={{
-                      height: '26px',
-                      padding: '0 0.65rem',
+                      height: '24px',
+                      padding: '0 0.55rem',
                       borderRadius: '0.4rem',
                       fontSize: '0.72rem',
                       fontWeight: 700,
@@ -394,7 +400,8 @@ export default function LoftActivitiesModal({
                       transition: 'all 0.15s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
+                      gap: '0.25rem',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     <span>📋</span>
@@ -404,8 +411,8 @@ export default function LoftActivitiesModal({
                     type="button"
                     onClick={() => setViewMode('calendar')}
                     style={{
-                      height: '26px',
-                      padding: '0 0.65rem',
+                      height: '24px',
+                      padding: '0 0.55rem',
                       borderRadius: '0.4rem',
                       fontSize: '0.72rem',
                       fontWeight: 700,
@@ -416,7 +423,8 @@ export default function LoftActivitiesModal({
                       transition: 'all 0.15s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
+                      gap: '0.25rem',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     <span>📅</span>
@@ -424,31 +432,94 @@ export default function LoftActivitiesModal({
                   </button>
                 </div>
 
-                {/* Modern Action Button */}
-                <button
-                  type="button"
-                  onClick={onLogActivity}
+                {/* Actions Group — Strictly Single Row (Never Wrap) */}
+                <div
                   style={{
-                    height: '32px',
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0 0.85rem',
-                    background: 'rgba(255, 193, 7, 0.12)',
-                    border: '1px solid rgba(255, 193, 7, 0.35)',
-                    borderRadius: '0.55rem',
-                    color: '#FFC107',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
-                    transition: 'all 0.15s ease',
-                    whiteSpace: 'nowrap',
+                    gap: '0.3rem',
+                    flexWrap: 'nowrap',
+                    flexShrink: 0,
                   }}
                 >
-                  <PlusIcon size={12} />
-                  <span>Log Activity</span>
-                </button>
+                  {onJoinGroupRace && (
+                    <button
+                      type="button"
+                      onClick={onJoinGroupRace}
+                      style={{
+                        height: '30px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0 0.55rem',
+                        background: 'rgba(56, 189, 248, 0.12)',
+                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                        borderRadius: '0.5rem',
+                        color: '#38bdf8',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title="Join a group race with code"
+                    >
+                      <span>🌐</span>
+                      <span>Join<span className="hidden sm:inline"> Race</span></span>
+                    </button>
+                  )}
+
+                  {onCreateGroupRace && (
+                    <button
+                      type="button"
+                      onClick={onCreateGroupRace}
+                      style={{
+                        height: '30px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0 0.55rem',
+                        background: 'rgba(192, 132, 252, 0.12)',
+                        border: '1px solid rgba(192, 132, 252, 0.35)',
+                        borderRadius: '0.5rem',
+                        color: '#c084fc',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title="Host a group race as admin"
+                    >
+                      <span>🏆</span>
+                      <span>Host<span className="hidden sm:inline"> Race</span></span>
+                    </button>
+                  )}
+
+                  {/* Modern Action Button */}
+                  <button
+                    type="button"
+                    onClick={onLogActivity}
+                    style={{
+                      height: '30px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0 0.65rem',
+                      background: 'rgba(255, 193, 7, 0.15)',
+                      border: '1px solid rgba(255, 193, 7, 0.4)',
+                      borderRadius: '0.5rem',
+                      color: '#FFC107',
+                      fontSize: '0.73rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <PlusIcon size={12} />
+                    <span>Log<span className="hidden sm:inline"> Activity</span></span>
+                  </button>
+                </div>
               </div>
 
               {/* View Content */}
@@ -660,6 +731,22 @@ export default function LoftActivitiesModal({
                                       >
                                         {type}
                                       </span>
+                                      {ev.extendedProps?.isGroupRace && (
+                                        <span
+                                          style={{
+                                            fontWeight: 800,
+                                            fontSize: '0.62rem',
+                                            padding: '0.08rem 0.4rem',
+                                            borderRadius: '4px',
+                                            background: 'rgba(192, 132, 252, 0.15)',
+                                            border: '1px solid rgba(192, 132, 252, 0.35)',
+                                            color: '#c084fc',
+                                            fontFamily: 'monospace',
+                                          }}
+                                        >
+                                          🌐 {ev.extendedProps?.joinCode || 'Group'}
+                                        </span>
+                                      )}
                                       <span
                                         style={{
                                           whiteSpace: 'nowrap',

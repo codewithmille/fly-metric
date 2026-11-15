@@ -687,7 +687,7 @@ export default function ActivityModal({
   const sortedBirdsList = [...birdsList].sort((a, b) => b.speed - a.speed)
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="modal-backdrop" style={{ zIndex: 10200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div
         className="modal-container"
         ref={modalRef}
