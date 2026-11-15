@@ -98,6 +98,7 @@ export default function ActivityModal({
   const [participatingRings, setParticipatingRings] = useState<string[]>([])
   const [isRfidTarget, setIsRfidTarget] = useState<boolean>(true)
   const [entriesExpanded, setEntriesExpanded] = useState<boolean>(true)
+  const [isEntriesModalOpen, setIsEntriesModalOpen] = useState(false)
 
   useEffect(() => {
     if (releaseTime) {
@@ -132,6 +133,42 @@ export default function ActivityModal({
     const speed = Math.round((dist * 1000) / flyingMins)
     if (speed > 1600) return 'N/A'
     return `${speed.toLocaleString()} m/min`
+  }
+
+  const getFlightTelemetry = (clockTime: string, speedMpm: number) => {
+    const kph = (speedMpm * 0.06).toFixed(1)
+    if (!releaseTime || !clockTime) {
+      return { kph: `${kph} km/h`, duration: '' }
+    }
+
+    const [rH = 0, rM = 0, rS = 0] = releaseTime.split(':').map(Number)
+    const [cH = 0, cM = 0, cS = 0] = clockTime.split(':').map(Number)
+
+    let relSeconds = rH * 3600 + rM * 60 + (rS || 0)
+    let arrSeconds = cH * 3600 + cM * 60 + (cS || 0)
+
+    if (arrSeconds < relSeconds) {
+      arrSeconds += 24 * 3600
+    }
+
+    const totalSecs = arrSeconds - relSeconds
+    const hours = Math.floor(totalSecs / 3600)
+    const mins = Math.floor((totalSecs % 3600) / 60)
+    const secs = totalSecs % 60
+
+    let duration = ''
+    if (hours > 0) {
+      duration = secs > 0 ? `${hours}h ${mins}m ${secs}s` : `${hours}h ${mins}m`
+    } else if (mins > 0) {
+      duration = secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
+    } else {
+      duration = `${secs}s`
+    }
+
+    return {
+      kph: `${kph} km/h`,
+      duration,
+    }
   }
 
   const generateForecastGrid = () => {
@@ -224,7 +261,8 @@ export default function ActivityModal({
   // Sync date when parent passes a new selectedDate or eventToEdit
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
-      setClockInOnly(!!isClockInOnly)
+      setClockInOnly(eventToEdit ? true : !!isClockInOnly)
+      setIsEntriesModalOpen(false)
       setReleaseLat('')
       setReleaseLng('')
       if (eventToEdit) {
@@ -432,13 +470,12 @@ export default function ActivityModal({
     setNewRing(registeredBirds.length > 0 ? registeredBirds[0].ringNo : '')
   }
 
-  const handleRemoveBird = (idx: number) => {
-    const birdToRemove = birdsList[idx]
-    if (eventToEdit && birdToRemove) {
-      localStorage.removeItem(`verify_photo_${eventToEdit.id}_${birdToRemove.ringNo.toUpperCase()}`)
-      localStorage.removeItem(`verify_video_${eventToEdit.id}_${birdToRemove.ringNo.toUpperCase()}`)
+  const handleRemoveBird = (ringToRemove: string) => {
+    if (eventToEdit) {
+      localStorage.removeItem(`verify_photo_${eventToEdit.id}_${ringToRemove.toUpperCase()}`)
+      localStorage.removeItem(`verify_video_${eventToEdit.id}_${ringToRemove.toUpperCase()}`)
     }
-    setBirdsList(birdsList.filter((_, i) => i !== idx))
+    setBirdsList(birdsList.filter((b) => b.ringNo.toUpperCase() !== ringToRemove.toUpperCase()))
   }
 
   const handleUseDeviceGpsForRelease = () => {
@@ -647,6 +684,8 @@ export default function ActivityModal({
 
   if (!isOpen) return null
 
+  const sortedBirdsList = [...birdsList].sort((a, b) => b.speed - a.speed)
+
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div
@@ -664,42 +703,185 @@ export default function ActivityModal({
           flexDirection: 'column',
           overflow: 'hidden',
           borderRadius: '1.25rem',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          position: 'relative'
         }}
       >
         {/* Header styling adapts to activity type */}
         <div className="modal-header" style={{
-          background: activityType === 'race' ? 'linear-gradient(135deg, #FFC107, #FF8F00)' :
-                      activityType === 'training' ? 'linear-gradient(135deg, #2196F3, #1565C0)' :
-                      activityType === 'medication' ? 'linear-gradient(135deg, #4CAF50, #2E7D32)' :
-                      'linear-gradient(135deg, #9C27B0, #6A1B9A)',
+          background: (clockInOnly || eventToEdit)
+            ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.16) 0%, rgba(13, 21, 39, 0.98) 100%)'
+            : activityType === 'race' ? 'linear-gradient(135deg, #FFC107, #FF8F00)' :
+              activityType === 'training' ? 'linear-gradient(135deg, #2196F3, #1565C0)' :
+              activityType === 'medication' ? 'linear-gradient(135deg, #4CAF50, #2E7D32)' :
+              'linear-gradient(135deg, #9C27B0, #6A1B9A)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.75rem',
+          flexDirection: 'column',
+          gap: '0.45rem',
           width: '100%',
           boxSizing: 'border-box',
-          padding: '1rem 1.25rem',
+          padding: '0.9rem 1.15rem',
           borderTopLeftRadius: '1.25rem',
           borderTopRightRadius: '1.25rem',
+          borderBottom: '1px solid rgba(255, 193, 7, 0.2)',
           flexShrink: 0,
         }}>
-          <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
-            <span className="modal-pigeon-icon" style={{ display: 'flex', alignItems: 'center', color: '#fff', flexShrink: 0 }}>
-              {activityType === 'race' ? <TrophyIcon size={24} /> :
-               activityType === 'training' ? <TrainingIcon size={24} /> :
-               activityType === 'medication' ? <PillIcon size={24} /> : <NotesIcon size={24} />}
-            </span>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <h2 id="modal-title" className="modal-title" style={{ color: '#fff', margin: 0, fontSize: '1.05rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {eventToEdit ? 'Activity Details' : 'Add Activity'}
-              </h2>
-              <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {eventToEdit ? 'Calculate speed and update records' : 'Schedule a new activity on the calendar'}
-              </p>
+          {/* Top Row: Title + Entries + Close */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
+              <span style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: (clockInOnly || eventToEdit) ? 'rgba(255, 193, 7, 0.15)' : 'rgba(255,255,255,0.2)',
+                border: (clockInOnly || eventToEdit) ? '1px solid rgba(255, 193, 7, 0.35)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: (clockInOnly || eventToEdit) ? 'var(--brand-gold)' : '#fff',
+                flexShrink: 0
+              }}>
+                {activityType === 'training' ? <TrainingIcon size={20} /> :
+                 activityType === 'medication' ? <PillIcon size={20} /> :
+                 activityType === 'task' ? <NotesIcon size={20} /> :
+                 <TrophyIcon size={20} />}
+              </span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h2 id="modal-title" style={{ color: '#fff', margin: 0, fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {eventToEdit ? (title || 'Race Cockpit') : 'Add Activity'}
+                </h2>
+                {!eventToEdit && (
+                  <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '0.7rem' }}>
+                    Schedule a new activity on the calendar
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+              {eventToEdit && (activityType === 'race' || activityType === 'training') && (
+                <button
+                  type="button"
+                  onClick={() => setIsEntriesModalOpen(true)}
+                  style={{
+                    background: 'rgba(255, 193, 7, 0.15)',
+                    border: '1px solid rgba(255, 193, 7, 0.4)',
+                    color: 'var(--brand-gold)',
+                    borderRadius: '9999px',
+                    padding: '0.28rem 0.65rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="View & Edit Race Entries"
+                >
+                  <span>🕊️</span>
+                  <span>Entries ({participatingRings.length}/{registeredBirds.length})</span>
+                </button>
+              )}
+              <button
+                className="modal-close-btn"
+                style={{
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.15)',
+                  position: 'static',
+                  margin: 0,
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: 'none',
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+                onClick={onClose}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
           </div>
-          <button className="modal-close-btn" style={{ color: '#fff', background: 'rgba(255,255,255,0.2)', position: 'static', margin: 0, flexShrink: 0 }} onClick={onClose} aria-label="Close modal">✕</button>
+
+          {/* Sub-bar for existing race / training: Telemetry & Actions */}
+          {eventToEdit && (activityType === 'race' || activityType === 'training') && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.4rem',
+              paddingTop: '0.35rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              fontSize: '0.72rem',
+              color: 'var(--text-secondary)',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span>📅</span> {raceDate}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span>📏</span> {distanceKmStr} km
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span>⏰</span> Rel: {releaseTime}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span>⏱️</span> Cut: {clockInTime}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => setClockInOnly(!clockInOnly)}
+                  style={{
+                    background: clockInOnly ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 193, 7, 0.2)',
+                    border: clockInOnly ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 193, 7, 0.5)',
+                    color: clockInOnly ? 'var(--text-secondary)' : 'var(--brand-gold)',
+                    borderRadius: '9999px',
+                    padding: '0.15rem 0.55rem',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                  title={clockInOnly ? "Edit Date, Distance, or Release time" : "Switch back to Live Cockpit"}
+                >
+                  <span>{clockInOnly ? '✏️ Edit Info' : '🏆 Cockpit'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsRfidTarget(!isRfidTarget)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    fontSize: '0.66rem',
+                    fontWeight: 800,
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '9999px',
+                    cursor: 'pointer',
+                    background: isRfidTarget ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                    border: isRfidTarget ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.12)',
+                    color: isRfidTarget ? '#34d399' : 'var(--text-muted)'
+                  }}
+                  title="Toggle RFID antenna target lock"
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isRfidTarget ? '#34d399' : '#6b7280' }} />
+                  <span>{isRfidTarget ? 'RFID LOCKED' : 'RFID OFF'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tab Selection */}
@@ -755,76 +937,27 @@ export default function ActivityModal({
           className="modal-body"
           style={{
             padding: '1rem 1.15rem',
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)',
             gap: '0.65rem',
             overflowY: 'auto',
             flex: 1,
           }}
         >
-          {clockInOnly && (
+          {clockInOnly && rfidFlash && (
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid var(--border-default)',
-              borderRadius: '0.65rem',
-              padding: '0.65rem 0.85rem',
-              marginBottom: '0.35rem',
-              position: 'relative'
+              padding: '0.45rem 0.75rem',
+              borderRadius: '0.5rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              background: rfidFlash.status === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+              border: rfidFlash.status === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+              color: rfidFlash.status === 'success' ? '#34d399' : '#fbbf24',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              marginBottom: '0.2rem',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{
-                    color: activityType === 'training' ? '#2196F3' :
-                           activityType === 'medication' ? '#4CAF50' :
-                           activityType === 'task' ? '#9C27B0' : 'var(--brand-gold)',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    {activityType === 'training' ? <TrainingIcon size={16} /> :
-                     activityType === 'medication' ? <PillIcon size={16} /> :
-                     activityType === 'task' ? <NotesIcon size={16} /> :
-                     <TrophyIcon size={16} />}
-                  </span>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-                    {activityType === 'race' ? 'Race Details' :
-                     activityType === 'training' ? 'Training Details' :
-                     activityType === 'medication' ? 'Diet/Meds Details' : 'Task Details'}
-                  </span>
-                </div>
-                
-                {/* Small Edit Details button */}
-                <button
-                  type="button"
-                  onClick={() => setClockInOnly(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--brand-gold)',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
-                >
-                  ✏️ Edit Event Details
-                </button>
-              </div>
-
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                {title || 'Untitled Activity'}
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                <span>📅 {raceDate}</span>
-                {(activityType === 'race' || activityType === 'training') && (
-                  <>
-                    <span>📏 {distanceKmStr} km</span>
-                    <span>⏰ Release: {releaseTime}</span>
-                    <span>⏱️ Cut-off: {clockInTime}</span>
-                  </>
-                )}
-              </div>
+              <span>{rfidFlash.message}</span>
             </div>
           )}
 
@@ -1123,392 +1256,381 @@ export default function ActivityModal({
             </>
           )}
 
-          {/* ── Participating Birds Picker (Kasali sa Laro / Entries) ── */}
-          {(activityType === 'race' || activityType === 'training') && (
+          {/* ── Participating Birds Bar (When editing event details) ── */}
+          {!clockInOnly && (activityType === 'race' || activityType === 'training') && (
             <div style={{
-              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(13, 17, 23, 0.75) 100%)',
-              border: '1px solid rgba(255, 193, 7, 0.28)',
+              background: 'rgba(255, 193, 7, 0.06)',
+              border: '1px solid rgba(255, 193, 7, 0.25)',
               borderRadius: '0.75rem',
               padding: '0.65rem 0.85rem',
               marginTop: '0.4rem',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '0.45rem',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+              flexWrap: 'wrap'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1rem' }}>🕊️</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fff' }}>
-                      Kasali sa Laro (Entries)
-                    </span>
-                    <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '9999px',
-                      background: 'rgba(255, 193, 7, 0.15)',
-                      color: 'var(--brand-gold)',
-                      border: '1px solid rgba(255, 193, 7, 0.3)'
-                    }}>
-                      {participatingRings.length} of {registeredBirds.length} birds
-                    </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🕊️</span>
+                <div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fff' }}>
+                    Kasali sa Laro (Entries)
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--brand-gold)' }}>
+                    {participatingRings.length} of {registeredBirds.length} birds enrolled
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))}
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.18rem 0.45rem',
-                      borderRadius: '0.35rem',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: '#fff',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setParticipatingRings([])}
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.18rem 0.45rem',
-                      borderRadius: '0.35rem',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                      color: '#f87171',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEntriesExpanded(!entriesExpanded)}
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.18rem 0.45rem',
-                      borderRadius: '0.35rem',
-                      background: 'rgba(255, 193, 7, 0.12)',
-                      border: '1px solid rgba(255, 193, 7, 0.3)',
-                      color: 'var(--brand-gold)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.2rem'
-                    }}
-                  >
-                    <span>{entriesExpanded ? '▲ Itago' : '▼ Ipakita'}</span>
-                  </button>
-                </div>
               </div>
-
-              {entriesExpanded && (
-                <>
-                  {registeredBirds.length === 0 ? (
-                    <div style={{ padding: '0.6rem', textAlign: 'center', background: 'rgba(0,0,0,0.25)', borderRadius: '0.5rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>
-                      Walang rehistradong ibon sa loft. Mag-rehistro muna sa Loft Registry!
-                    </div>
-                  ) : (
-                    <div style={{
-                      maxHeight: '110px',
-                      overflowY: 'auto',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '0.35rem',
-                      padding: '0.15rem 0',
-                    }}>
-                      {registeredBirds.map((bird) => {
-                        const isSelected = participatingRings.includes(bird.ringNo.toUpperCase())
-                        return (
-                          <button
-                            key={bird.id}
-                            type="button"
-                            onClick={() => {
-                              const upper = bird.ringNo.toUpperCase()
-                              setParticipatingRings((prev) =>
-                                prev.includes(upper) ? prev.filter((r) => r !== upper) : [...prev, upper]
-                              )
-                            }}
-                            style={{
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              padding: '0.22rem 0.55rem',
-                              borderRadius: '9999px',
-                              cursor: 'pointer',
-                              border: isSelected ? '1px solid rgba(16, 185, 129, 0.7)' : '1px solid rgba(255, 255, 255, 0.1)',
-                              background: isSelected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                              color: isSelected ? '#34d399' : '#cbd5e1',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              transition: 'all 0.12s ease',
-                              fontFamily: 'monospace',
-                            }}
-                          >
-                            <span>{isSelected ? '✓' : '+'}</span>
-                            <span>{bird.ringNo}</span>
-                            <span style={{ fontSize: '0.62rem', opacity: 0.7, fontFamily: 'sans-serif' }}>({bird.color || 'Racer'})</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* RFID Active Target Toggle */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: '0.4rem',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                fontSize: '0.72rem',
-                flexWrap: 'wrap',
-                gap: '0.35rem',
-              }}>
-                <label htmlFor="rfid-target-toggle" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', color: isRfidTarget ? '#34d399' : 'rgba(255, 255, 255, 0.65)', fontWeight: 700 }}>
-                  <input
-                    id="rfid-target-toggle"
-                    type="checkbox"
-                    checked={isRfidTarget}
-                    onChange={(e) => setIsRfidTarget(e.target.checked)}
-                    style={{ cursor: 'pointer', accentColor: '#10b981' }}
-                  />
-                  <span>📡 Aktibong Laro para sa 125kHz RFID Sensor Pad</span>
-                </label>
-                <span style={{ fontSize: '0.65rem', color: isRfidTarget ? '#34d399' : 'rgba(255,255,255,0.4)', fontWeight: 700 }}>
-                  {isRfidTarget ? 'TARGET LOCKED' : 'Inactive'}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsEntriesModalOpen(true)}
+                style={{
+                  background: 'rgba(255, 193, 7, 0.15)',
+                  border: '1px solid rgba(255, 193, 7, 0.4)',
+                  color: 'var(--brand-gold)',
+                  borderRadius: '9999px',
+                  padding: '0.28rem 0.8rem',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
+                <span>Piliin ang mga Ibon</span>
+                <span>➔</span>
+              </button>
             </div>
           )}
 
-          {/* Bird Clocking List Manager (Only when editing an existing Race or Training event) */}
+          {/* Bird Clocking Cockpit (Only when viewing/clocking an existing Race or Training event) */}
           {eventToEdit && (activityType === 'race' || activityType === 'training') && (
-            <div style={{ marginTop: '0.65rem', borderTop: '1px solid var(--border-default)', paddingTop: '0.65rem' }}>
-              <h3 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <BirdIcon size={16} /> Clocked Birds ({birdsList.length})
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginLeft: 'auto' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.55rem',
+              marginTop: '0.2rem',
+            }}>
+              {/* Leaderboard Section Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ color: 'var(--brand-gold)' }}>🏆</span>
+                  <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#fff' }}>
+                    Clocked Arrivals ({birdsList.length})
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '9999px',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#34d399',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
                   125kHz RFID Ready
                 </span>
-              </h3>
+              </div>
               
               {rfidFlash && (
-                <div style={{ marginBottom: '0.6rem', padding: '0.45rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: rfidFlash.status === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', border: rfidFlash.status === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)', color: rfidFlash.status === 'success' ? '#34d399' : '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{ padding: '0.45rem 0.75rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: rfidFlash.status === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', border: rfidFlash.status === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)', color: rfidFlash.status === 'success' ? '#34d399' : '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <span>{rfidFlash.message}</span>
                 </div>
               )}
 
-              {/* Add Bird Inputs */}
-              <div className="add-bird-row">
-                <div className="form-group add-bird-group">
-                  <label htmlFor="bird-ring" className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <TagIcon size={12} /> Select Bird
-                  </label>
-                  {registeredBirds.length === 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%' }}>
-                      <input
-                        id="bird-ring"
-                        type="text"
-                        className="form-input"
-                        placeholder="Enter Ring No. (e.g. PHA-2026-88001)"
-                        value={newRing}
-                        onChange={(e) => setNewRing(e.target.value)}
-                        style={{ height: '2.2rem', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                      />
-                      {onOpenRegistry && (
-                        <button
-                          type="button"
-                          onClick={onOpenRegistry}
-                          style={{
-                            background: 'rgba(255, 193, 7, 0.12)',
-                            border: '1px solid rgba(255, 193, 7, 0.3)',
-                            color: 'var(--brand-gold)',
-                            borderRadius: '0.375rem',
-                            padding: '0.2rem 0.5rem',
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            marginTop: '0.25rem',
-                            alignSelf: 'flex-start'
-                          }}
-                        >
-                          <PlusIcon size={11} /> + Register in Loft Registry
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <select
-                      id="bird-ring"
-                      className="form-input"
-                      value={newRing}
-                      onChange={(e) => setNewRing(e.target.value)}
-                      style={{
-                        height: '2.2rem',
-                        padding: '0.3rem 0.6rem',
-                        fontSize: '0.8rem',
-                        background: 'var(--bg-surface)',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {registeredBirds.map((b) => {
-                        const isEnrolled = participatingRings.length === 0 || participatingRings.includes(b.ringNo.toUpperCase())
-                        return (
-                          <option key={b.id} value={b.ringNo}>
-                            {b.ringNo} ({b.color || 'Racer'}) {isEnrolled ? '✓ Kasali' : '— Di Kasali'}
-                          </option>
-                        )
-                      })}
-                    </select>
-                  )}
+              {/* Quick Clock-in Card */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.75)',
+                padding: '0.65rem 0.75rem',
+                borderRadius: '0.85rem',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.45rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.05rem' }}>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ color: 'var(--brand-gold)' }}>⚡</span> Manual Clock-In
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                    {birdsList.length} of {participatingRings.length || registeredBirds.length} clocked
+                  </span>
                 </div>
-                <div className="form-group add-bird-group">
-                  <label htmlFor="bird-time" className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <TimerIcon size={12} /> Arrival Time
-                  </label>
+
+                {/* Pigeon Selector (Full Width) */}
+                {registeredBirds.length === 0 ? (
                   <input
-                    id="bird-time"
-                    type="time"
+                    id="bird-ring"
+                    type="text"
                     className="form-input"
-                    value={newTime}
-                    onChange={(e) => setNewTime(e.target.value)}
-                    style={{ height: '2.2rem', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                    placeholder="Ring No. (e.g. PH-2026-88001)"
+                    value={newRing}
+                    onChange={(e) => setNewRing(e.target.value)}
+                    style={{ height: '2.3rem', padding: '0.3rem 0.65rem', fontSize: '0.8rem', width: '100%', margin: 0 }}
                   />
+                ) : (
+                  <select
+                    id="bird-ring"
+                    className="form-input"
+                    value={newRing}
+                    onChange={(e) => setNewRing(e.target.value)}
+                    style={{
+                      height: '2.3rem',
+                      padding: '0.3rem 0.65rem',
+                      fontSize: '0.78rem',
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      width: '100%',
+                      margin: 0,
+                    }}
+                  >
+                    {registeredBirds.map((b) => {
+                      const isEnrolled = participatingRings.length === 0 || participatingRings.includes(b.ringNo.toUpperCase())
+                      const isAlreadyClocked = birdsList.some((cb) => cb.ringNo.toUpperCase() === b.ringNo.toUpperCase())
+                      return (
+                        <option key={b.id} value={b.ringNo} disabled={isAlreadyClocked}>
+                          {b.ringNo} {b.name ? `"${b.name}"` : ''} ({b.color || 'Racer'}) {isAlreadyClocked ? '✓ CLOCKED' : isEnrolled ? '• KASALI' : '— DI KASALI'}
+                        </option>
+                      )
+                    })}
+                  </select>
+                )}
+
+                {/* Arrival Time + Clock Button Row */}
+                <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                  <div style={{ width: '115px', flexShrink: 0 }}>
+                    <input
+                      id="bird-time"
+                      type="time"
+                      step="1"
+                      className="form-input"
+                      value={newTime}
+                      onChange={(e) => setNewTime(e.target.value)}
+                      style={{
+                        height: '2.3rem',
+                        padding: '0.3rem 0.45rem',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        fontFamily: 'monospace',
+                        textAlign: 'center',
+                        width: '100%',
+                        margin: 0,
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddBird()}
+                    style={{
+                      flex: 1,
+                      height: '2.3rem',
+                      padding: '0 0.9rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      background: activityType === 'training'
+                        ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+                        : 'linear-gradient(135deg, #FFC107, #FF9800)',
+                      color: '#000',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    <PlusIcon size={15} />
+                    <span>Clock In Arrival</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleAddBird()}
-                  className="add-bird-btn"
-                  style={{
-                    background: activityType === 'training' ? '#2196F3' : 'var(--brand-gold)',
-                    color: activityType === 'training' ? '#fff' : '#000',
-                  }}
-                >
-                  <PlusIcon size={14} /> Add
-                </button>
               </div>
 
-              {/* Bird List Table */}
+              {/* Leaderboard Table */}
               {birdsList.length === 0 ? (
                 <div style={{
-                  padding: '1rem',
+                  padding: '1.25rem 1rem',
                   textAlign: 'center',
                   background: 'var(--bg-surface)',
-                  borderRadius: '0.5rem',
+                  borderRadius: '0.65rem',
                   border: '1px dashed var(--border-default)',
-                  fontSize: '0.78rem',
+                  fontSize: '0.76rem',
                   color: 'var(--text-secondary)'
                 }}>
-                  No birds clocked in yet. Add a bird above!
+                  🕊️ Walang ibon na naka-clock in pa. Piliin ang ibon sa itaas at i-click ang Clock, o itapat sa 125kHz RFID pad!
                 </div>
               ) : (
                 <div style={{
-                  maxHeight: '140px',
+                  maxHeight: '270px',
                   overflowY: 'auto',
                   border: '1px solid var(--border-default)',
-                  borderRadius: '0.5rem',
-                  background: 'var(--bg-card)'
+                  borderRadius: '0.65rem',
+                  background: 'var(--bg-card)',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
                 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-default)', color: 'var(--text-secondary)' }}>
-                        <th style={{ padding: '0.4rem 0.6rem', fontWeight: 700 }}>Ring No.</th>
-                        <th style={{ padding: '0.4rem 0.6rem', fontWeight: 700 }}>Arrival</th>
-                        <th style={{ padding: '0.4rem 0.6rem', fontWeight: 700, textAlign: 'right' }}>Speed</th>
-                        <th style={{ padding: '0.4rem 0.6rem', fontWeight: 700, textAlign: 'center', width: '2.5rem' }}>Del</th>
+                        <th style={{ padding: '0.45rem 0.35rem', fontWeight: 800, width: '2.4rem', textAlign: 'center', fontSize: '0.66rem', textTransform: 'uppercase' }}>Rank</th>
+                        <th style={{ padding: '0.45rem 0.5rem', fontWeight: 800, fontSize: '0.66rem', textTransform: 'uppercase' }}>Pigeon</th>
+                        <th style={{ padding: '0.45rem 0.5rem', fontWeight: 800, fontSize: '0.66rem', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Arrival / Flight</th>
+                        <th style={{ padding: '0.45rem 0.5rem', fontWeight: 800, fontSize: '0.66rem', textTransform: 'uppercase', textAlign: 'right', whiteSpace: 'nowrap' }}>Speed / KPH</th>
+                        <th style={{ padding: '0.45rem 0.35rem', width: '2.2rem', textAlign: 'center' }}></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {birdsList.map((bird, idx) => (
-                        <tr key={idx} style={{ borderBottom: idx < birdsList.length - 1 ? '1px solid var(--border-default)' : 'none' }}>
-                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <span>{bird.ringNo}</span>
-                              {localPhotos[bird.ringNo.toUpperCase()] && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedMedia({ type: 'photo', url: localPhotos[bird.ringNo.toUpperCase()] })}
-                                  style={{
-                                    background: 'rgba(33, 150, 243, 0.12)',
-                                    border: '1px solid rgba(33, 150, 243, 0.3)',
-                                    borderRadius: '4px',
-                                    color: '#2196F3',
-                                    padding: '0.1rem 0.3rem',
-                                    fontSize: '0.65rem',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.15rem',
-                                    fontWeight: 700
-                                  }}
-                                  title="View Verification Photo"
-                                >
-                                  📷 Photo
-                                </button>
+                      {sortedBirdsList.map((bird, idx) => {
+                        const matchedBird = registeredBirds.find((rb) => rb.ringNo.toUpperCase() === bird.ringNo.toUpperCase())
+                        const isGold = idx === 0
+                        const isSilver = idx === 1
+                        const isBronze = idx === 2
+                        const telemetry = getFlightTelemetry(bird.clockInTime, bird.speed)
+
+                        return (
+                          <tr
+                            key={bird.ringNo}
+                            style={{
+                              borderBottom: idx < sortedBirdsList.length - 1 ? '1px solid var(--border-default)' : 'none',
+                              background: isGold ? 'rgba(255, 193, 7, 0.05)' :
+                                          isSilver ? 'rgba(203, 213, 225, 0.03)' :
+                                          isBronze ? 'rgba(217, 119, 6, 0.03)' : 'transparent',
+                            }}
+                          >
+                            {/* Rank Badge */}
+                            <td style={{ padding: '0.5rem 0.35rem', textAlign: 'center', verticalAlign: 'middle' }}>
+                              {isGold ? (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 900, padding: '0.18rem 0.42rem', borderRadius: '9999px', background: 'rgba(255, 193, 7, 0.25)', color: 'var(--brand-gold)', border: '1px solid rgba(255, 193, 7, 0.6)' }}>
+                                  1st
+                                </span>
+                              ) : isSilver ? (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 900, padding: '0.18rem 0.42rem', borderRadius: '9999px', background: 'rgba(203, 213, 225, 0.2)', color: '#e2e8f0', border: '1px solid rgba(203, 213, 225, 0.45)' }}>
+                                  2nd
+                                </span>
+                              ) : isBronze ? (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 900, padding: '0.18rem 0.42rem', borderRadius: '9999px', background: 'rgba(217, 119, 6, 0.2)', color: '#f59e0b', border: '1px solid rgba(217, 119, 6, 0.45)' }}>
+                                  3rd
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 700 }}>#{idx + 1}</span>
                               )}
-                              {localVideos[bird.ringNo.toUpperCase()] && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedMedia({ type: 'video', url: localVideos[bird.ringNo.toUpperCase()] })}
-                                  style={{
-                                    background: 'rgba(76, 175, 80, 0.12)',
-                                    border: '1px solid rgba(76, 175, 80, 0.3)',
-                                    borderRadius: '4px',
-                                    color: '#4CAF50',
-                                    padding: '0.1rem 0.3rem',
-                                    fontSize: '0.65rem',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.15rem',
-                                    fontWeight: 700
-                                  }}
-                                  title="View Verification Video"
-                                >
-                                  📹 Video
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                          <td style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }}>{bird.clockInTime}</td>
-                          <td style={{ padding: '0.4rem 0.6rem', fontWeight: 700, color: 'var(--brand-gold)', textAlign: 'right' }}>{bird.speed.toLocaleString()} m/min</td>
-                          <td style={{ padding: '0.4rem 0.6rem', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveBird(idx)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'var(--color-error)',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: 0,
-                                width: '100%'
-                              }}
-                              title="Delete bird"
-                            >
-                              <TrashIcon size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+
+                            {/* Ring & Details */}
+                            <td style={{ padding: '0.5rem 0.5rem', verticalAlign: 'middle' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '0.78rem', color: isGold ? 'var(--brand-gold)' : '#fff', letterSpacing: '-0.02em' }}>
+                                    {bird.ringNo}
+                                  </span>
+                                  {localPhotos[bird.ringNo.toUpperCase()] && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedMedia({ type: 'photo', url: localPhotos[bird.ringNo.toUpperCase()] })}
+                                      style={{
+                                        background: 'rgba(33, 150, 243, 0.15)',
+                                        border: '1px solid rgba(33, 150, 243, 0.4)',
+                                        borderRadius: '4px',
+                                        color: '#60a5fa',
+                                        padding: '0.05rem 0.35rem',
+                                        fontSize: '0.62rem',
+                                        cursor: 'pointer',
+                                        fontWeight: 800,
+                                      }}
+                                      title="View Verification Photo"
+                                    >
+                                      📷
+                                    </button>
+                                  )}
+                                  {localVideos[bird.ringNo.toUpperCase()] && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedMedia({ type: 'video', url: localVideos[bird.ringNo.toUpperCase()] })}
+                                      style={{
+                                        background: 'rgba(76, 175, 80, 0.15)',
+                                        border: '1px solid rgba(76, 175, 80, 0.4)',
+                                        borderRadius: '4px',
+                                        color: '#4ade80',
+                                        padding: '0.05rem 0.35rem',
+                                        fontSize: '0.62rem',
+                                        cursor: 'pointer',
+                                        fontWeight: 800,
+                                      }}
+                                      title="View Verification Video"
+                                    >
+                                      📹
+                                    </button>
+                                  )}
+                                </div>
+                                {matchedBird && (
+                                  <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.2 }}>
+                                    {matchedBird.name ? `${matchedBird.name} • ` : ''}{matchedBird.color || 'Racer'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Arrival Time & Duration */}
+                            <td style={{ padding: '0.5rem 0.5rem', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: '0.78rem', fontWeight: 800 }}>
+                                  {bird.clockInTime}
+                                </span>
+                                {telemetry.duration && (
+                                  <span style={{ fontSize: '0.66rem', color: '#60a5fa', fontFamily: 'monospace', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                                    <span>⏱️</span>
+                                    <span>{telemetry.duration}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Speed & KPH */}
+                            <td style={{ padding: '0.5rem 0.5rem', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.15rem' }}>
+                                <span style={{ fontWeight: 900, fontSize: '0.82rem', color: isGold ? 'var(--brand-gold)' : '#34d399', fontFamily: 'monospace' }}>
+                                  {bird.speed.toLocaleString()} <span style={{ fontSize: '0.62rem', opacity: 0.8, fontFamily: 'sans-serif' }}>m/m</span>
+                                </span>
+                                <span style={{ fontSize: '0.66rem', color: 'var(--brand-gold)', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                  ⚡ {telemetry.kph}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Delete */}
+                            <td style={{ padding: '0.5rem 0.35rem', textAlign: 'center', verticalAlign: 'middle' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBird(bird.ringNo)}
+                                style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '0.45rem',
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                                  color: '#f87171',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                title="Remove clocked bird"
+                              >
+                                <TrashIcon size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1608,6 +1730,174 @@ export default function ActivityModal({
           </div>
         </div>
       </div>
+
+      {/* Floating Sub-Modal for Kasali sa Laro (Entries) */}
+      {isEntriesModalOpen && (
+        <div
+          className="modal-backdrop modal-floating"
+          style={{ zIndex: 11000 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setIsEntriesModalOpen(false) }}
+        >
+          <div
+            className="modal-container"
+            style={{
+              maxWidth: '440px',
+              width: '100%',
+              background: '#0d1527',
+              border: '1px solid rgba(255, 193, 7, 0.4)',
+              borderRadius: '1.25rem',
+              padding: '1.15rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>🕊️</span>
+                <div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>
+                    Kasali sa Laro (Entries)
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                    Piliin ang mga ibon na makikipag-karera sa flight na ito
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEntriesModalOpen(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: 'none',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                }}
+                aria-label="Close entries popup"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quick Select & Counter */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '0.5rem', border: '1px solid var(--border-default)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--brand-gold)' }}>
+                {participatingRings.length} of {registeredBirds.length} birds enrolled
+              </span>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))}
+                  style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '0.35rem', background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', cursor: 'pointer' }}
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setParticipatingRings([])}
+                  style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '0.35rem', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', cursor: 'pointer' }}
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            {/* RFID Active Target Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: isRfidTarget ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.02)', borderRadius: '0.5rem', border: isRfidTarget ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-default)' }}>
+              <label htmlFor="rfid-target-toggle-sheet" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', color: isRfidTarget ? '#34d399' : 'rgba(255, 255, 255, 0.7)', fontSize: '0.74rem', fontWeight: 700 }}>
+                <input
+                  id="rfid-target-toggle-sheet"
+                  type="checkbox"
+                  checked={isRfidTarget}
+                  onChange={(e) => setIsRfidTarget(e.target.checked)}
+                  style={{ cursor: 'pointer', accentColor: '#10b981' }}
+                />
+                <span>📡 125kHz RFID Sensor Target Flight</span>
+              </label>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: isRfidTarget ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)', color: isRfidTarget ? '#34d399' : 'var(--text-muted)' }}>
+                {isRfidTarget ? 'TARGET LOCKED' : 'OFF'}
+              </span>
+            </div>
+
+            {/* Bird Chips Grid */}
+            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '0.2rem 0' }}>
+              {registeredBirds.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', width: '100%', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Walang rehistradong ibon sa loft. Mag-rehistro muna sa Loft Registry!
+                </div>
+              ) : (
+                registeredBirds.map((bird) => {
+                  const isSelected = participatingRings.includes(bird.ringNo.toUpperCase())
+                  return (
+                    <button
+                      key={bird.id}
+                      type="button"
+                      onClick={() => {
+                        const upper = bird.ringNo.toUpperCase()
+                        setParticipatingRings((prev) =>
+                          prev.includes(upper) ? prev.filter((r) => r !== upper) : [...prev, upper]
+                        )
+                      }}
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '9999px',
+                        cursor: 'pointer',
+                        border: isSelected ? '1px solid rgba(16, 185, 129, 0.8)' : '1px solid rgba(255, 255, 255, 0.12)',
+                        background: isSelected ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.03)',
+                        color: isSelected ? '#34d399' : '#cbd5e1',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        transition: 'all 0.12s ease',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      <span>{isSelected ? '✓' : '+'}</span>
+                      <span>{bird.ringNo}</span>
+                      <span style={{ fontSize: '0.62rem', opacity: 0.7, fontFamily: 'sans-serif' }}>
+                        ({bird.color || 'Racer'})
+                      </span>
+                    </button>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Sheet Done button */}
+            <button
+              type="button"
+              onClick={() => setIsEntriesModalOpen(false)}
+              style={{
+                width: '100%',
+                padding: '0.65rem',
+                borderRadius: '0.6rem',
+                background: 'var(--brand-gold)',
+                color: '#000',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                border: 'none',
+                cursor: 'pointer',
+                marginTop: '0.2rem',
+              }}
+            >
+              Tapos Na / Done ({participatingRings.length} Selected)
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox for verification media */}
       {selectedMedia && (
