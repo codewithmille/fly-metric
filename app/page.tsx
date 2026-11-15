@@ -13,7 +13,7 @@ import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
 import PigeonChatModal from '@/components/PigeonChatModal'
 import ElectronicPadModal from '@/components/ElectronicPadModal'
-import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon } from '@/components/icons'
+import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon, AntennaIcon } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
@@ -797,186 +797,323 @@ export default function Home() {
           </h1>
           <span className="nav-badge hidden md:inline-flex">MY LOFT</span>
           {isOfflineMode ? (
-            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(255, 143, 0, 0.15)', border: '1px solid rgba(255, 143, 0, 0.3)', color: '#FF8F00', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(255, 143, 0, 0.12)', border: '1px solid rgba(255, 143, 0, 0.35)', color: '#FF8F00', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FF8F00', display: 'inline-block' }}></span>
               Offline
             </span>
           ) : (
-            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(76, 175, 80, 0.15)', border: '1px solid rgba(76, 175, 80, 0.3)', color: '#4CAF50', alignItems: 'center', gap: '0.35rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(76, 175, 80, 0.12)', border: '1px solid rgba(76, 175, 80, 0.35)', color: '#4CAF50', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4CAF50', display: 'inline-block' }}></span>
               Online
             </span>
           )}
         </div>
 
-        <div className="nav-actions">
+        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          {/* 1. Loft Registry */}
           <button
             id="loft-registry-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsRegistryOpen(true)}
             aria-label="Manage Loft Birds Registry"
             style={{
-              background: 'rgba(76, 175, 80, 0.1)',
-              border: '1px solid rgba(76, 175, 80, 0.3)',
+              background: 'rgba(76, 175, 80, 0.08)',
+              border: '1px solid rgba(76, 175, 80, 0.35)',
               color: '#4CAF50',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(76, 175, 80, 0.1)',
             }}
           >
-            <BirdIcon size={16} /> <span className="nav-btn-text">Loft Registry</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(76, 175, 80, 0.22)',
+                border: '1px solid rgba(76, 175, 80, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#4CAF50',
+              }}
+            >
+              <BirdIcon size={13} />
+            </span>
+            <span className="nav-btn-text">Loft Registry</span>
           </button>
+
+          {/* 2. Training Program */}
           <button
             id="training-prog-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsTrainingOpen(true)}
             aria-label="Training Program"
             style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
               color: '#10b981',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.1)',
             }}
           >
-            <TrainingIcon size={16} /> <span className="nav-btn-text">Training Program</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(16, 185, 129, 0.22)',
+                border: '1px solid rgba(16, 185, 129, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#10b981',
+              }}
+            >
+              <TrainingIcon size={13} />
+            </span>
+            <span className="nav-btn-text">Training Program</span>
           </button>
+
+          {/* 3. Speed Calculator */}
           <button
             id="speed-calc-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsCalculatorOpen(true)}
             aria-label="Speed Calculator"
             style={{
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
+              background: 'rgba(255, 193, 7, 0.08)',
+              border: '1px solid rgba(255, 193, 7, 0.35)',
               color: 'var(--brand-gold)',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
             }}
           >
-            <CalculatorIcon size={16} /> <span className="nav-btn-text">Speed Calculator</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(255, 193, 7, 0.22)',
+                border: '1px solid rgba(255, 193, 7, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--brand-gold)',
+              }}
+            >
+              <CalculatorIcon size={13} />
+            </span>
+            <span className="nav-btn-text">Speed Calculator</span>
           </button>
+
+          {/* 4. Trap Station */}
           <button
             id="trap-antenna-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsPadStationOpen(true)}
             aria-label="Live Trap Station"
             style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.45)',
               color: '#34d399',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem',
+              gap: '0.45rem',
               boxShadow: '0 0 10px rgba(16, 185, 129, 0.15)',
             }}
           >
-            <span style={{ fontSize: '1rem' }}>📡</span> <span className="nav-btn-text">Trap Station</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(16, 185, 129, 0.25)',
+                border: '1px solid rgba(16, 185, 129, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#34d399',
+              }}
+            >
+              <AntennaIcon size={13} />
+            </span>
+            <span className="nav-btn-text">Trap Station</span>
           </button>
+
+          {/* 5. Clock-in Bird */}
           <button
             id="quick-clockin-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsClockInOpen(true)}
             aria-label="Quick Clock-in bird"
             style={{
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
+              background: 'rgba(255, 193, 7, 0.08)',
+              border: '1px solid rgba(255, 193, 7, 0.35)',
               color: 'var(--brand-gold)',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
             }}
           >
-            <PlusIcon size={16} /> <span className="nav-btn-text">Clock-in Bird</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(255, 193, 7, 0.22)',
+                border: '1px solid rgba(255, 193, 7, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--brand-gold)',
+              }}
+            >
+              <PlusIcon size={13} />
+            </span>
+            <span className="nav-btn-text">Clock-in Bird</span>
           </button>
+
+          {/* 6. Verify Photos */}
           <button
             id="verify-photo-nav"
             className="nav-btn nav-btn-secondary"
             onClick={() => setIsVerifyPhotoOpen(true)}
             aria-label="Verify clock-in photo"
             style={{
-              background: 'rgba(33, 150, 243, 0.1)',
-              border: '1px solid rgba(33, 150, 243, 0.3)',
+              background: 'rgba(33, 150, 243, 0.08)',
+              border: '1px solid rgba(33, 150, 243, 0.35)',
               color: '#2196F3',
               fontWeight: 700,
-              fontSize: '0.82rem',
-              padding: '0.5rem 0.88rem',
-              borderRadius: '0.5rem',
+              fontSize: '0.78rem',
+              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.1)',
             }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ flexShrink: 0 }}
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(33, 150, 243, 0.22)',
+                border: '1px solid rgba(33, 150, 243, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#2196F3',
+              }}
             >
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </span>
             <span className="nav-btn-text">Verify Photos</span>
           </button>
+
+          {/* 7. Log Activity (Hero CTA Pill) */}
           <button
             id="log-new-activity-nav"
             className="nav-btn nav-btn-primary"
             onClick={() => openModal(today)}
             aria-label="Log new activity"
             style={{
+              background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
+              color: '#000',
+              fontWeight: 800,
+              fontSize: '0.8rem',
+              padding: '0.25rem 0.95rem 0.25rem 0.35rem',
+              borderRadius: '9999px',
+              cursor: 'pointer',
+              transition: 'all 0.18s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.4rem'
+              gap: '0.45rem',
+              boxShadow: '0 4px 14px rgba(255, 193, 7, 0.35)',
+              border: 'none',
             }}
           >
-            <PlusIcon size={16} /> <span className="nav-btn-text">Log Activity</span>
+            <span
+              style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                borderRadius: '9999px',
+                background: 'rgba(0, 0, 0, 0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#000',
+              }}
+            >
+              <PlusIcon size={14} />
+            </span>
+            <span className="nav-btn-text" style={{ color: '#000', fontWeight: 900 }}>Log Activity</span>
           </button>
 
           {/* ── Camera / Verify Photos icon ── */}
@@ -986,31 +1123,33 @@ export default function Home() {
             aria-label="Verify clock-in photo"
             title="Verify Photos"
             style={{
-              background: 'rgba(33, 150, 243, 0.08)',
-              border: '1px solid rgba(33, 150, 243, 0.25)',
-              borderRadius: '0.5rem',
+              width: '32px',
+              height: '32px',
+              borderRadius: '9999px',
+              background: 'rgba(33, 150, 243, 0.1)',
+              border: '1px solid rgba(33, 150, 243, 0.35)',
               color: '#2196F3',
               cursor: 'pointer',
-              padding: '0.4rem 0.55rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.15s',
+              transition: 'all 0.18s ease',
               flexShrink: 0,
+              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(33,150,243,0.18)'
-              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.5)'
+              e.currentTarget.style.background = 'rgba(33,150,243,0.22)'
+              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.55)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(33,150,243,0.08)'
-              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.25)'
+              e.currentTarget.style.background = 'rgba(33,150,243,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.35)'
             }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="17"
-              height="17"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -1024,7 +1163,7 @@ export default function Home() {
           </button>
 
           {/* ── User Avatar + Sign out ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginLeft: '0.2rem' }}>
 
             {avatarUrl ? (
               <img
@@ -1033,13 +1172,14 @@ export default function Home() {
                 title="Edit Loft Profile"
                 onClick={() => setIsProfileOpen(true)}
                 style={{
-                  width: '34px',
-                  height: '34px',
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
-                  border: '2px solid rgba(255,193,7,0.35)',
+                  border: '2px solid rgba(255,193,7,0.45)',
                   objectFit: 'cover',
                   flexShrink: 0,
                   cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(255,193,7,0.25)'
                 }}
               />
             ) : (
@@ -1047,19 +1187,20 @@ export default function Home() {
                 title="Edit Loft Profile"
                 onClick={() => setIsProfileOpen(true)}
                 style={{
-                  width: '34px',
-                  height: '34px',
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
                   color: '#000',
                   flexShrink: 0,
-                  border: '2px solid rgba(255,193,7,0.35)',
+                  border: '2px solid rgba(255,193,7,0.45)',
                   cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(255,193,7,0.25)'
                 }}
               >
                 {initials}
@@ -1071,36 +1212,50 @@ export default function Home() {
               title="Sign out"
               style={{
                 background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '0.5rem',
-                color: 'rgba(255,255,255,0.5)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '9999px',
+                color: 'rgba(255,255,255,0.7)',
                 cursor: 'pointer',
-                padding: '0.4rem 0.65rem',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                transition: 'all 0.15s',
+                padding: '0.25rem 0.75rem 0.25rem 0.35rem',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                transition: 'all 0.18s ease',
                 letterSpacing: '0.02em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.3rem',
+                gap: '0.4rem',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.12)'
-                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'
+                e.currentTarget.style.background = 'rgba(239,68,68,0.15)'
+                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'
                 e.currentTarget.style.color = '#f87171'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-                e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+                e.currentTarget.style.color = 'rgba(255,255,255,0.7)'
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
+              <span
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  minWidth: '22px',
+                  borderRadius: '9999px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'inherit',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </span>
               <span className="nav-btn-text">Sign out</span>
             </button>
           </div>

@@ -335,3 +335,24 @@ export const CalculatorIcon = ({ size = 20, ...props }: IconProps) => (
     <line x1="16" y1="10" x2="16.01" y2="10" />
   </svg>
 )
+
+// 17. Antenna / Trap Station radar icon
+export const AntennaIcon = ({ size = 20, ...props }: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M4.93 4.93a10 10 0 0 1 14.14 0" />
+    <path d="M7.76 7.76a6 6 0 0 1 8.48 0" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <path d="M12 14v8" />
+  </svg>
+)
