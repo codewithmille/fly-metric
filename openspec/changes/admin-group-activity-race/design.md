@@ -25,6 +25,15 @@ The Group Activity Race feature allows an authorized admin/race director to orga
         └──────────────────────────────────────────────┘
 ```
 
+## Key Business Rules & Clarified Design Decisions
+1. **Unlimited Bird Entries (Walang Limitasyon sa Kalapati)**:
+   - Fanciers can basket as many of their registered loft birds as they want. There is no artificial cap per participant.
+   - The UI includes a convenient "Select All" / "Deselect All" control and individual bird toggles.
+2. **Race Organizer / Host Model**:
+   - Any authenticated user can create a Group Activity Race and becomes the official Race Organizer/Admin for that specific derby/flight.
+3. **Distance Calculation**:
+   - Uses the official race release distance by default. If a participating loft has their own loft coordinates registered, the system automatically computes their specific distance for pinpoint velocity accuracy.
+
 ## Data Model & Schema Strategy
 
 We extend the Prisma schema with lightweight, flexible group race properties on `RaceEvent` or related models:

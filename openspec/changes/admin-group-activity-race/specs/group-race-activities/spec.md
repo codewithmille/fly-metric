@@ -21,8 +21,9 @@ The system SHALL allow any registered fancier to join an open group race by ente
 - **GIVEN** an active group race with `raceStatus = 'basketing'`
 - **WHEN** a fancier enters the valid 6-character `joinCode` in "Join Group Race"
 - **THEN** the system displays the race release details and distance
-- **AND** loads the fancier's active loft birds for entry selection
-- **AND** upon clicking "Confirm Enrollment", registers the loft and selected bird ring numbers under `loftEntries`.
+- **AND** loads the fancier's active loft birds for entry selection without any artificial quantity limit (unlimited entries supported)
+- **AND** provides "Select All" and individual check toggles
+- **AND** upon clicking "Confirm Enrollment", registers the loft and all selected bird ring numbers under `loftEntries`.
 
 #### Scenario: Fancier attempts to join a closed or non-existent race
 - **GIVEN** an invalid join code or a group race whose status is `released` or `completed`
