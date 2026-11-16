@@ -433,32 +433,13 @@ export default function PigeonChatModal({
   const lastModelIdx = messages.map((m, i) => m.role === 'model' ? i : -1).filter(i => i >= 0).pop() ?? -1
 
   return (
-    <div
-      className="modal-backdrop"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      style={{ zIndex: 9000, alignItems: 'flex-end', padding: 0, paddingBottom: '4.4rem' }}
-    >
+    <>
       <div
         ref={modalRef}
         role="dialog"
-        aria-modal="true"
         aria-label="FlyMetric AI Pigeon Assistant"
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          margin: '0 auto',
-          height: viewportHeight ? `${viewportHeight - 70}px` : 'calc(92dvh - 4.4rem)',
-          maxHeight: viewportHeight ? `${viewportHeight - 70}px` : 'calc(92dvh - 4.4rem)',
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#0d1117',
-          borderRadius: 0,
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderBottom: 'none',
-          animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
-          overflow: 'hidden',
-        }}
+        className="chat-widget-panel"
+        style={viewportHeight ? { maxHeight: `${Math.max(320, viewportHeight - 24)}px` } : undefined}
       >
         {/* Header */}
         <div style={{
@@ -522,6 +503,28 @@ export default function PigeonChatModal({
                 🗑️ Clear
               </button>
             )}
+            <button
+              onClick={onClose}
+              title="Minimize chat"
+              aria-label="Close chat widget"
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: '28px',
+                height: '28px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
           </div>
         </div>
 
@@ -735,6 +738,6 @@ export default function PigeonChatModal({
           50%       { opacity: 0; }
         }
       `}</style>
-    </div>
+    </>
   )
 }

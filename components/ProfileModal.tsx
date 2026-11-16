@@ -5,8 +5,9 @@ import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon, SettingsIcon } from '@/components/icons'
+import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon, SettingsIcon, CalendarIcon } from '@/components/icons'
 import { saveBird, deleteBird, saveEvent, generateLocalId, resetLoftRecords } from '@/lib/apiClient'
+import { useRfidScanner } from '@/hooks/useRfidScanner'
 
 interface LoftBird {
   id: string
@@ -91,13 +92,82 @@ export default function ProfileModal({
   const [localPhotos, setLocalPhotos] = useState<Record<string, Record<string, string>>>({})
   const [localVideos, setLocalVideos] = useState<Record<string, Record<string, string>>>({})
 
+  // Edit Bird States (Full Modal + Inline Edit Mode)
+  const [editingBird, setEditingBird] = useState<LoftBird | null>(null)
+  const [editRingNo, setEditRingNo] = useState('')
+  const [editColor, setEditColor] = useState('')
+  const [editName, setEditName] = useState('')
+  const [editGender, setEditGender] = useState('Unknown')
+  const [editBirthdate, setEditBirthdate] = useState('')
+  const [editStrain, setEditStrain] = useState('')
+  const [editStatus, setEditStatus] = useState('Active')
+  const [editNotes, setEditNotes] = useState('')
+  const [editSire, setEditSire] = useState('')
+  const [editDam, setEditDam] = useState('')
+  const [editRfidTag, setEditRfidTag] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editSuccess, setEditSuccess] = useState(false)
+  const [scanNotice, setScanNotice] = useState<string | null>(null)
+
+  const [isInlineEditMode, setIsInlineEditMode] = useState(false)
+  const [inlineDrafts, setInlineDrafts] = useState<Record<string, { ringNo: string; color: string; name: string; gender: string }>>({})
+  const [savingInlineId, setSavingInlineId] = useState<string | null>(null)
+  const [savingAllInline, setSavingAllInline] = useState(false)
+
+  useRfidScanner({
+    enabled: isOpen && !!editingBird,
+    onScan: (scannedTag) => {
+      const raw = scannedTag.trim()
+      if (!raw || !editingBird) return
+      setEditRfidTag(raw)
+      setScanNotice(`📡 RFID Tag ${raw} linked to ${editingBird.ringNo}!`)
+      setTimeout(() => setScanNotice(null), 4000)
+    }
+  })
+
   useEffect(() => {
     if (!isOpen) {
       setSelectedHistoryBird(null)
+      setEditingBird(null)
+      setIsInlineEditMode(false)
       setIsSettingsModalOpen(false)
       setIsSettingsMenuOpen(false)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (editingBird) {
+      setEditRingNo(editingBird.ringNo || '')
+      setEditColor(editingBird.color || '')
+      setEditName(editingBird.name || '')
+      setEditGender(editingBird.gender || 'Unknown')
+      setEditBirthdate(editingBird.birthdate || '')
+      setEditStrain(editingBird.strain || '')
+      setEditStatus(editingBird.status || 'Active')
+      setEditNotes(editingBird.notes || '')
+      setEditSire(editingBird.sire || '')
+      setEditDam(editingBird.dam || '')
+      setEditRfidTag(editingBird.rfidTag || '')
+      setEditError('')
+      setEditSuccess(false)
+    }
+  }, [editingBird])
+
+  useEffect(() => {
+    if (isInlineEditMode) {
+      const nextDrafts: Record<string, { ringNo: string; color: string; name: string; gender: string }> = {}
+      registeredBirds.forEach((b) => {
+        nextDrafts[b.id] = {
+          ringNo: b.ringNo || '',
+          color: b.color || '',
+          name: b.name || '',
+          gender: b.gender || 'Unknown',
+        }
+      })
+      setInlineDrafts(nextDrafts)
+    }
+  }, [isInlineEditMode, registeredBirds])
 
   // Load verification media for selected history bird
   useEffect(() => {
@@ -589,9 +659,146 @@ export default function ProfileModal({
       if (!res.success) {
         throw new Error('Failed to delete bird')
       }
+      if (editingBird?.id === id) setEditingBird(null)
+      if (selectedHistoryBird?.id === id) setSelectedHistoryBird(null)
       onBirdsUpdated()
     } catch (e: any) {
       alert(e.message || 'Error deleting bird')
+    }
+  }
+
+  const handleUpdateBird = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEditError('')
+    setEditSuccess(false)
+    if (!editingBird) return
+
+    if (!editRingNo.trim()) {
+      setEditError('Ring Number is required.')
+      return
+    }
+
+    const finalEditColor = editColor.trim() || 'Blue Bar'
+    setEditSaving(true)
+
+    try {
+      const res = await saveBird(
+        session?.access_token,
+        {
+          id: editingBird.id,
+          ringNo: editRingNo.trim().toUpperCase(),
+          color: finalEditColor,
+          name: editName.trim() || null,
+          gender: editGender,
+          birthdate: editBirthdate || null,
+          strain: editStrain.trim() || null,
+          status: editStatus,
+          notes: editNotes.trim() || null,
+          sire: editSire.trim().toUpperCase() || null,
+          dam: editDam.trim().toUpperCase() || null,
+          rfidTag: editRfidTag.trim() || null,
+        },
+        true
+      )
+
+      if (!res.success) {
+        throw new Error('Failed to update bird')
+      }
+
+      setEditSuccess(true)
+      onBirdsUpdated()
+      if (res.data) {
+        setEditingBird(res.data)
+        if (selectedHistoryBird?.id === editingBird.id) {
+          setSelectedHistoryBird(res.data)
+        }
+      }
+
+      setTimeout(() => {
+        setEditSuccess(false)
+        setEditingBird(null)
+      }, 900)
+    } catch (err: any) {
+      setEditError(err.message || 'An error occurred.')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const handleInlineFieldChange = (birdId: string, field: 'ringNo' | 'color' | 'name' | 'gender', value: string) => {
+    setInlineDrafts((prev) => ({
+      ...prev,
+      [birdId]: {
+        ...(prev[birdId] || { ringNo: '', color: '', name: '', gender: 'Unknown' }),
+        [field]: value,
+      },
+    }))
+  }
+
+  const handleSaveInlineRow = async (bird: LoftBird) => {
+    const draft = inlineDrafts[bird.id]
+    if (!draft) return
+    if (!draft.ringNo.trim()) {
+      alert('Ring Number cannot be empty.')
+      return
+    }
+
+    setSavingInlineId(bird.id)
+    try {
+      const res = await saveBird(
+        session?.access_token,
+        {
+          ...bird,
+          id: bird.id,
+          ringNo: draft.ringNo.trim().toUpperCase(),
+          color: draft.color.trim() || 'Blue Bar',
+          name: draft.name.trim() || null,
+          gender: draft.gender || 'Unknown',
+        },
+        true
+      )
+      if (!res.success) throw new Error('Failed to update bird')
+      onBirdsUpdated()
+    } catch (err: any) {
+      alert(err.message || 'Error saving bird changes')
+    } finally {
+      setSavingInlineId(null)
+    }
+  }
+
+  const handleSaveAllInline = async () => {
+    setSavingAllInline(true)
+    try {
+      for (const bird of registeredBirds) {
+        const draft = inlineDrafts[bird.id]
+        if (!draft) continue
+        const changed =
+          draft.ringNo.trim().toUpperCase() !== (bird.ringNo || '').toUpperCase() ||
+          (draft.color.trim() || 'Blue Bar') !== (bird.color || '') ||
+          (draft.name.trim() || null) !== (bird.name || null) ||
+          (draft.gender || 'Unknown') !== (bird.gender || 'Unknown')
+
+        if (changed && draft.ringNo.trim()) {
+          await saveBird(
+            session?.access_token,
+            {
+              ...bird,
+              id: bird.id,
+              ringNo: draft.ringNo.trim().toUpperCase(),
+              color: draft.color.trim() || 'Blue Bar',
+              name: draft.name.trim() || null,
+              gender: draft.gender || 'Unknown',
+            },
+            true
+          )
+        }
+      }
+      onBirdsUpdated()
+      setIsInlineEditMode(false)
+    } catch (err: any) {
+      alert(err.message || 'Error saving changes')
+    } finally {
+      setSavingAllInline(false)
     }
   }
 
@@ -1088,34 +1295,56 @@ export default function ProfileModal({
                       </div>
                     </div>
                   </div>
-                  <span
-                    style={{
-                      padding: '0.2rem 0.55rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.68rem',
-                      fontWeight: 800,
-                      background:
-                        selectedHistoryBird.gender === 'Hen'
-                          ? 'rgba(236, 72, 153, 0.15)'
-                          : selectedHistoryBird.gender === 'Cock'
-                          ? 'rgba(56, 189, 248, 0.15)'
-                          : 'rgba(255,255,255,0.06)',
-                      border:
-                        selectedHistoryBird.gender === 'Hen'
-                          ? '1px solid rgba(236, 72, 153, 0.35)'
-                          : selectedHistoryBird.gender === 'Cock'
-                          ? '1px solid rgba(56, 189, 248, 0.35)'
-                          : '1px solid rgba(255,255,255,0.1)',
-                      color:
-                        selectedHistoryBird.gender === 'Hen'
-                          ? '#f472b6'
-                          : selectedHistoryBird.gender === 'Cock'
-                          ? '#38bdf8'
-                          : 'var(--text-muted)',
-                    }}
-                  >
-                    {selectedHistoryBird.gender || 'Unsexed'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        background:
+                          selectedHistoryBird.gender === 'Hen'
+                            ? 'rgba(236, 72, 153, 0.15)'
+                            : selectedHistoryBird.gender === 'Cock'
+                            ? 'rgba(56, 189, 248, 0.15)'
+                            : 'rgba(255,255,255,0.06)',
+                        border:
+                          selectedHistoryBird.gender === 'Hen'
+                            ? '1px solid rgba(236, 72, 153, 0.35)'
+                            : selectedHistoryBird.gender === 'Cock'
+                            ? '1px solid rgba(56, 189, 248, 0.35)'
+                            : '1px solid rgba(255,255,255,0.1)',
+                        color:
+                          selectedHistoryBird.gender === 'Hen'
+                            ? '#f472b6'
+                            : selectedHistoryBird.gender === 'Cock'
+                            ? '#38bdf8'
+                            : 'var(--text-muted)',
+                      }}
+                    >
+                      {selectedHistoryBird.gender || 'Unsexed'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditingBird(selectedHistoryBird)}
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        background: 'rgba(56, 189, 248, 0.14)',
+                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                        color: '#38bdf8',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
+                      title="Edit Bird Profile"
+                    >
+                      <NotesIcon size={11} /> Edit
+                    </button>
+                  </div>
                 </div>
 
                 {/* Timeline section */}
@@ -1254,24 +1483,54 @@ export default function ProfileModal({
               /* MAIN BIRD REGISTRY LIST */
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5">
-                  <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                  <div className="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
                       <h4 className="text-sm sm:text-base font-extrabold text-white m-0">
                         Loft Pigeons ({filteredBirds.length})
                       </h4>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onOpenRegistryTrigger) {
-                          onOpenRegistryTrigger()
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 py-1 px-2.5 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 rounded-full text-amber-400 text-xs font-bold transition-all cursor-pointer"
-                    >
-                      <PlusIcon size={11} /> Add Bird
-                    </button>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onOpenRegistryTrigger) {
+                            onOpenRegistryTrigger()
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 py-1 px-2.5 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 rounded-full text-amber-400 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <PlusIcon size={11} /> Add Bird
+                      </button>
+
+                      {filteredBirds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsInlineEditMode((prev) => !prev)}
+                          className={`inline-flex items-center gap-1 py-1 px-2.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                            isInlineEditMode
+                              ? 'bg-sky-400/25 border-sky-400/50 text-sky-300 shadow-[0_0_10px_rgba(56,189,248,0.2)]'
+                              : 'bg-sky-400/10 hover:bg-sky-400/20 border-sky-400/30 text-sky-400'
+                          }`}
+                          title={isInlineEditMode ? 'Exit Edit Mode' : 'Toggle inline Edit Mode'}
+                        >
+                          <NotesIcon size={11} />
+                          <span>{isInlineEditMode ? 'Exit Edit Mode' : 'Edit Mode'}</span>
+                        </button>
+                      )}
+
+                      {isInlineEditMode && (
+                        <button
+                          type="button"
+                          disabled={savingAllInline}
+                          onClick={handleSaveAllInline}
+                          className="inline-flex items-center gap-1 py-1 px-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/45 rounded-full text-emerald-300 text-xs font-extrabold transition-all cursor-pointer"
+                          title="Save all modified pigeons"
+                        >
+                          <span>{savingAllInline ? 'Saving…' : '✓ Save All'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Sleek Search Input */}
@@ -1304,67 +1563,141 @@ export default function ProfileModal({
                   <>
                     {/* Mobile Pigeon Card List (sm:hidden) */}
                     <div className="sm:hidden flex flex-col gap-2 mb-3">
-                      {filteredBirds.map((b) => (
-                        <div
-                          key={b.id}
-                          className="p-3 rounded-xl bg-slate-900/80 border border-white/10 flex items-center justify-between gap-2.5 hover:border-amber-400/30 transition-all"
-                        >
+                      {filteredBirds.map((b) => {
+                        const draft = inlineDrafts[b.id] || {
+                          ringNo: b.ringNo || '',
+                          color: b.color || '',
+                          name: b.name || '',
+                          gender: b.gender || 'Unknown',
+                        }
+                        return (
                           <div
-                            onClick={() => setSelectedHistoryBird(b)}
-                            className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+                            key={b.id}
+                            className="p-3 rounded-xl bg-slate-900/80 border border-white/10 flex flex-col gap-2.5 hover:border-amber-400/30 transition-all"
                           >
-                            <div className="w-9 h-9 rounded-lg bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
-                              <img src="/icon.png" alt="" className="w-5 h-5 object-contain" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-mono font-extrabold text-amber-400 text-xs tracking-tight">
-                                  {b.ringNo}
-                                </span>
-                                {b.rfidTag && (
-                                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0">
-                                    📡 {b.rfidTag}
-                                  </span>
-                                )}
+                            {isInlineEditMode ? (
+                              <div className="flex flex-col gap-2">
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <input
+                                    type="text"
+                                    value={draft.ringNo}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'ringNo', e.target.value)}
+                                    placeholder="Ring No"
+                                    className="px-2 py-1 rounded-lg bg-slate-950/90 border border-amber-400/35 text-amber-400 font-mono font-bold text-xs outline-none"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={draft.color}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'color', e.target.value)}
+                                    placeholder="Color"
+                                    className="px-2 py-1 rounded-lg bg-slate-950/90 border border-white/15 text-slate-200 text-xs outline-none"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <input
+                                    type="text"
+                                    value={draft.name}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'name', e.target.value)}
+                                    placeholder="Name / Alias"
+                                    className="px-2 py-1 rounded-lg bg-slate-950/90 border border-white/15 text-slate-200 text-xs outline-none"
+                                  />
+                                  <select
+                                    value={draft.gender}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'gender', e.target.value)}
+                                    className="px-2 py-1 rounded-lg bg-slate-950/90 border border-white/15 text-slate-200 text-xs outline-none"
+                                  >
+                                    <option value="Cock">Cock</option>
+                                    <option value="Hen">Hen</option>
+                                    <option value="Unknown">Unknown</option>
+                                  </select>
+                                </div>
+                                <div className="flex items-center justify-end gap-1.5 pt-1">
+                                  <button
+                                    type="button"
+                                    disabled={savingInlineId === b.id}
+                                    onClick={() => handleSaveInlineRow(b)}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold"
+                                  >
+                                    {savingInlineId === b.id ? 'Saving…' : '✓ Save'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingBird(b)}
+                                    className="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-400/35 text-sky-300 text-[11px] font-bold"
+                                  >
+                                    Full Profile
+                                  </button>
+                                </div>
                               </div>
-                              <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                                {b.name ? <span className="text-slate-200 font-semibold">{b.name} • </span> : ''}
-                                {b.color}
-                              </div>
-                            </div>
-                          </div>
+                            ) : (
+                              <div className="flex items-center justify-between gap-2.5">
+                                <div
+                                  onClick={() => setSelectedHistoryBird(b)}
+                                  className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+                                >
+                                  <div className="w-9 h-9 rounded-lg bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
+                                    <img src="/icon.png" alt="" className="w-5 h-5 object-contain" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-mono font-extrabold text-amber-400 text-xs tracking-tight">
+                                        {b.ringNo}
+                                      </span>
+                                      {b.rfidTag && (
+                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0">
+                                          📡 {b.rfidTag}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                                      {b.name ? <span className="text-slate-200 font-semibold">{b.name} • </span> : ''}
+                                      {b.color}
+                                    </div>
+                                  </div>
+                                </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span
-                              className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                                b.gender === 'Hen'
-                                  ? 'bg-pink-500/15 text-pink-400 border border-pink-500/30'
-                                  : b.gender === 'Cock'
-                                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
-                                  : 'bg-white/5 text-slate-400 border border-white/10'
-                              }`}
-                            >
-                              {b.gender || '—'}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedHistoryBird(b)}
-                              className="w-7 h-7 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 flex items-center justify-center text-xs"
-                              title="View History"
-                            >
-                              ⏱️
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteBird(b.id)}
-                              className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 flex items-center justify-center text-xs"
-                              title="Delete Bird"
-                            >
-                              <TrashIcon size={12} />
-                            </button>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span
+                                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                                      b.gender === 'Hen'
+                                        ? 'bg-pink-500/15 text-pink-400 border border-pink-500/30'
+                                        : b.gender === 'Cock'
+                                        ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+                                        : 'bg-white/5 text-slate-400 border border-white/10'
+                                    }`}
+                                  >
+                                    {b.gender || '—'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingBird(b)}
+                                    className="w-7 h-7 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/30 text-sky-400 flex items-center justify-center text-xs"
+                                    title="Edit Bird"
+                                  >
+                                    <NotesIcon size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedHistoryBird(b)}
+                                    className="w-7 h-7 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 flex items-center justify-center text-xs"
+                                    title="View History"
+                                  >
+                                    ⏱️
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteBird(b.id)}
+                                    className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 flex items-center justify-center text-xs"
+                                    title="Delete Bird"
+                                  >
+                                    <TrashIcon size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
 
                     {/* Desktop Pigeon Table (hidden sm:block) */}
@@ -1397,137 +1730,274 @@ export default function ProfileModal({
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredBirds.map((b) => (
-                          <tr
-                            key={b.id}
-                            style={{
-                              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                              transition: 'background 0.15s ease',
-                            }}
-                          >
-                            <td style={{ padding: '0.55rem 0.85rem', fontWeight: 700 }}>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedHistoryBird(b)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#FFC107',
-                                  fontWeight: 800,
-                                  cursor: 'pointer',
-                                  padding: 0,
-                                  textAlign: 'left',
-                                  fontSize: '0.76rem',
-                                  fontFamily: 'monospace',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.45rem',
-                                }}
-                                title="View Bird Performance History"
-                              >
-                                <span
-                                  style={{
-                                    width: '24px',
-                                    height: '24px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(255, 193, 7, 0.1)',
-                                    border: '1px solid rgba(255, 193, 7, 0.25)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <img src="/icon.png" alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
-                                </span>
-                                <span style={{ textDecoration: 'underline', textUnderlineOffset: '3px' }}>{b.ringNo}</span>
-                              </button>
-                            </td>
-                            <td style={{ padding: '0.55rem 0.75rem', color: '#cbd5e1', fontWeight: 500 }}>{b.color}</td>
-                            <td style={{ padding: '0.55rem 0.75rem', color: '#e2e8f0', fontWeight: 600 }}>{b.name || '—'}</td>
-                            <td style={{ padding: '0.55rem 0.75rem' }}>
-                              <span
-                                style={{
-                                  padding: '0.16rem 0.5rem',
-                                  borderRadius: '9999px',
-                                  fontSize: '0.66rem',
-                                  fontWeight: 800,
-                                  background:
-                                    b.gender === 'Hen'
-                                      ? 'rgba(236, 72, 153, 0.14)'
-                                      : b.gender === 'Cock'
-                                      ? 'rgba(56, 189, 248, 0.14)'
-                                      : 'rgba(255,255,255,0.06)',
-                                  border:
-                                    b.gender === 'Hen'
-                                      ? '1px solid rgba(236, 72, 153, 0.3)'
-                                      : b.gender === 'Cock'
-                                      ? '1px solid rgba(56, 189, 248, 0.3)'
-                                      : '1px solid rgba(255,255,255,0.1)',
-                                  color:
-                                    b.gender === 'Hen' ? '#f472b6' : b.gender === 'Cock' ? '#38bdf8' : 'var(--text-muted)',
-                                }}
-                              >
-                                {b.gender || '—'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '0.55rem 0.85rem' }}>
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedHistoryBird(b)}
-                                  style={{
-                                    background: 'rgba(255, 193, 7, 0.1)',
-                                    border: '1px solid rgba(255, 193, 7, 0.28)',
-                                    borderRadius: '6px',
-                                    color: 'var(--brand-gold)',
-                                    width: '1.65rem',
-                                    height: '1.65rem',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                  }}
-                                  title="View Performance History"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                        {filteredBirds.map((b) => {
+                          const draft = inlineDrafts[b.id] || {
+                            ringNo: b.ringNo || '',
+                            color: b.color || '',
+                            name: b.name || '',
+                            gender: b.gender || 'Unknown',
+                          }
+                          return (
+                            <tr
+                              key={b.id}
+                              style={{
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                                transition: 'background 0.15s ease',
+                                background: isInlineEditMode ? 'rgba(56, 189, 248, 0.03)' : 'transparent',
+                              }}
+                            >
+                              <td style={{ padding: '0.55rem 0.85rem', fontWeight: 700 }}>
+                                {isInlineEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={draft.ringNo}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'ringNo', e.target.value)}
+                                    placeholder="Ring No"
+                                    style={{
+                                      width: '100%',
+                                      maxWidth: '145px',
+                                      padding: '0.28rem 0.5rem',
+                                      borderRadius: '6px',
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255, 193, 7, 0.4)',
+                                      color: '#FFC107',
+                                      fontFamily: 'monospace',
+                                      fontWeight: 800,
+                                      fontSize: '0.74rem',
+                                    }}
+                                  />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedHistoryBird(b)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#FFC107',
+                                      fontWeight: 800,
+                                      cursor: 'pointer',
+                                      padding: 0,
+                                      textAlign: 'left',
+                                      fontSize: '0.76rem',
+                                      fontFamily: 'monospace',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.45rem',
+                                    }}
+                                    title="View Bird Performance History"
                                   >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <polyline points="12 6 12 12 16 14" />
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteBird(b.id)}
-                                  style={{
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    border: '1px solid rgba(239, 68, 68, 0.28)',
-                                    borderRadius: '6px',
-                                    color: '#f87171',
-                                    width: '1.65rem',
-                                    height: '1.65rem',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                  }}
-                                  title="Delete Bird"
-                                >
-                                  <TrashIcon size={12} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                    <span
+                                      style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '6px',
+                                        background: 'rgba(255, 193, 7, 0.1)',
+                                        border: '1px solid rgba(255, 193, 7, 0.25)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <img src="/icon.png" alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                                    </span>
+                                    <span style={{ textDecoration: 'underline', textUnderlineOffset: '3px' }}>{b.ringNo}</span>
+                                  </button>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.55rem 0.75rem', color: '#cbd5e1', fontWeight: 500 }}>
+                                {isInlineEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={draft.color}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'color', e.target.value)}
+                                    placeholder="Color"
+                                    style={{
+                                      width: '100%',
+                                      maxWidth: '120px',
+                                      padding: '0.28rem 0.5rem',
+                                      borderRadius: '6px',
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                                      color: '#e2e8f0',
+                                      fontSize: '0.73rem',
+                                    }}
+                                  />
+                                ) : (
+                                  b.color
+                                )}
+                              </td>
+                              <td style={{ padding: '0.55rem 0.75rem', color: '#e2e8f0', fontWeight: 600 }}>
+                                {isInlineEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={draft.name}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'name', e.target.value)}
+                                    placeholder="Name / Alias"
+                                    style={{
+                                      width: '100%',
+                                      maxWidth: '130px',
+                                      padding: '0.28rem 0.5rem',
+                                      borderRadius: '6px',
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                                      color: '#fff',
+                                      fontSize: '0.73rem',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                ) : (
+                                  b.name || '—'
+                                )}
+                              </td>
+                              <td style={{ padding: '0.55rem 0.75rem' }}>
+                                {isInlineEditMode ? (
+                                  <select
+                                    value={draft.gender}
+                                    onChange={(e) => handleInlineFieldChange(b.id, 'gender', e.target.value)}
+                                    style={{
+                                      padding: '0.26rem 0.45rem',
+                                      borderRadius: '6px',
+                                      background: '#090d16',
+                                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                                      color: '#e2e8f0',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    <option value="Cock">Cock</option>
+                                    <option value="Hen">Hen</option>
+                                    <option value="Unknown">Unknown</option>
+                                  </select>
+                                ) : (
+                                  <span
+                                    style={{
+                                      padding: '0.16rem 0.5rem',
+                                      borderRadius: '9999px',
+                                      fontSize: '0.66rem',
+                                      fontWeight: 800,
+                                      background:
+                                        b.gender === 'Hen'
+                                          ? 'rgba(236, 72, 153, 0.14)'
+                                          : b.gender === 'Cock'
+                                          ? 'rgba(56, 189, 248, 0.14)'
+                                          : 'rgba(255,255,255,0.06)',
+                                      border:
+                                        b.gender === 'Hen'
+                                          ? '1px solid rgba(236, 72, 153, 0.3)'
+                                          : b.gender === 'Cock'
+                                          ? '1px solid rgba(56, 189, 248, 0.3)'
+                                          : '1px solid rgba(255,255,255,0.1)',
+                                      color:
+                                        b.gender === 'Hen' ? '#f472b6' : b.gender === 'Cock' ? '#38bdf8' : 'var(--text-muted)',
+                                    }}
+                                  >
+                                    {b.gender || '—'}
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.55rem 0.85rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                                  {isInlineEditMode && (
+                                    <button
+                                      type="button"
+                                      disabled={savingInlineId === b.id}
+                                      onClick={() => handleSaveInlineRow(b)}
+                                      style={{
+                                        background: 'rgba(16, 185, 129, 0.16)',
+                                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                                        borderRadius: '6px',
+                                        color: '#34d399',
+                                        height: '1.65rem',
+                                        padding: '0 0.5rem',
+                                        fontSize: '0.66rem',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                      title="Save Row"
+                                    >
+                                      {savingInlineId === b.id ? '…' : '✓ Save'}
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingBird(b)}
+                                    style={{
+                                      background: 'rgba(56, 189, 248, 0.12)',
+                                      border: '1px solid rgba(56, 189, 248, 0.32)',
+                                      borderRadius: '6px',
+                                      color: '#38bdf8',
+                                      width: '1.65rem',
+                                      height: '1.65rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                    title="Edit Bird Profile"
+                                  >
+                                    <NotesIcon size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedHistoryBird(b)}
+                                    style={{
+                                      background: 'rgba(255, 193, 7, 0.1)',
+                                      border: '1px solid rgba(255, 193, 7, 0.28)',
+                                      borderRadius: '6px',
+                                      color: 'var(--brand-gold)',
+                                      width: '1.65rem',
+                                      height: '1.65rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                    title="View Performance History"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteBird(b.id)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      border: '1px solid rgba(239, 68, 68, 0.28)',
+                                      borderRadius: '6px',
+                                      color: '#f87171',
+                                      width: '1.65rem',
+                                      height: '1.65rem',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                    title="Delete Bird"
+                                  >
+                                    <TrashIcon size={12} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -2351,6 +2821,449 @@ export default function ProfileModal({
                 </button>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sub-modal for Editing Individual Bird Profile ── */}
+      {editingBird && (
+        <div
+          className="modal-backdrop modal-floating"
+          style={{ zIndex: 12500 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !editSaving) setEditingBird(null)
+          }}
+        >
+          <div className="modal-container" style={{ maxWidth: '480px', padding: 0 }}>
+            <div
+              className="modal-header"
+              style={{
+                background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                padding: '0.9rem 1.2rem',
+              }}
+            >
+              <div className="modal-header-left">
+                <span style={{ color: '#fff', display: 'flex', alignItems: 'center' }}>
+                  <BirdIcon size={18} />
+                </span>
+                <div>
+                  <h2 className="modal-title" style={{ color: '#fff', fontSize: '1rem', fontWeight: 800, margin: 0 }}>
+                    Edit Pigeon: {editingBird.ringNo}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '0.68rem', color: 'rgba(255,255,255,0.8)' }}>
+                    Update ring number, color, alias, gender, RFID tag &amp; pedigree
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', position: 'static', margin: 0 }}
+                onClick={() => setEditingBird(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              className="modal-body modal-scroll-body"
+              style={{
+                padding: '1.25rem',
+                maxHeight: '74dvh',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              {scanNotice && (
+                <div
+                  style={{
+                    padding: '0.55rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid rgba(76, 175, 80, 0.4)',
+                    background: 'rgba(76, 175, 80, 0.12)',
+                    color: '#81C784',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <span>⚡</span>
+                  <span>{scanNotice}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleUpdateBird}
+                style={{
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '0.75rem',
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <div className="form-row">
+                  <div className="form-group">
+                    <label
+                      htmlFor="profile-edit-ring"
+                      className="form-label"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.3rem', fontSize: '0.7rem' }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <TagIcon size={12} /> Ring Number <span style={{ color: '#f87171', fontWeight: 800 }}>*</span>
+                      </span>
+                      <span style={{ fontSize: '0.62rem', color: '#f87171', fontWeight: 700 }}>Required</span>
+                    </label>
+                    <input
+                      id="profile-edit-ring"
+                      type="text"
+                      className="form-input"
+                      value={editRingNo}
+                      onChange={(e) => setEditRingNo(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label
+                      htmlFor="profile-edit-color"
+                      className="form-label"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                    >
+                      <NotesIcon size={12} /> Color
+                    </label>
+                    <input
+                      id="profile-edit-color"
+                      type="text"
+                      className="form-input"
+                      value={editColor}
+                      onChange={(e) => setEditColor(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label
+                      htmlFor="profile-edit-name"
+                      className="form-label"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                    >
+                      <NameIcon size={12} /> Name / Alias
+                    </label>
+                    <input
+                      id="profile-edit-name"
+                      type="text"
+                      className="form-input"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label
+                      htmlFor="profile-edit-gender"
+                      className="form-label"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                    >
+                      <DnaIcon size={12} /> Gender
+                    </label>
+                    <select
+                      id="profile-edit-gender"
+                      className="form-input"
+                      value={editGender}
+                      onChange={(e) => setEditGender(e.target.value)}
+                      style={{
+                        height: '2.2rem',
+                        fontSize: '0.8rem',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="Cock">Cock (Male)</option>
+                      <option value="Hen">Hen (Female)</option>
+                      <option value="Unknown">Unknown</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 125kHz RFID Snap Ring Tag */}
+                <div
+                  style={{
+                    background: 'rgba(255, 193, 7, 0.05)',
+                    border: '1px solid rgba(255, 193, 7, 0.25)',
+                    borderRadius: '0.5rem',
+                    padding: '0.65rem 0.75rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label
+                      htmlFor="profile-edit-rfid"
+                      className="form-label"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.72rem',
+                        color: '#FFC107',
+                        fontWeight: 700,
+                        margin: 0,
+                      }}
+                    >
+                      📡 125kHz RFID Snap Ring Tag
+                    </label>
+                    <span
+                      style={{
+                        fontSize: '0.62rem',
+                        background: 'rgba(255,193,7,0.15)',
+                        color: '#FFC107',
+                        padding: '0.1rem 0.35rem',
+                        borderRadius: '3px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      USB Scanner Ready
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      id="profile-edit-rfid"
+                      type="text"
+                      placeholder="Tap blue ring on USB reader (or type tag ID)"
+                      className="form-input"
+                      value={editRfidTag}
+                      onChange={(e) => setEditRfidTag(e.target.value)}
+                      style={{ height: '2.2rem', fontSize: '0.8rem', flex: 1, fontFamily: 'monospace' }}
+                    />
+                    {editRfidTag && (
+                      <button
+                        type="button"
+                        onClick={() => setEditRfidTag('')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          padding: '0.2rem',
+                        }}
+                        title="Clear tag"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pedigree & Advanced details */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    borderTop: '1px solid var(--border-default)',
+                    paddingTop: '0.75rem',
+                    marginTop: '0.2rem',
+                  }}
+                >
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label
+                        htmlFor="profile-edit-birthdate"
+                        className="form-label"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                      >
+                        <CalendarIcon size={12} /> Hatch Date
+                      </label>
+                      <input
+                        id="profile-edit-birthdate"
+                        type="date"
+                        className="form-input"
+                        value={editBirthdate}
+                        onChange={(e) => setEditBirthdate(e.target.value)}
+                        style={{ height: '2.2rem', fontSize: '0.8rem', colorScheme: 'dark' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label
+                        htmlFor="profile-edit-strain"
+                        className="form-label"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                      >
+                        <DnaIcon size={12} /> Strain / Breed
+                      </label>
+                      <input
+                        id="profile-edit-strain"
+                        type="text"
+                        placeholder="e.g. Janssen / Arden"
+                        className="form-input"
+                        value={editStrain}
+                        onChange={(e) => setEditStrain(e.target.value)}
+                        style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label
+                        htmlFor="profile-edit-sire"
+                        className="form-label"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                      >
+                        Sire (Father Ring)
+                      </label>
+                      <input
+                        id="profile-edit-sire"
+                        type="text"
+                        placeholder="e.g. PH-2024-5020"
+                        className="form-input"
+                        value={editSire}
+                        onChange={(e) => setEditSire(e.target.value)}
+                        style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label
+                        htmlFor="profile-edit-dam"
+                        className="form-label"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                      >
+                        Dam (Mother Ring)
+                      </label>
+                      <input
+                        id="profile-edit-dam"
+                        type="text"
+                        placeholder="e.g. PH-2024-3011"
+                        className="form-input"
+                        value={editDam}
+                        onChange={(e) => setEditDam(e.target.value)}
+                        style={{ height: '2.2rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label
+                        htmlFor="profile-edit-status"
+                        className="form-label"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                      >
+                        Loft Status
+                      </label>
+                      <select
+                        id="profile-edit-status"
+                        className="form-input"
+                        value={editStatus}
+                        onChange={(e) => setEditStatus(e.target.value)}
+                        style={{
+                          height: '2.2rem',
+                          fontSize: '0.8rem',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        <option value="Active">Active Racer</option>
+                        <option value="Breeding">Breeder</option>
+                        <option value="Retired">Retired</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Sold">Sold</option>
+                        <option value="Deceased">Deceased</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label
+                      htmlFor="profile-edit-notes"
+                      className="form-label"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}
+                    >
+                      <NotesIcon size={12} /> Notes &amp; Lineage Details
+                    </label>
+                    <textarea
+                      id="profile-edit-notes"
+                      placeholder="Pedigree details, achievements, temperament..."
+                      className="form-input"
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      style={{ height: '3.5rem', resize: 'vertical', fontSize: '0.8rem', padding: '0.4rem 0.5rem' }}
+                    />
+                  </div>
+                </div>
+
+                {editError && (
+                  <div className="form-error" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                    {editError}
+                  </div>
+                )}
+                {editSuccess && (
+                  <div
+                    style={{
+                      background: 'rgba(63, 185, 80, 0.1)',
+                      border: '1px solid rgba(63, 185, 80, 0.3)',
+                      borderRadius: '0.5rem',
+                      padding: '0.4rem',
+                      color: 'var(--color-success)',
+                      textAlign: 'center',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      marginTop: '0.2rem',
+                    }}
+                  >
+                    Changes saved successfully!
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBird(null)}
+                    style={{
+                      flex: 1,
+                      height: '2.3rem',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      color: '#cbd5e1',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editSaving}
+                    className="btn-primary"
+                    style={{
+                      flex: 1.5,
+                      height: '2.3rem',
+                      background: '#2196F3',
+                      color: '#fff',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {editSaving ? 'Saving Changes...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

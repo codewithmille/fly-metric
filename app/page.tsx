@@ -548,17 +548,20 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
-  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat' | 'trap') => {
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat' | 'trap' | 'birds') => {
     setIsModalOpen(false)
     setIsSelectionOpen(false)
     setIsClockInOpen(false)
     setIsVerifyPhotoOpen(false)
     setIsActivitiesOpen(false)
     setIsProfileOpen(false)
+    setIsRegistryOpen(false)
     setIsChatOpen(false)
     setIsPadStationOpen(false)
 
-    if (tabName === 'addEvent') {
+    if (tabName === 'birds') {
+      setIsRegistryOpen(true)
+    } else if (tabName === 'addEvent') {
       openModal(today)
     } else if (tabName === 'clockIn') {
       setIsClockInOpen(true)
@@ -2445,49 +2448,73 @@ export default function Home() {
         </div>
       )}
 
+      {/* ── Floating AI Chat Button (widget launcher) ───── */}
+      {!isChatOpen &&
+        !isModalOpen &&
+        !isClockInOpen &&
+        !isVerifyPhotoOpen &&
+        !isActivitiesOpen &&
+        !isProfileOpen &&
+        !isRegistryOpen &&
+        !isPadStationOpen &&
+        !isCalculatorOpen &&
+        !isTrainingOpen && (
+          <button
+            type="button"
+            id="ai-chat-fab"
+            className="chat-fab"
+            onClick={() => setIsChatOpen(true)}
+            aria-label="Open FlyMetric AI Chat"
+            title="Chat with FlyMetric AI"
+          >
+            <span className="chat-fab-pulse" aria-hidden="true" />
+            <img src="/icon.png" alt="" className="chat-fab-icon" />
+            <span className="chat-fab-label">Ask AI</span>
+          </button>
+        )}
+
       {/* React Native-style Mobile Bottom Tab Bar */}
       <div className="mobile-tab-bar">
         <button 
-          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isActivitiesOpen && !isProfileOpen && !isChatOpen) ? 'active' : ''}`}
+          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isActivitiesOpen && !isProfileOpen && !isRegistryOpen) ? 'active' : ''}`}
           onClick={() => navigateToTab('home')}
           aria-label="Loft Dashboard Home"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6"/></svg>
           <span>Home</span>
         </button>
         <button 
-          className={`mobile-tab-btn ${isClockInOpen ? 'active' : ''}`}
+          className={`mobile-tab-btn ${isRegistryOpen ? 'active' : ''}`}
+          onClick={() => navigateToTab('birds')}
+          aria-label="Loft Birds Registry"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/></svg>
+          <span>Birds</span>
+        </button>
+
+        {/* CENTER: Clock-In (elevated) */}
+        <button 
+          className={`mobile-tab-btn mobile-tab-btn-chat ${isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('clockIn')}
           aria-label="Quick Clock-in bird"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>Clock-In</span>
-        </button>
-
-        {/* CENTER: AI Chat Button */}
-        <button 
-          className={`mobile-tab-btn mobile-tab-btn-chat ${isChatOpen ? 'active' : ''}`}
-          onClick={() => navigateToTab('chat')}
-          aria-label="FlyMetric AI Pigeon Chat"
-        >
           <div style={{
-            width: '46px', height: '46px',
+            width: '48px', height: '48px',
             borderRadius: '50%',
-            background: isChatOpen
-              ? 'linear-gradient(135deg, #064e3b, #022c22)'
-              : 'linear-gradient(135deg, #111c24, #090d16)',
+            background: '#0d1117',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isChatOpen
-              ? '0 0 0 3px rgba(16,185,129,0.5), 0 4px 16px rgba(16,185,129,0.4)'
-              : '0 0 0 2px rgba(16,185,129,0.35), 0 4px 12px rgba(16,185,129,0.25)',
-            marginTop: '-18px',
-            border: '2px solid rgba(16,185,129,0.4)',
+            boxShadow: isClockInOpen
+              ? '0 0 0 3px rgba(255,193,7,0.25), 0 4px 18px rgba(255,193,7,0.35)'
+              : '0 4px 12px rgba(0,0,0,0.5)',
+            marginTop: '-20px',
+            border: `2px solid ${isClockInOpen ? '#FFC107' : 'rgba(255,193,7,0.55)'}`,
+            color: 'var(--brand-gold)',
             transition: 'all 0.2s ease',
             flexShrink: 0,
           }}>
-            <img src="/icon.png" alt="FlyMetric AI" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           </div>
-          <span style={{ marginTop: '2px' }}>AI Chat</span>
+          <span style={{ marginTop: '2px' }}>Clock-In</span>
         </button>
 
         <button 
@@ -2503,7 +2530,7 @@ export default function Home() {
           onClick={() => navigateToTab('profile')}
           aria-label="Loft Profile"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
           <span>Profile</span>
         </button>
       </div>
