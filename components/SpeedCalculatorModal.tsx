@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { CalculatorIcon, RulerIcon } from '@/components/icons'
 
 interface SpeedCalculatorModalProps {
   isOpen: boolean
@@ -77,7 +78,7 @@ export default function SpeedCalculatorModal({ isOpen, onClose }: SpeedCalculato
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      style={{ zIndex: 9000 }}
+      style={{ zIndex: 10500 }}
     >
       <div
         className="modal-container border border-white/10 bg-base-200 shadow-2xl"
@@ -88,23 +89,18 @@ export default function SpeedCalculatorModal({ isOpen, onClose }: SpeedCalculato
         style={{ maxWidth: '450px' }}
       >
         {/* Header */}
-        <div
-          className="modal-header"
-          style={{ background: 'linear-gradient(135deg, var(--brand-gold), #b38600)' }}
-        >
-          <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.3rem' }}>🧮</span>
+        <div className="modal-header">
+          <div className="modal-header-left">
+            <span className="modal-pigeon-icon">
+              <CalculatorIcon size={18} />
+            </span>
             <div>
-              <h2 className="modal-title" style={{ color: '#000', fontWeight: 800 }}>
-                Quick Speed Calculator
-              </h2>
-              <p className="modal-subtitle" style={{ color: 'rgba(0,0,0,0.68)' }}>
-                Calculate pigeon velocity in real-time
-              </p>
+              <h2 className="modal-title">Speed Calculator Bench</h2>
+              <p className="modal-subtitle">Real-time velocity &amp; duration computation</p>
             </div>
           </div>
           <button
-            className="btn btn-circle btn-xs border-none bg-black/15 text-black hover:bg-black/25"
+            className="modal-close-btn"
             onClick={onClose}
             aria-label="Close modal"
           >
@@ -117,7 +113,10 @@ export default function SpeedCalculatorModal({ isOpen, onClose }: SpeedCalculato
           {/* Distance Input */}
           <div className="form-group">
             <label htmlFor="calc-distance" className="form-label flex items-center justify-between">
-              <span>📏 Fly Distance</span>
+              <span className="flex items-center gap-1.5">
+                <RulerIcon size={13} />
+                <span>Fly Distance</span>
+              </span>
               <span className="badge badge-ghost badge-xs">km or meters</span>
             </label>
             <div className="join w-full">
@@ -236,7 +235,7 @@ export default function SpeedCalculatorModal({ isOpen, onClose }: SpeedCalculato
 
           <button
             type="button"
-            className="btn btn-primary w-full font-extrabold"
+            className="cockpit-nav-btn-primary w-full !py-2.5 !text-sm !font-bold"
             onClick={onClose}
           >
             Done

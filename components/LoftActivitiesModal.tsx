@@ -11,6 +11,13 @@ import {
   PillIcon,
   NotesIcon,
   PlusIcon,
+  GlobeIcon,
+  MapPinIcon,
+  EditIcon,
+  TimerIcon,
+  CameraIcon,
+  VideoIcon,
+  DownloadIcon,
 } from '@/components/icons'
 
 interface BirdRecord {
@@ -31,6 +38,7 @@ interface LoftActivitiesModalProps {
   onEditActivity: (dateStr: string, event: RaceEvent) => void
   onJoinGroupRace?: () => void
   onCreateGroupRace?: () => void
+  isPageMode?: boolean
 }
 
 export default function LoftActivitiesModal({
@@ -45,6 +53,7 @@ export default function LoftActivitiesModal({
   onEditActivity,
   onJoinGroupRace,
   onCreateGroupRace,
+  isPageMode = false,
 }: LoftActivitiesModalProps) {
   const [activeTab, setActiveTab] = useState<'activities' | 'results'>(initialTab)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
@@ -149,20 +158,15 @@ export default function LoftActivitiesModal({
   })
   const sortedDates = Object.keys(groupedEvents).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
 
-  return (
-    <div
-      className="modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
+  const modalContent = (
+    <>
       <div
-        className="modal-container"
+        className={isPageMode ? "w-full max-w-7xl mx-auto flex flex-col gap-4" : "modal-container"}
         ref={modalRef}
         tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        style={{
+        role={isPageMode ? "region" : "dialog"}
+        aria-modal={isPageMode ? undefined : "true"}
+        style={isPageMode ? undefined : {
           maxWidth: '640px',
           padding: 0,
           background: '#0d121d',
@@ -170,136 +174,168 @@ export default function LoftActivitiesModal({
           boxShadow: '0 28px 64px rgba(0, 0, 0, 0.75)',
         }}
       >
-        {/* ── Modern Modal Header ── */}
-        <div
-          style={{
-            position: 'relative',
-            padding: '1rem 1.25rem',
-            background: 'linear-gradient(135deg, #111827 0%, #1e1b4b 60%, #0f172a 100%)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-            <span
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'rgba(255, 193, 7, 0.12)',
-                border: '1px solid rgba(255, 193, 7, 0.28)',
-                color: '#FFC107',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {activeTab === 'activities' ? <CalendarIcon size={20} /> : <TrophyIcon size={20} />}
-            </span>
-            <div style={{ minWidth: 0 }}>
-              <h2
-                style={{
-                  color: '#fff',
-                  fontSize: '1.05rem',
-                  fontWeight: 800,
-                  margin: 0,
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {activeTab === 'activities' ? 'Loft Activities & Flights' : 'Race & Training History'}
-              </h2>
-              <p
-                style={{
-                  color: '#94a3b8',
-                  fontSize: '0.72rem',
-                  margin: '0.15rem 0 0 0',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {activeTab === 'activities'
-                  ? 'Manage scheduled flights, training calendar & events'
-                  : 'View completed loft results & clock-in verification logs'}
+        {/* ── Page Mode Header / Modal Header ── */}
+        {isPageMode ? (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/10">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">Loft Activities</h2>
+                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                  {events.length} Flights
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1 m-0">
+                Active schedule, road tosses, club races, and official clocking records
               </p>
             </div>
-          </div>
 
-          <button
-            className="modal-close-btn"
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Modern View Switcher */}
+              <div className="inline-flex bg-[#080c14] border border-white/10 rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    viewMode === 'list' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <NotesIcon size={12} />
+                  <span>List</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('calendar')}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    viewMode === 'calendar' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CalendarIcon size={12} />
+                  <span>Calendar</span>
+                </button>
+              </div>
+
+              {onJoinGroupRace && (
+                <button
+                  type="button"
+                  onClick={onJoinGroupRace}
+                  className="cockpit-nav-btn !py-1 !px-2.5 !text-xs !text-sky-400 !border-sky-500/30"
+                  title="Join a group race with code"
+                >
+                  <GlobeIcon size={13} />
+                  <span>Join</span>
+                </button>
+              )}
+
+              {onCreateGroupRace && (
+                <button
+                  type="button"
+                  onClick={onCreateGroupRace}
+                  className="cockpit-nav-btn !py-1 !px-2.5 !text-xs !text-purple-400 !border-purple-500/30"
+                  title="Host a group race as admin"
+                >
+                  <TrophyIcon size={13} />
+                  <span>Host</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={onLogActivity}
+                className="cockpit-nav-btn-primary !h-[32px] !text-xs !py-0 !px-3 !gap-1.5 shrink-0"
+              >
+                <PlusIcon size={13} />
+                <span>Log Flight</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
             style={{
-              color: '#fff',
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
+              position: 'relative',
+              padding: '0.85rem 1.15rem',
+              background: '#0e1420',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
+              justifyContent: 'space-between',
+              gap: '0.75rem',
             }}
-            onClick={onClose}
-            aria-label="Close modal"
           >
-            ✕
-          </button>
-        </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+              <span
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '7px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  color: '#f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {activeTab === 'activities' ? <CalendarIcon size={16} /> : <TrophyIcon size={16} />}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <h2
+                  style={{
+                    color: '#ffffff',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    margin: 0,
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  {activeTab === 'activities' ? 'Loft Activities & Flights' : 'Race & Training History'}
+                </h2>
+                <p
+                  style={{
+                    color: '#94a3b8',
+                    fontSize: '0.68rem',
+                    margin: '0.1rem 0 0 0',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {activeTab === 'activities'
+                    ? 'Flight schedule, road tosses & derbies'
+                    : 'Clocked velocity results & audit archives'}
+                </p>
+              </div>
+            </div>
 
-        {/* ── Segmented Navigation Tabs (Sleek Cockpit Style) ── */}
+            <button
+              className="modal-close-btn"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* ── Sub-Navigation Tabs (GitHub Underline Style in Page Mode) ── */}
         <div
-          style={{
-            display: 'flex',
-            gap: '0.45rem',
-            padding: '0.5rem 1rem 0.35rem',
-            background: 'rgba(15, 23, 42, 0.75)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            flexShrink: 0,
-          }}
+          className={isPageMode ? "flex items-center gap-1 border-b border-white/10" : "flex gap-1.5 p-2 bg-[#080c14] border-b border-white/10"}
         >
           <button
             type="button"
             onClick={() => setActiveTab('activities')}
-            style={{
-              flex: 1,
-              height: '38px',
-              padding: '0 0.65rem',
-              borderRadius: '0.6rem',
-              border: activeTab === 'activities' ? '1px solid rgba(255, 193, 7, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
-              background: activeTab === 'activities' ? 'rgba(255, 193, 7, 0.16)' : 'rgba(255, 255, 255, 0.03)',
-              color: activeTab === 'activities' ? '#FFC107' : '#94a3b8',
-              fontWeight: 800,
-              fontSize: '0.78rem',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.15s ease',
-            }}
+            className={isPageMode ? `cockpit-tab-item ${activeTab === 'activities' ? 'active' : ''}` : "flex-1 h-[34px] px-3 rounded-md text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"}
+            style={!isPageMode ? {
+              background: activeTab === 'activities' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+              color: activeTab === 'activities' ? '#f59e0b' : '#94a3b8',
+              border: activeTab === 'activities' ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid transparent',
+            } : undefined}
           >
-            <span style={{ fontSize: '0.9rem' }}>📅</span>
-            <span>
-              Activities<span className="hidden sm:inline"> & Flights</span>
-            </span>
-            <span
-              style={{
-                fontSize: '0.65rem',
-                padding: '0.08rem 0.45rem',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontFamily: 'monospace',
-                background: activeTab === 'activities' ? 'rgba(255, 193, 7, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                color: activeTab === 'activities' ? '#FFC107' : '#94a3b8',
-              }}
-            >
+            <CalendarIcon size={14} />
+            <span>Activities<span className="hidden sm:inline"> & Flights</span></span>
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
               {events.length}
             </span>
           </button>
@@ -307,49 +343,30 @@ export default function LoftActivitiesModal({
           <button
             type="button"
             onClick={() => setActiveTab('results')}
-            style={{
-              flex: 1,
-              height: '38px',
-              padding: '0 0.65rem',
-              borderRadius: '0.6rem',
-              border: activeTab === 'results' ? '1px solid rgba(56, 189, 248, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
-              background: activeTab === 'results' ? 'rgba(56, 189, 248, 0.16)' : 'rgba(255, 255, 255, 0.03)',
+            className={isPageMode ? `cockpit-tab-item ${activeTab === 'results' ? 'active' : ''}` : "flex-1 h-[34px] px-3 rounded-md text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"}
+            style={!isPageMode ? {
+              background: activeTab === 'results' ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255, 255, 255, 0.03)',
               color: activeTab === 'results' ? '#38bdf8' : '#94a3b8',
-              fontWeight: 800,
-              fontSize: '0.78rem',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.15s ease',
-            }}
+              border: activeTab === 'results' ? '1px solid rgba(14, 165, 233, 0.4)' : '1px solid transparent',
+            } : undefined}
           >
-            <span style={{ fontSize: '0.9rem' }}>🏆</span>
-            <span>
-              <span className="hidden sm:inline">Clocked </span>Results
-            </span>
-            <span
-              style={{
-                fontSize: '0.65rem',
-                padding: '0.08rem 0.45rem',
-                borderRadius: '9999px',
-                fontWeight: 800,
-                fontFamily: 'monospace',
-                background: activeTab === 'results' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                color: activeTab === 'results' ? '#38bdf8' : '#94a3b8',
-              }}
-            >
+            <TrophyIcon size={14} />
+            <span>Clocked Results</span>
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
               {completedEvents.length}
             </span>
           </button>
         </div>
 
-        {/* ── Scrollable Body ── */}
+        {/* ── Content Body ── */}
         <div
-          className="modal-body modal-scroll-body"
-          style={{
+          className={isPageMode ? "w-full" : "modal-body modal-scroll-body"}
+          style={isPageMode ? {
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          } : {
             padding: '0.85rem 1rem',
             overflowY: 'auto',
             maxHeight: '74vh',
@@ -359,168 +376,126 @@ export default function LoftActivitiesModal({
           {/* TAB 1: ACTIVITIES & FLIGHTS */}
           {activeTab === 'activities' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Refined Sub-Toolbar: Minimalist View Switcher + Clean Action */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.4rem',
-                  padding: '0.1rem 0 0.35rem 0',
-                  flexWrap: 'nowrap',
-                }}
-              >
-                {/* Modern Pill View Switcher */}
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    background: 'rgba(2, 6, 23, 0.6)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '0.55rem',
-                    padding: '2px',
-                    gap: '2px',
-                    height: '30px',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('list')}
-                    style={{
-                      height: '24px',
-                      padding: '0 0.55rem',
-                      borderRadius: '0.4rem',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: viewMode === 'list' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                      color: viewMode === 'list' ? '#fff' : '#94a3b8',
-                      transition: 'all 0.15s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>📋</span>
-                    <span>List</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('calendar')}
-                    style={{
-                      height: '24px',
-                      padding: '0 0.55rem',
-                      borderRadius: '0.4rem',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: viewMode === 'calendar' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                      color: viewMode === 'calendar' ? '#fff' : '#94a3b8',
-                      transition: 'all 0.15s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>📅</span>
-                    <span>Calendar</span>
-                  </button>
-                </div>
-
-                {/* Actions Group — Strictly Single Row (Never Wrap) */}
+              {/* Refined Sub-Toolbar: Minimalist View Switcher + Clean Action (Modal only) */}
+              {!isPageMode && (
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.3rem',
+                    justifyContent: 'space-between',
+                    gap: '0.4rem',
+                    padding: '0.1rem 0 0.35rem 0',
                     flexWrap: 'nowrap',
-                    flexShrink: 0,
                   }}
                 >
-                  {onJoinGroupRace && (
-                    <button
-                      type="button"
-                      onClick={onJoinGroupRace}
-                      style={{
-                        height: '30px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0 0.55rem',
-                        background: 'rgba(56, 189, 248, 0.12)',
-                        border: '1px solid rgba(56, 189, 248, 0.35)',
-                        borderRadius: '0.5rem',
-                        color: '#38bdf8',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title="Join a group race with code"
-                    >
-                      <span>🌐</span>
-                      <span>Join<span className="hidden sm:inline"> Race</span></span>
-                    </button>
-                  )}
-
-                  {onCreateGroupRace && (
-                    <button
-                      type="button"
-                      onClick={onCreateGroupRace}
-                      style={{
-                        height: '30px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0 0.55rem',
-                        background: 'rgba(192, 132, 252, 0.12)',
-                        border: '1px solid rgba(192, 132, 252, 0.35)',
-                        borderRadius: '0.5rem',
-                        color: '#c084fc',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title="Host a group race as admin"
-                    >
-                      <span>🏆</span>
-                      <span>Host<span className="hidden sm:inline"> Race</span></span>
-                    </button>
-                  )}
-
-                  {/* Modern Action Button */}
-                  <button
-                    type="button"
-                    onClick={onLogActivity}
+                  {/* Modern Cockpit View Switcher */}
+                  <div
                     style={{
-                      height: '30px',
                       display: 'inline-flex',
+                      background: '#080c14',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '0.45rem',
+                      padding: '2px',
+                      gap: '2px',
+                      height: '28px',
                       alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0 0.65rem',
-                      background: 'rgba(255, 193, 7, 0.15)',
-                      border: '1px solid rgba(255, 193, 7, 0.4)',
-                      borderRadius: '0.5rem',
-                      color: '#FFC107',
-                      fontSize: '0.73rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
-                      transition: 'all 0.15s ease',
-                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                     }}
                   >
-                    <PlusIcon size={12} />
-                    <span>Log<span className="hidden sm:inline"> Activity</span></span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      style={{
+                        height: '22px',
+                        padding: '0 0.45rem',
+                        borderRadius: '0.35rem',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: viewMode === 'list' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                        color: viewMode === 'list' ? '#fff' : '#94a3b8',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <NotesIcon size={11} />
+                      <span>List</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('calendar')}
+                      style={{
+                        height: '22px',
+                        padding: '0 0.45rem',
+                        borderRadius: '0.35rem',
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: viewMode === 'calendar' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                        color: viewMode === 'calendar' ? '#fff' : '#94a3b8',
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <CalendarIcon size={11} />
+                      <span>Calendar</span>
+                    </button>
+                  </div>
+
+                  {/* Actions Group — Strictly Single Row (Never Wrap) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      flexWrap: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {onJoinGroupRace && (
+                      <button
+                        type="button"
+                        onClick={onJoinGroupRace}
+                        className="cockpit-nav-btn !py-1 !px-2 !text-[11px] !text-sky-400 !border-sky-500/30"
+                        title="Join a group race with code"
+                      >
+                        <GlobeIcon size={12} />
+                        <span>Join</span>
+                      </button>
+                    )}
+
+                    {onCreateGroupRace && (
+                      <button
+                        type="button"
+                        onClick={onCreateGroupRace}
+                        className="cockpit-nav-btn !py-1 !px-2 !text-[11px] !text-purple-400 !border-purple-500/30"
+                        title="Host a group race as admin"
+                      >
+                        <TrophyIcon size={12} />
+                        <span>Host</span>
+                      </button>
+                    )}
+
+                    {/* Modern Action Button */}
+                    <button
+                      type="button"
+                      onClick={onLogActivity}
+                      className="cockpit-nav-btn-primary !py-1 !px-2 !text-[11px] !gap-1"
+                    >
+                      <PlusIcon size={12} />
+                      <span>Log</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* View Content */}
               {loading ? (
@@ -557,7 +532,9 @@ export default function LoftActivitiesModal({
                     border: '1px dashed rgba(255,255,255,0.1)',
                   }}
                 >
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📅</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#64748b' }}>
+                    <CalendarIcon size={32} />
+                  </div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc' }}>No Loft Activities Logged</div>
                   <p style={{ fontSize: '0.75rem', marginTop: '0.35rem', maxWidth: '300px', margin: '0.35rem auto 1.1rem auto', color: '#94a3b8' }}>
                     Create a scheduled training flight or official race event to track clock-in velocities.
@@ -565,15 +542,10 @@ export default function LoftActivitiesModal({
                   <button
                     type="button"
                     onClick={onLogActivity}
+                    className="cockpit-nav-btn-primary"
                     style={{
-                      padding: '0.5rem 1rem',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: '#FFC107',
-                      color: '#000',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: 'pointer',
+                      padding: '0.45rem 0.9rem',
+                      fontSize: '0.76rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.35rem',
@@ -584,44 +556,58 @@ export default function LoftActivitiesModal({
                 </div>
               ) : (
                 /* Grouped list of activities */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {sortedDates.map((dateStr) => {
                     const dayEvents = groupedEvents[dateStr]
-                    const dateObj = new Date(dateStr)
-                    const formattedHeaderDate = dateObj.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
+                    let formattedHeaderDate = dateStr
+                    try {
+                      const d = new Date(dateStr)
+                      if (!isNaN(d.getTime())) {
+                        formattedHeaderDate = d.toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      }
+                    } catch (e) {}
 
                     return (
-                      <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                        {/* Section Date Header */}
+                      <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {/* Refined Minimalist Timeline Header */}
                         <div
                           style={{
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            color: '#FFC107',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                            padding: '0.4rem 0.65rem',
-                            borderLeft: '3px solid #FFC107',
-                            background: 'linear-gradient(90deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0) 100%)',
-                            borderRadius: '0 6px 6px 0',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            padding: '0.2rem 0.1rem 0.1rem',
                           }}
                         >
-                          <span>📅 {formattedHeaderDate}</span>
-                          <span style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 600 }}>
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              color: '#94a3b8',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.05em',
+                              fontFamily: 'monospace',
+                              whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <CalendarIcon size={12} className="text-slate-500" />
+                            <span>{formattedHeaderDate}</span>
+                          </span>
+                          <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
+                          <span style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700, fontFamily: 'monospace' }}>
                             {dayEvents.length} {dayEvents.length === 1 ? 'flight' : 'flights'}
                           </span>
                         </div>
 
                         {/* Activities Cards */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                           {dayEvents.map((ev) => {
                             const type = ev.extendedProps?.club || 'Race'
                             const location = ev.extendedProps?.location || 'No location configured'
@@ -633,26 +619,25 @@ export default function LoftActivitiesModal({
                                 key={ev.id}
                                 onClick={() => onDateClick(ev.date || '', ev)}
                                 style={{
-                                  background: 'linear-gradient(135deg, rgba(20, 27, 45, 0.75) 0%, rgba(13, 18, 30, 0.9) 100%)',
-                                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                                  borderRadius: '0.75rem',
-                                  padding: '0.75rem 0.95rem',
+                                  background: '#0c121e',
+                                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                                  borderRadius: '0.55rem',
+                                  padding: '0.6rem 0.8rem',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'space-between',
-                                  gap: '0.85rem',
+                                  gap: '0.75rem',
                                   transition: 'all 0.15s ease',
-                                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
                                 }}
-                                className="hover:border-amber-400/50"
+                                className="hover:border-amber-400/40 hover:bg-[#0f1728]"
                               >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
                                   <span
                                     style={{
-                                      width: '2.3rem',
-                                      height: '2.3rem',
-                                      borderRadius: '0.55rem',
+                                      width: '2.1rem',
+                                      height: '2.1rem',
+                                      borderRadius: '0.5rem',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
@@ -680,53 +665,51 @@ export default function LoftActivitiesModal({
                                           ? '#4ade80'
                                           : type === 'Task'
                                           ? '#c084fc'
-                                          : '#FFC107',
+                                          : '#f59e0b',
                                     }}
                                   >
                                     {type === 'Training' ? (
-                                      <TrainingIcon size={16} />
+                                      <TrainingIcon size={15} />
                                     ) : type === 'Medication' ? (
-                                      <PillIcon size={16} />
+                                      <PillIcon size={15} />
                                     ) : type === 'Task' ? (
-                                      <NotesIcon size={16} />
+                                      <NotesIcon size={15} />
                                     ) : (
-                                      <TrophyIcon size={16} />
+                                      <TrophyIcon size={15} />
                                     )}
                                   </span>
 
-                                  <div style={{ minWidth: 0 }}>
+                                  <div style={{ minWidth: 0, flex: 1 }}>
                                     <div
                                       style={{
-                                        fontSize: '0.88rem',
-                                        fontWeight: 800,
-                                        color: '#f8fafc',
-                                        marginBottom: '0.2rem',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                      }}
-                                    >
-                                      {ev.title}
-                                    </div>
-                                    <div
-                                      style={{
-                                        fontSize: '0.7rem',
-                                        color: '#94a3b8',
                                         display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '0.35rem 0.5rem',
                                         alignItems: 'center',
+                                        gap: '0.4rem',
+                                        marginBottom: '0.15rem',
+                                        flexWrap: 'wrap',
                                       }}
                                     >
                                       <span
                                         style={{
+                                          fontSize: '0.85rem',
                                           fontWeight: 800,
-                                          fontSize: '0.65rem',
-                                          padding: '0.08rem 0.4rem',
-                                          borderRadius: '4px',
-                                          background: type === 'Training' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 193, 7, 0.15)',
-                                          border: type === 'Training' ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(255, 193, 7, 0.35)',
-                                          color: type === 'Training' ? '#38bdf8' : '#FFC107',
+                                          color: '#f8fafc',
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                        }}
+                                      >
+                                        {ev.title}
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontWeight: 800,
+                                          fontSize: '0.62rem',
+                                          padding: '0.05rem 0.35rem',
+                                          borderRadius: '3px',
+                                          background: type === 'Training' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                          border: type === 'Training' ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                                          color: type === 'Training' ? '#38bdf8' : '#f59e0b',
                                         }}
                                       >
                                         {type}
@@ -736,39 +719,61 @@ export default function LoftActivitiesModal({
                                           style={{
                                             fontWeight: 800,
                                             fontSize: '0.62rem',
-                                            padding: '0.08rem 0.4rem',
-                                            borderRadius: '4px',
+                                            padding: '0.05rem 0.35rem',
+                                            borderRadius: '3px',
                                             background: 'rgba(192, 132, 252, 0.15)',
-                                            border: '1px solid rgba(192, 132, 252, 0.35)',
+                                            border: '1px solid rgba(192, 132, 252, 0.3)',
                                             color: '#c084fc',
                                             fontFamily: 'monospace',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.2rem',
                                           }}
                                         >
-                                          🌐 {ev.extendedProps?.joinCode || 'Group'}
+                                          <GlobeIcon size={10} />
+                                          <span>{ev.extendedProps?.joinCode || 'Group'}</span>
                                         </span>
                                       )}
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        fontSize: '0.68rem',
+                                        color: '#94a3b8',
+                                        display: 'flex',
+                                        flexWrap: 'nowrap',
+                                        gap: '0.35rem',
+                                        alignItems: 'center',
+                                        fontFamily: 'monospace',
+                                        overflow: 'hidden',
+                                      }}
+                                    >
                                       <span
                                         style={{
                                           whiteSpace: 'nowrap',
                                           overflow: 'hidden',
                                           textOverflow: 'ellipsis',
-                                          maxWidth: '170px',
+                                          maxWidth: '140px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
                                         }}
                                       >
-                                        📍 {location}
+                                        <MapPinIcon size={11} className="text-slate-500 shrink-0" />
+                                        <span>{location}</span>
                                       </span>
-                                      {distance && distance > 0 && (
+                                      {distance && distance > 0 ? (
                                         <>
-                                          <span>•</span>
-                                          <span style={{ fontFamily: 'monospace', color: '#38bdf8' }}>📏 {distance} km</span>
+                                          <span style={{ color: '#475569' }}>•</span>
+                                          <span style={{ color: '#38bdf8', whiteSpace: 'nowrap' }}>{distance} km</span>
                                         </>
-                                      )}
-                                      {releaseTime && (
+                                      ) : null}
+                                      {releaseTime ? (
                                         <>
-                                          <span>•</span>
-                                          <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>⏰ Rel: {releaseTime}</span>
+                                          <span style={{ color: '#475569' }}>•</span>
+                                          <span style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>Rel {releaseTime}</span>
                                         </>
-                                      )}
+                                      ) : null}
                                     </div>
                                   </div>
                                 </div>
@@ -782,25 +787,23 @@ export default function LoftActivitiesModal({
                                     }}
                                     style={{
                                       background: 'rgba(255, 255, 255, 0.05)',
-                                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                                      borderRadius: '0.45rem',
-                                      padding: '0.35rem 0.6rem',
+                                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                                      borderRadius: '0.4rem',
+                                      padding: '0.25rem 0.55rem',
                                       color: '#cbd5e1',
-                                      fontSize: '0.7rem',
+                                      fontSize: '0.68rem',
                                       fontWeight: 700,
                                       cursor: 'pointer',
                                       display: 'flex',
                                       alignItems: 'center',
-                                      gap: '0.25rem',
+                                      gap: '0.3rem',
                                       transition: 'all 0.15s ease',
                                     }}
                                     title="Edit Event Details"
                                   >
-                                    ✏️ Edit
+                                    <EditIcon size={12} />
+                                    <span>Edit</span>
                                   </button>
-                                  <span style={{ color: 'rgba(255, 193, 7, 0.7)', fontSize: '0.8rem', fontWeight: 800 }}>
-                                    →
-                                  </span>
                                 </div>
                               </div>
                             )
@@ -819,7 +822,9 @@ export default function LoftActivitiesModal({
             <div>
               {completedEvents.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📭</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#64748b' }}>
+                    <TrophyIcon size={32} />
+                  </div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc' }}>No Clocked Results Found</div>
                   <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', maxWidth: '300px', margin: '0.25rem auto', color: '#94a3b8' }}>
                     Completed events will appear here once you clock-in birds via the RFID reader, camera, or quick clock-in panel.
@@ -886,12 +891,12 @@ export default function LoftActivitiesModal({
                                 fontWeight: 800,
                                 padding: '0.15rem 0.45rem',
                                 borderRadius: '4px',
-                                background: type === 'Training' ? 'rgba(33, 150, 243, 0.15)' : 'rgba(255, 193, 7, 0.15)',
-                                color: type === 'Training' ? '#38bdf8' : '#FFC107',
+                                background: type === 'Training' ? 'rgba(33, 150, 243, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: type === 'Training' ? '#38bdf8' : '#f59e0b',
                                 border:
                                   type === 'Training'
                                     ? '1px solid rgba(33, 150, 243, 0.3)'
-                                    : '1px solid rgba(255, 193, 7, 0.3)',
+                                    : '1px solid rgba(245, 158, 11, 0.3)',
                               }}
                             >
                               {type}
@@ -903,8 +908,11 @@ export default function LoftActivitiesModal({
                               <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
                                 {ev.title}
                               </h3>
-                              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                                📍 {ev.extendedProps?.location || 'No location'} · 📏 {distance} km
+                              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <MapPinIcon size={11} className="text-slate-500" />
+                                <span>{ev.extendedProps?.location || 'No location'}</span>
+                                <span style={{ color: '#475569' }}>•</span>
+                                <span style={{ color: '#38bdf8' }}>{distance} km</span>
                               </div>
                             </div>
                             <span style={{ fontSize: '0.75rem', color: '#94a3b8', paddingLeft: '0.5rem' }}>
@@ -920,17 +928,20 @@ export default function LoftActivitiesModal({
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.4rem',
-                                background: 'rgba(255,193,7,0.06)',
-                                border: '1px solid rgba(255,193,7,0.15)',
+                                background: 'rgba(245,158,11,0.06)',
+                                border: '1px solid rgba(245,158,11,0.15)',
                                 borderRadius: '0.45rem',
                                 padding: '0.35rem 0.55rem',
                                 fontSize: '0.7rem',
                               }}
                             >
-                              <span style={{ color: '#FFC107', fontWeight: 700 }}>🏆 Winner:</span>
+                              <span style={{ color: '#f59e0b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <TrophyIcon size={12} />
+                                <span>Winner:</span>
+                              </span>
                               <strong style={{ color: '#fff', fontFamily: 'monospace' }}>{winnerRing}</strong>
-                              <span style={{ color: '#FFC107', marginLeft: 'auto', fontFamily: 'monospace', fontWeight: 800 }}>
-                                ⚡ {maxSpeed.toLocaleString()} m/min <span style={{ color: '#38bdf8', fontWeight: 600 }}>• {(maxSpeed * 0.06).toFixed(1)} km/h</span>
+                              <span style={{ color: '#f59e0b', marginLeft: 'auto', fontFamily: 'monospace', fontWeight: 800 }}>
+                                {maxSpeed.toLocaleString()} m/min <span style={{ color: '#38bdf8', fontWeight: 600 }}>• {(maxSpeed * 0.06).toFixed(1)} km/h</span>
                               </span>
                             </div>
                           )}
@@ -967,10 +978,11 @@ export default function LoftActivitiesModal({
                                           padding: '0.5rem 0.25rem',
                                           fontWeight: 800,
                                           fontSize: '0.7rem',
-                                          color: idx === 0 ? '#FFC107' : idx === 1 ? '#cbd5e1' : idx === 2 ? '#f59e0b' : '#94a3b8',
+                                          fontFamily: 'monospace',
+                                          color: idx === 0 ? '#f59e0b' : idx === 1 ? '#cbd5e1' : idx === 2 ? '#d97706' : '#64748b',
                                         }}
                                       >
-                                        {idx === 0 ? '🥇 1st' : idx === 1 ? '🥈 2nd' : idx === 2 ? '🥉 3rd' : `#${idx + 1}`}
+                                        {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `#${idx + 1}`}
                                       </td>
                                       <td style={{ padding: '0.5rem 0.25rem', fontWeight: 700, color: '#f8fafc' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -986,13 +998,17 @@ export default function LoftActivitiesModal({
                                                   border: '1px solid rgba(33, 150, 243, 0.25)',
                                                   borderRadius: '3px',
                                                   color: '#38bdf8',
-                                                  padding: '0.05rem 0.3rem',
-                                                  fontSize: '0.58rem',
+                                                  padding: '0.1rem 0.35rem',
+                                                  fontSize: '0.62rem',
                                                   cursor: 'pointer',
                                                   fontWeight: 700,
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.2rem',
                                                 }}
                                               >
-                                                📷 Photo
+                                                <CameraIcon size={10} />
+                                                <span>Photo</span>
                                               </button>
                                             )}
                                             {video && (
@@ -1004,13 +1020,17 @@ export default function LoftActivitiesModal({
                                                   border: '1px solid rgba(76, 175, 80, 0.25)',
                                                   borderRadius: '3px',
                                                   color: '#4ade80',
-                                                  padding: '0.05rem 0.3rem',
-                                                  fontSize: '0.58rem',
+                                                  padding: '0.1rem 0.35rem',
+                                                  fontSize: '0.62rem',
                                                   cursor: 'pointer',
                                                   fontWeight: 700,
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.2rem',
                                                 }}
                                               >
-                                                📹 Video
+                                                <VideoIcon size={10} />
+                                                <span>Video</span>
                                               </button>
                                             )}
                                           </div>
@@ -1116,9 +1136,10 @@ export default function LoftActivitiesModal({
                   link.click()
                   document.body.removeChild(link)
                 }}
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700 }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               >
-                📥 Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}
+                <DownloadIcon size={14} />
+                <span>Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}</span>
               </button>
               <button
                 type="button"
@@ -1132,6 +1153,25 @@ export default function LoftActivitiesModal({
           </div>
         </div>
       )}
+    </>
+  )
+
+  if (isPageMode) {
+    return (
+      <div className="w-full">
+        {modalContent}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      {modalContent}
     </div>
   )
 }

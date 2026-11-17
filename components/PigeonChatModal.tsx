@@ -34,12 +34,12 @@ interface PigeonChatModalProps {
 }
 
 const QUICK_QUESTIONS = [
-  '🏆 What is my best performing pigeon?',
-  '📊 Summarize my loft birds & race stats',
-  '🏁 What do I feed pigeons after a race?',
-  '💊 What supplements on Wednesday?',
-  '⚡ How to build stamina for 300km+?',
-  '🦠 Signs of Canker & respiratory disease?',
+  'What is my best performing pigeon?',
+  'Summarize my loft birds & race stats',
+  'What do I feed pigeons after a race?',
+  'What supplements on Wednesday?',
+  'How to build stamina for 300km+?',
+  'Signs of Canker & respiratory disease?',
 ]
 
 function buildLoftContext(
@@ -238,7 +238,11 @@ function MessageBubble({
         border: msg.role === 'model' ? '1px solid rgba(16,185,129,0.35)' : 'none',
         boxShadow: msg.role === 'model' ? '0 0 8px rgba(16,185,129,0.25)' : 'none',
       }}>
-        {msg.role === 'user' ? '👤' : <img src="/icon.png" alt="AI" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
+        {msg.role === 'user' ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        ) : (
+          <img src="/icon.png" alt="AI" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+        )}
       </div>
 
       {/* Bubble */}
@@ -500,7 +504,7 @@ export default function PigeonChatModal({
                   fontWeight: 700,
                 }}
               >
-                🗑️ Clear
+                Clear
               </button>
             )}
             <button

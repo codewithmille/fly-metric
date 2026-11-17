@@ -111,10 +111,10 @@ export default function RaceCalendar({ events, loading, onDateClick }: RaceCalen
           onMouseLeave={hidePopover}
         >
           <div className="popover-header">
-            <span className="popover-icon">
-              {popover.event.extendedProps.club === 'Training' ? '🚴' :
-               popover.event.extendedProps.club === 'Medication' ? '💊' :
-               popover.event.extendedProps.club === 'Task' ? '📝' : '🏆'}
+            <span className="popover-icon inline-flex items-center">
+              {popover.event.extendedProps.club === 'Training' ? <TimerIcon size={14} className="text-sky-400" /> :
+               popover.event.extendedProps.club === 'Medication' ? <PillIcon size={14} className="text-emerald-400" /> :
+               popover.event.extendedProps.club === 'Task' ? <NotesIcon size={14} className="text-amber-400" /> : <TrophyIcon size={14} className="text-amber-400" />}
             </span>
             <span className="popover-title">{popover.event.title}</span>
           </div>

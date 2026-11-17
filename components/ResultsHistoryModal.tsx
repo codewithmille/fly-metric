@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, TrophyIcon, CalendarIcon, TrainingIcon } from '@/components/icons'
+import {
+  BirdIcon,
+  TrophyIcon,
+  CalendarIcon,
+  TrainingIcon,
+  MapPinIcon,
+  CameraIcon,
+  VideoIcon,
+  DownloadIcon,
+} from '@/components/icons'
 
 interface BirdRecord {
   ringNo: string
@@ -138,7 +147,9 @@ export default function ResultsHistoryModal({
         <div className="modal-body modal-scroll-body" style={{ padding: '1.2rem', overflowY: 'auto' }}>
           {completedEvents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#64748b' }}>
+                <TrophyIcon size={32} />
+              </div>
               <div style={{ fontSize: '0.88rem', fontWeight: 700 }}>No Clocked Results Found</div>
               <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', maxWidth: '300px', marginLeft: 'auto', marginRight: 'auto' }}>
                 Completed events will appear here once you clock-in birds via the camera or quick clock-in panel.
@@ -207,8 +218,11 @@ export default function ResultsHistoryModal({
                           <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                             {ev.title}
                           </h3>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
-                            📍 {ev.extendedProps?.location || 'No location'} · 📏 {distance} km
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontFamily: 'monospace' }}>
+                            <MapPinIcon size={11} className="text-slate-500 inline shrink-0" />
+                            <span>{ev.extendedProps?.location || 'No location'}</span>
+                            <span>•</span>
+                            <span>{distance} km</span>
                           </div>
                         </div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>
@@ -223,16 +237,19 @@ export default function ResultsHistoryModal({
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.4rem',
-                          background: 'rgba(255,193,7,0.04)',
-                          border: '1px solid rgba(255,193,7,0.08)',
+                          background: 'rgba(245,158,11,0.06)',
+                          border: '1px solid rgba(245,158,11,0.15)',
                           borderRadius: '0.4rem',
                           padding: '0.35rem 0.5rem',
                           fontSize: '0.7rem'
                         }}>
-                          <span style={{ color: 'var(--brand-gold)' }}>🏆 Winner:</span>
-                          <strong style={{ color: 'var(--text-primary)' }}>{winnerRing}</strong>
-                          <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                            ⚡ {maxSpeed.toLocaleString()} m/min
+                          <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 700 }}>
+                            <TrophyIcon size={12} />
+                            <span>Winner:</span>
+                          </span>
+                          <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{winnerRing}</strong>
+                          <span style={{ color: 'var(--text-muted)', marginLeft: 'auto', fontFamily: 'monospace', fontWeight: 700 }}>
+                            {maxSpeed.toLocaleString()} m/min
                           </span>
                         </div>
                       )}
@@ -283,10 +300,14 @@ export default function ResultsHistoryModal({
                                               padding: '0.05rem 0.25rem',
                                               fontSize: '0.58rem',
                                               cursor: 'pointer',
-                                              fontWeight: 700
+                                              fontWeight: 700,
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.2rem',
                                             }}
                                           >
-                                            📷 Photo
+                                            <CameraIcon size={9} />
+                                            <span>Photo</span>
                                           </button>
                                         )}
                                         {video && (
@@ -301,10 +322,14 @@ export default function ResultsHistoryModal({
                                               padding: '0.05rem 0.25rem',
                                               fontSize: '0.58rem',
                                               cursor: 'pointer',
-                                              fontWeight: 700
+                                              fontWeight: 700,
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.2rem',
                                             }}
                                           >
-                                            📹 Video
+                                            <VideoIcon size={9} />
+                                            <span>Video</span>
                                           </button>
                                         )}
                                       </div>
@@ -398,9 +423,10 @@ export default function ResultsHistoryModal({
                   link.click()
                   document.body.removeChild(link)
                 }}
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700 }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               >
-                📥 Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}
+                <DownloadIcon size={14} />
+                <span>Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}</span>
               </button>
               <button
                 type="button"

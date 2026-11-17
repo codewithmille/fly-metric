@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { TrainingIcon, CalendarIcon, TimerIcon, NotesIcon, LightningIcon, PillIcon, BirdIcon } from '@/components/icons'
 
 interface TrainingProgramModalProps {
   isOpen: boolean
   onClose: () => void
+  isPageMode?: boolean
 }
 
 type TabType = 'schedule' | 'progression' | 'feeding' | 'recovery' | 'supplements' | 'breeder'
@@ -25,7 +27,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Race Return / Rest',
     subtitle: 'Day of Return',
-    icon: '🏁',
+    icon: 'D0',
     focus: 'Rehydration, detoxification, and physical rest.',
     schedule: [
       '08:00 AM – 12:00 PM (Race Return): Pag-uwi ng mga ibon, bigyan agad ng lukewarm water na may Electrolytes + Glucose o Honey para mabilis ma-restore ang energy at maiwasan ang dehydration.',
@@ -40,7 +42,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Recovery & Bath',
     subtitle: 'Day 1 after return',
-    icon: '🛁',
+    icon: 'D1',
     focus: 'Gut recovery, bathing, and mental relaxation.',
     schedule: [
       '06:00 AM – 07:00 AM (Morning Free Fly): Buksan ang loft para sa 30 minutong boluntaryong lipad (voluntary flying). Huwag pilitin o flag-in ang mga ibon.',
@@ -55,7 +57,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Muscle Rebuilding',
     subtitle: 'Day 2 after return',
-    icon: '💪',
+    icon: 'D2',
     focus: 'Protein intake to repair muscle fibers and tissue.',
     schedule: [
       '05:30 AM – 06:15 AM (Morning forced training): Palipadin ang mga ibon gamit ang flag ng 45 minutes para ma-stretch at gumaling ang muscle fibers.',
@@ -70,7 +72,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Stamina Conditioning',
     subtitle: 'Day 3 after return',
-    icon: '⚡',
+    icon: 'D3',
     focus: 'Building aerobic capacity and metabolic conditioning.',
     schedule: [
       '05:30 AM – 06:30 AM (Forced Loft Fly): Taasan ang pagpapalipad hanggang 60 minutes gamit ang flag o sipol. Obserbahan ang pag-flock ng mga ibon.',
@@ -85,7 +87,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Power & Road Work',
     subtitle: 'Day 4 after return',
-    icon: '🚀',
+    icon: 'D4',
     focus: 'Stamina building and orientation training.',
     schedule: [
       '04:30 AM (Basketing for Toss): I-basket ang mga ibon nang madaling araw para sa road training toss.',
@@ -100,7 +102,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Carbohydrate Loading',
     subtitle: 'Day 5 after return',
-    icon: '🔋',
+    icon: 'D5',
     focus: 'Filling glycogen stores in muscles and liver.',
     schedule: [
       '06:00 AM – 06:30 AM (Voluntary Loft Fly): Hayaang lumipad nang malaya (free fly) ang mga ibon nang 30 minutes lamang. Huwag nang pilitin o i-flag.',
@@ -115,7 +117,7 @@ const weeklySteps: WeeklyStep[] = [
   {
     title: 'Basketing / Calmness',
     subtitle: 'Day 6 after return (Basketing)',
-    icon: '📦',
+    icon: 'D6',
     focus: 'Maintaining energy, hydration, and a calm nervous system.',
     schedule: [
       '06:00 AM – 06:20 AM (Stretch Fly): 20 minutong napaka-gaan at malayang lipad para lang ma-stretch ang mga pakpak.',
@@ -129,7 +131,11 @@ const weeklySteps: WeeklyStep[] = [
   }
 ]
 
-export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgramModalProps) {
+export default function TrainingProgramModal({
+  isOpen,
+  onClose,
+  isPageMode = false,
+}: TrainingProgramModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('schedule')
   const [returnDay, setReturnDay] = useState<DayType>('sat')
   const [activeDay, setActiveDay] = useState<DayType>('sat')
@@ -271,38 +277,50 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
     { name: 'Liver Support (Sorbitol/B-complex)', dose: '5ml per Litre of water', timing: 'Sunday', benefits: 'Helps detoxify the liver and kidneys of metabolic waste after intense flight.' }
   ]
 
-  return (
-    <div 
-      className="modal-backdrop modal-floating" 
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      style={{ zIndex: 9000 }}
+  const trainingMainView = (
+    <div
+      className={isPageMode ? "w-full max-w-7xl mx-auto flex flex-col gap-4" : "modal-container"}
+      ref={modalRef}
+      tabIndex={-1}
+      role={isPageMode ? "region" : "dialog"}
+      aria-modal={isPageMode ? undefined : "true"}
+      style={isPageMode ? undefined : { maxWidth: '680px', width: '95%', maxHeight: '90dvh', display: 'flex', flexDirection: 'column' }}
     >
-      <div
-        className="modal-container"
-        ref={modalRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        style={{ maxWidth: '680px', width: '95%', maxHeight: '90dvh', display: 'flex', flexDirection: 'column' }}
-      >
-        {/* Header */}
-        <div className="modal-header" style={{ background: 'linear-gradient(135deg, #10b981, #047857)', flexShrink: 0 }}>
-          <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>🕊️</span>
+      {/* Header */}
+      {isPageMode ? (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">Training & Conditioning</h2>
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                Active Cycle
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1 m-0">
+              Championship toss progressions, feeding calculation, and post-race recovery programs
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="modal-header">
+          <div className="modal-header-left">
+            <span className="modal-pigeon-icon">
+              <TrainingIcon size={18} />
+            </span>
             <div>
-              <h2 className="modal-title" style={{ color: '#fff', fontWeight: 800 }}>Pigeon Training & Conditioning</h2>
-              <p className="modal-subtitle" style={{ color: 'rgba(255,255,255,0.75)' }}>Belgian & Taiwanese championship training methodology</p>
+              <h2 className="modal-title">Pigeon Training &amp; Conditioning</h2>
+              <p className="modal-subtitle">Championship toss progressions, feeding &amp; recovery schedule</p>
             </div>
           </div>
           <button 
             className="modal-close-btn" 
-            style={{ color: '#fff', background: 'rgba(255,255,255,0.1)' }} 
             onClick={onClose} 
             aria-label="Close modal"
           >
             ✕
           </button>
         </div>
+      )}
 
         {/* Navigation Tabs */}
         <div 
@@ -326,8 +344,8 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 fontWeight: 700,
                 border: 'none',
                 background: 'transparent',
-                color: activeTab === tab ? '#10b981' : 'var(--text-secondary)',
-                borderBottom: activeTab === tab ? '2px solid #10b981' : '2px solid transparent',
+                color: activeTab === tab ? '#f59e0b' : 'var(--text-secondary)',
+                borderBottom: activeTab === tab ? '2px solid #f59e0b' : '2px solid transparent',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 whiteSpace: 'nowrap',
@@ -336,18 +354,30 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 flexShrink: 0
               }}
             >
-              {tab === 'schedule' && '📅 Weekly Schedule'}
-              {tab === 'progression' && '📈 Toss Progression'}
-              {tab === 'feeding' && '🌾 Feed Calc'}
-              {tab === 'recovery' && '🏥 Recovery'}
-              {tab === 'supplements' && '🧪 Supplements'}
-              {tab === 'breeder' && '🥚 Breeder Guide'}
+              {tab === 'schedule' && 'Weekly Schedule'}
+              {tab === 'progression' && 'Toss Progression'}
+              {tab === 'feeding' && 'Feed Calc'}
+              {tab === 'recovery' && 'Recovery'}
+              {tab === 'supplements' && 'Supplements'}
+              {tab === 'breeder' && 'Breeder Guide'}
             </button>
           ))}
         </div>
 
-        {/* Modal Content Body */}
-        <div className="modal-body" style={{ padding: '1.25rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* Content Body */}
+        <div className={isPageMode ? "w-full" : "modal-body"} style={isPageMode ? {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          padding: '0.5rem 0 2rem 0',
+        } : { 
+          padding: '1.25rem', 
+          overflowY: 'auto', 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '1rem' 
+        }}>
           
           {/* TAB 1: WEEKLY CONDITIONING SCHEDULE */}
           {activeTab === 'schedule' && (
@@ -366,7 +396,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 gap: '0.5rem'
               }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  📅 Race Return Day (Araw ng Uwi):
+                  Race Return Day (Araw ng Uwi):
                 </span>
                 <select
                   aria-label="Race Return Day"
@@ -431,7 +461,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                       minWidth: '55px'
                     }}
                   >
-                    <div style={{ fontSize: '0.85rem', marginBottom: '0.1rem' }}>{daysInfo[day].icon}</div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, marginBottom: '0.1rem', opacity: 0.7 }}>{daysInfo[day].icon}</div>
                     <div>{day.toUpperCase()}</div>
                   </button>
                 ))}
@@ -450,7 +480,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.75rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                      {daysInfo[activeDay].icon} {daysInfo[activeDay].title} Schedule
+                      {daysInfo[activeDay].title} Schedule
                     </h3>
                     <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>{daysInfo[activeDay].subtitle}</span>
                   </div>
@@ -511,11 +541,11 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
 
                 <div className="responsive-grid-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
                   <div>
-                    <h4 style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem', letterSpacing: '0.04em' }}>🌾 Feeding</h4>
+                    <h4 style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem', letterSpacing: '0.04em' }}>Feeding</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.3' }}>{daysInfo[activeDay].feeding}</p>
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem', letterSpacing: '0.04em' }}>🧪 Supplements</h4>
+                    <h4 style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem', letterSpacing: '0.04em' }}>Supplements</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.3' }}>{daysInfo[activeDay].supplements}</p>
                   </div>
                 </div>
@@ -536,7 +566,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 borderRadius: '0.5rem',
                 padding: '0.65rem 0.88rem'
               }}>
-                📈 <strong>Training Toss Progression</strong>: Complete each stage before advancing. If pigeons arrive dispersed or delayed, repeat the stage before increasing distance.
+                <strong>Training Toss Progression</strong>: Complete each stage before advancing. If pigeons arrive dispersed or delayed, repeat the stage before increasing distance.
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -580,7 +610,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                           {step.stage}: {step.distance}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                          🔁 {step.frequency} · <span style={{ color: 'var(--text-muted)' }}>{step.notes}</span>
+                          {step.frequency} · <span style={{ color: 'var(--text-muted)' }}>{step.notes}</span>
                         </div>
                       </div>
                     </div>
@@ -623,7 +653,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  🌾 Short Distance (90-150 km)
+                  Short Distance (90-150 km)
                 </button>
                 <button
                   type="button"
@@ -640,7 +670,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  🥜 Medium Distance (150-300 km)
+                  Medium Distance (150-300 km)
                 </button>
               </div>
 
@@ -761,7 +791,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 borderRadius: '0.5rem',
                 padding: '0.65rem 0.88rem'
               }}>
-                🚨 <strong>Recovery is key</strong>: Races are won or lost based on how fast the loft recovers. Follow these time-sensitive protocols after birds return to the loft.
+                <strong>Recovery is key</strong>: Races are won or lost based on how fast the loft recovers. Follow these time-sensitive protocols after birds return to the loft.
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -842,7 +872,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                     className="selection-item-card"
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <strong style={{ fontSize: '0.85rem', color: 'var(--brand-gold)' }}>🧪 {sup.name}</strong>
+                      <strong style={{ fontSize: '0.85rem', color: 'var(--brand-gold)' }}>{sup.name}</strong>
                       <span style={{
                         fontSize: '0.6rem',
                         fontWeight: 700,
@@ -883,7 +913,9 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                 padding: '1rem 1.1rem',
                 display: 'flex', gap: '0.75rem', alignItems: 'flex-start'
               }}>
-                <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>🥚</span>
+                <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', flexShrink: 0 }}>
+                  <BirdIcon size={18} />
+                </div>
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Breeder Conditioning Program</div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.55 }}>
@@ -896,14 +928,14 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* Philippine Breeding Calendar */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  📆 Philippine Breeding Calendar
+                  Philippine Breeding Calendar
                 </h3>
                 <div className="responsive-grid-2" style={{ gap: '0.6rem' }}>
                   {[
-                    { season: 'Early Breeding Season', months: 'October – December', icon: '🌤️', color: '#f59e0b', tip: 'Condition pairs from September. Best ambient temperature for nesting. Young birds will be fit for February–March races.' },
-                    { season: 'Mid Breeding Season', months: 'January – March', icon: '☀️', color: '#10b981', tip: 'Peak breeding season. High energy feeds needed. Transition young birds to loft training by April.' },
-                    { season: 'Off-Season Breeding', months: 'April – June', icon: '🌧️', color: '#6366f1', tip: 'Rainy season. Limit breeding pairs. Focus on health maintenance. Ventilation is critical to avoid respiratory illness.' },
-                    { season: 'Rest & Moult Period', months: 'July – September', icon: '🍃', color: '#64748b', tip: 'Separate cocks and hens. Support full moult with high-protein feed and Vitamin E. No breeding during moult.' },
+                    { season: 'Early Breeding Season', months: 'October – December', color: '#f59e0b', tip: 'Condition pairs from September. Best ambient temperature for nesting. Young birds will be fit for February–March races.' },
+                    { season: 'Mid Breeding Season', months: 'January – March', color: '#10b981', tip: 'Peak breeding season. High energy feeds needed. Transition young birds to loft training by April.' },
+                    { season: 'Off-Season Breeding', months: 'April – June', color: '#6366f1', tip: 'Rainy season. Limit breeding pairs. Focus on health maintenance. Ventilation is critical to avoid respiratory illness.' },
+                    { season: 'Rest & Moult Period', months: 'July – September', color: '#64748b', tip: 'Separate cocks and hens. Support full moult with high-protein feed and Vitamin E. No breeding during moult.' },
                   ].map((s, i) => (
                     <div key={i} style={{
                       background: 'rgba(255,255,255,0.02)',
@@ -912,7 +944,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                       padding: '0.75rem 0.88rem',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                        <span style={{ fontSize: '1rem' }}>{s.icon}</span>
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: s.color }}>{s.season}</span>
                       </div>
                       <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>{s.months}</div>
@@ -925,14 +957,14 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* 4-Week Pre-Breeding Conditioning */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  💪 Pre-Breeding Conditioning — 4 Weeks Before Pairing
+                  Pre-Breeding Conditioning — 4 Weeks Before Pairing
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {[
-                    { week: 'Week 1 — Detox & Parasite Clear', icon: '🧹', tasks: ['Treat for Canker (Metronidazole 3 days)', 'Treat for Coccidiosis if needed', 'ACV (Apple Cider Vinegar) in water daily — 10ml/L', 'Depurative diet: barley + wheat only', 'Separate cocks and hens'] },
-                    { week: 'Week 2 — Health Build', icon: '🏗️', tasks: ['Probiotics in feed (5g/kg) for 5 days', 'Vitamin B-complex in water', 'Transition to sport mix: 60% barley, 40% maize', 'Grit and mineral free access', 'Check for respiratory symptoms'] },
-                    { week: 'Week 3 — Conditioning', icon: '⚡', tasks: ['High-protein breeding mix: maize 35%, peas 20%, wheat 20%, safflower 15%, hemp 10%', 'Vitamin E + Selenium supplement (3 days)', 'Allow supervised exercise — loft flying 2× daily', 'Canary seed added for hens (calcium)', 'Inspect nest boxes — clean and disinfect'] },
-                    { week: 'Week 4 — Pair-Ready', icon: '💑', tasks: ['Feed breeding mix ad libitum (free access)', 'Iron + B12 in water (Wednesday)', 'Allow pairs to meet through cage divider', 'Select pairs based on pedigree and performance records', 'Begin pairing on Day 28 or when hens show egg-laying posture'] },
+                    { week: 'Week 1 — Detox & Parasite Clear', tasks: ['Treat for Canker (Metronidazole 3 days)', 'Treat for Coccidiosis if needed', 'ACV (Apple Cider Vinegar) in water daily — 10ml/L', 'Depurative diet: barley + wheat only', 'Separate cocks and hens'] },
+                    { week: 'Week 2 — Health Build', tasks: ['Probiotics in feed (5g/kg) for 5 days', 'Vitamin B-complex in water', 'Transition to sport mix: 60% barley, 40% maize', 'Grit and mineral free access', 'Check for respiratory symptoms'] },
+                    { week: 'Week 3 — Conditioning', tasks: ['High-protein breeding mix: maize 35%, peas 20%, wheat 20%, safflower 15%, hemp 10%', 'Vitamin E + Selenium supplement (3 days)', 'Allow supervised exercise — loft flying 2× daily', 'Canary seed added for hens (calcium)', 'Inspect nest boxes — clean and disinfect'] },
+                    { week: 'Week 4 — Pair-Ready', tasks: ['Feed breeding mix ad libitum (free access)', 'Iron + B12 in water (Wednesday)', 'Allow pairs to meet through cage divider', 'Select pairs based on pedigree and performance records', 'Begin pairing on Day 28 or when hens show egg-laying posture'] },
                   ].map((w, i) => (
                     <div key={i} style={{
                       background: 'rgba(255,255,255,0.02)',
@@ -946,7 +978,6 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                         padding: '0.5rem 0.88rem',
                         display: 'flex', alignItems: 'center', gap: '0.4rem'
                       }}>
-                        <span style={{ fontSize: '1rem' }}>{w.icon}</span>
                         <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b' }}>{w.week}</span>
                       </div>
                       <ul style={{ margin: 0, padding: '0.6rem 0.88rem 0.6rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -962,7 +993,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* Breeding Season Feed Composition Table */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  🌾 Breeding Season Feed Composition
+                  Breeding Season Feed Composition
                 </h3>
                 <div style={{ border: '1px solid var(--border-default)', borderRadius: '0.625rem', overflow: 'hidden' }}>
                   <div className="responsive-table-container">
@@ -977,12 +1008,12 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                       </thead>
                       <tbody>
                         {[
-                          { grain: '🌽 Maize (Mais)', egg: '30%', squab: '35%', purpose: 'Primary energy source for sitting pairs and crop milk production' },
-                          { grain: '🫘 Peas (Gisantes)', egg: '25%', squab: '30%', purpose: 'High protein for squab growth and cock stamina during feeding' },
-                          { grain: '🌾 Wheat (Trigo)', egg: '20%', squab: '15%', purpose: 'B-vitamins and carbohydrate for sustained energy' },
-                          { grain: '🌻 Safflower', egg: '12%', squab: '10%', purpose: 'High fat for crop milk fat content; immune function' },
-                          { grain: '🌿 Hemp Seed', egg: '8%', squab: '7%', purpose: 'Omega-3 fatty acids, hormone balance, feather quality' },
-                          { grain: '🟡 Canary Seed', egg: '5%', squab: '3%', purpose: 'Calcium-rich; essential for shell hardening and bone density of squabs' },
+                          { grain: 'Maize (Mais)', egg: '30%', squab: '35%', purpose: 'Primary energy source for sitting pairs and crop milk production' },
+                          { grain: 'Peas (Gisantes)', egg: '25%', squab: '30%', purpose: 'High protein for squab growth and cock stamina during feeding' },
+                          { grain: 'Wheat (Trigo)', egg: '20%', squab: '15%', purpose: 'B-vitamins and carbohydrate for sustained energy' },
+                          { grain: 'Safflower', egg: '12%', squab: '10%', purpose: 'High fat for crop milk fat content; immune function' },
+                          { grain: 'Hemp Seed', egg: '8%', squab: '7%', purpose: 'Omega-3 fatty acids, hormone balance, feather quality' },
+                          { grain: 'Canary Seed', egg: '5%', squab: '3%', purpose: 'Calcium-rich; essential for shell hardening and bone density of squabs' },
                         ].map((row, i) => (
                           <tr key={i} style={{ borderBottom: '1px solid var(--border-default)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
                             <td style={{ padding: '0.55rem 0.88rem', fontSize: '0.72rem', color: 'var(--text-primary)', fontWeight: 600 }}>{row.grain}</td>
@@ -1000,35 +1031,35 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* Breeder Feeding & Watering Guide */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  🥤 Breeder Feeding & Watering Guide (Gabay sa Pakain at Tubig)
+                  Breeder Feeding & Watering Guide (Gabay sa Pakain at Tubig)
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   {[
                     {
-                      title: '🍽️ Feed Quantity (Gaano Karaming Pagkain)',
+                      title: 'Feed Quantity (Gaano Karaming Pagkain)',
                       desc: 'Depende sa stage ng breeder ang dami ng kailangang patuka para maiwasan ang labis na katabaan o pagkabansot ng inakay:',
                       bullets: [
-                        '🥚 Sitting on Eggs (Nangangitlog/Naglilimlim): Limitahan sa 30 to 35 grams bawat kalapati kada araw. Hatiin sa 15g sa umaga (gisingin sila) at 20g sa hapon. Ang labis na pagkain ay magpapataba sa kanila at magiging sanhi ng tamad na paglilimlim.',
-                        '🐣 Feeding Squabs (May Inakay): Ad Libitum o Free Access (unlimited). Dapat laging may pagkain sa loft feeder dahil ang mga magulang ay patuloy na nagpapasuso ng crop milk at nagpapakain sa mga inakay buong araw.',
-                        '💡 Tip: Bago magpatuka sa hapon, maglagay ng mineral block o grit. Nakakatulong ito sa paggiling ng matitigas na butil sa loob ng gizzard.'
+                        'Sitting on Eggs (Nangangitlog/Naglilimlim): Limitahan sa 30 to 35 grams bawat kalapati kada araw. Hatiin sa 15g sa umaga (gisingin sila) at 20g sa hapon. Ang labis na pagkain ay magpapataba sa kanila at magiging sanhi ng tamad na paglilimlim.',
+                        'Feeding Squabs (May Inakay): Ad Libitum o Free Access (unlimited). Dapat laging may pagkain sa loft feeder dahil ang mga magulang ay patuloy na nagpapasuso ng crop milk at nagpapakain sa mga inakay buong araw.',
+                        'Tip: Bago magpatuka sa hapon, maglagay ng mineral block o grit. Nakakatulong ito sa paggiling ng matitigas na butil sa loob ng gizzard.'
                       ]
                     },
                     {
-                      title: '💧 Water Management (Tamang Pagpapainom)',
+                      title: 'Water Management (Tamang Pagpapainom)',
                       desc: 'Ang malinis na tubig ay kritikal sa paggawa ng crop milk (gatas ng kalapati):',
                       bullets: [
-                        '🥤 Dami ng Tubig: Ang isang pares ay karaniwang umiinom ng 80ml–120ml kada araw. Ngunit kapag may inakay na pinapakain, umaabot ito ng 250ml–300ml bawat pares dahil sa paggawa ng crop milk.',
-                        '🧼 Dalas ng Pagpapalit: Palitan ang tubig 2 beses sa isang araw (umaga at hapon). Linisin ang painuman gamit ang brush para matanggal ang madulas na slime/lumot at dumi.',
-                        '🍋 Apple Cider Vinegar (ACV): Maglagay ng 5ml hanggang 10ml ACV bawat 1 litro ng tubig, 3 beses sa isang linggo. Pinapanatili nitong acidic ang bituka at crop ng magulang upang hindi sila tubuan ng amag, bacteria, o Canker na madaling maipasa sa inakay.'
+                        'Dami ng Tubig: Ang isang pares ay karaniwang umiinom ng 80ml–120ml kada araw. Ngunit kapag may inakay na pinapakain, umaabot ito ng 250ml–300ml bawat pares dahil sa paggawa ng crop milk.',
+                        'Dalas ng Pagpapalit: Palitan ang tubig 2 beses sa isang araw (umaga at hapon). Linisin ang painuman gamit ang brush para matanggal ang madulas na slime/lumot at dumi.',
+                        'Apple Cider Vinegar (ACV): Maglagay ng 5ml hanggang 10ml ACV bawat 1 litro ng tubig, 3 beses sa isang linggo. Pinapanatili nitong acidic ang bituka at crop ng magulang upang hindi sila tubuan ng amag, bacteria, o Canker na madaling maipasa sa inakay.'
                       ]
                     },
                     {
-                      title: '🪨 Minerals & Grit (Asin at Bato-bato)',
+                      title: 'Minerals & Grit (Asin at Bato-bato)',
                       desc: 'Kailangang-kailangan ng breeder ang minerals para sa shell ng itlog at buto ng inakay:',
                       bullets: [
-                        '🪨 Grit Mix: Laging maglagay ng fresh grit (dinikdik na shell ng talaba, uling, brick dust) sa isang hiwalay na lalagyan. Huwag ihalo sa pagkain.',
-                        '🧪 Calcium Liquid: Magdagdag ng Calcium chloride o liquid calcium (10ml/L) sa tubig 2 araw bago mangitlog ang hen para maiwasan ang "soft-shell" egg.',
-                        '🧱 Pink Mineral Block / Clay Block: Maglaan ng clay block. May taglay itong minerals at asin na nagbibigay ng electrolytes sa breeding pairs.'
+                        'Grit Mix: Laging maglagay ng fresh grit (dinikdik na shell ng talaba, uling, brick dust) sa isang hiwalay na lalagyan. Huwag ihalo sa pagkain.',
+                        'Calcium Liquid: Magdagdag ng Calcium chloride o liquid calcium (10ml/L) sa tubig 2 araw bago mangitlog ang hen para maiwasan ang "soft-shell" egg.',
+                        'Pink Mineral Block / Clay Block: Maglaan ng clay block. May taglay itong minerals at asin na nagbibigay ng electrolytes sa breeding pairs.'
                       ]
                     }
                   ].map((g, i) => (
@@ -1064,14 +1095,14 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* Nest Box & Egg Management */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  🪺 Nest Box & Egg Management
+                  Nest Box & Egg Management
                 </h3>
                 <div className="responsive-grid-2" style={{ gap: '0.6rem' }}>
                   {[
-                    { title: 'Egg Laying', icon: '🥚', timeline: 'Days 1–2 after mating', notes: ['First egg laid ~10 days after pairing', 'Second egg follows 40–44 hours later', 'Do not disturb nest for first 5 days', 'Mark eggs with pencil to track fertility'] },
-                    { title: 'Incubation', icon: '♨️', timeline: 'Days 1–17', notes: ['Both parents sit in shifts (cock: morning, hen: afternoon/night)', 'Normal incubation: 17–19 days', 'Candle eggs on Day 7–9 to check fertility', 'Infertile (clear) eggs — remove on Day 9'] },
-                    { title: 'Hatching & Squab', icon: '🐣', timeline: 'Days 17–28', notes: ['Squabs hatch on Day 17–19', 'Fed crop milk by both parents for first 5 days', 'Add extra protein feed after Day 5', 'Squabs fledge (leave nest) at Day 28–35'] },
-                    { title: 'Weaning', icon: '🕊️', timeline: 'Days 28–35', notes: ['Separate squabs from parents at 28–30 days', 'Place in young bird loft with water and grit access', 'Begin loft training at 6–8 weeks', 'Re-pair parents for 2nd round or rest'] },
+                    { title: 'Egg Laying', timeline: 'Days 1–2 after mating', notes: ['First egg laid ~10 days after pairing', 'Second egg follows 40–44 hours later', 'Do not disturb nest for first 5 days', 'Mark eggs with pencil to track fertility'] },
+                    { title: 'Incubation', timeline: 'Days 1–17', notes: ['Both parents sit in shifts (cock: morning, hen: afternoon/night)', 'Normal incubation: 17–19 days', 'Candle eggs on Day 7–9 to check fertility', 'Infertile (clear) eggs — remove on Day 9'] },
+                    { title: 'Hatching & Squab', timeline: 'Days 17–28', notes: ['Squabs hatch on Day 17–19', 'Fed crop milk by both parents for first 5 days', 'Add extra protein feed after Day 5', 'Squabs fledge (leave nest) at Day 28–35'] },
+                    { title: 'Weaning', timeline: 'Days 28–35', notes: ['Separate squabs from parents at 28–30 days', 'Place in young bird loft with water and grit access', 'Begin loft training at 6–8 weeks', 'Re-pair parents for 2nd round or rest'] },
                   ].map((stage, i) => (
                     <div key={i} style={{
                       background: 'rgba(255,255,255,0.02)',
@@ -1085,7 +1116,6 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
                         borderBottom: '1px solid var(--border-default)',
                         display: 'flex', alignItems: 'center', gap: '0.4rem'
                       }}>
-                        <span style={{ fontSize: '1rem' }}>{stage.icon}</span>
                         <div>
                           <div style={{ fontSize: '0.73rem', fontWeight: 800, color: '#818cf8' }}>{stage.title}</div>
                           <div style={{ fontSize: '0.63rem', color: 'var(--text-muted)' }}>{stage.timeline}</div>
@@ -1104,7 +1134,7 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
               {/* Breeder Supplement Schedule */}
               <div>
                 <h3 style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  🧪 Breeder Supplement Schedule
+                  Breeder Supplement Schedule
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                   {[
@@ -1185,28 +1215,31 @@ export default function TrainingProgramModal({ isOpen, onClose }: TrainingProgra
           </span>
           <button
             type="button"
-            className="nav-btn nav-btn-primary"
+            className="cockpit-nav-btn-primary !h-[1.9rem] !text-xs !py-0 !px-3"
             onClick={onClose}
-            style={{
-              padding: '0.45rem 1rem',
-              background: '#10b981',
-              color: '#000',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '1.8rem'
-            }}
           >
             Close Guide
           </button>
         </div>
 
       </div>
+  )
+
+  if (isPageMode) {
+    return (
+      <div className="w-full">
+        {trainingMainView}
+      </div>
+    )
+  }
+
+  return (
+    <div 
+      className="modal-backdrop modal-floating" 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      style={{ zIndex: 10500 }}
+    >
+      {trainingMainView}
     </div>
   )
 }

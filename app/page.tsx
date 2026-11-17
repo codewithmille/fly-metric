@@ -16,7 +16,25 @@ import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 import TrainingProgramModal from '@/components/TrainingProgramModal'
 import PigeonChatModal from '@/components/PigeonChatModal'
 import ElectronicPadModal from '@/components/ElectronicPadModal'
-import { BirdIcon, LightningIcon, TrainingIcon, TrophyIcon, PlusIcon, CalendarIcon, PillIcon, NotesIcon, CalculatorIcon, AntennaIcon } from '@/components/icons'
+import {
+  BirdIcon,
+  LightningIcon,
+  TrainingIcon,
+  TrophyIcon,
+  PlusIcon,
+  CalendarIcon,
+  PillIcon,
+  NotesIcon,
+  CalculatorIcon,
+  AntennaIcon,
+  TimerIcon,
+  MapPinIcon,
+  GlobeIcon,
+  EditIcon,
+  HomeIcon,
+  CameraIcon,
+  UserIcon,
+} from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
@@ -80,6 +98,7 @@ export default function Home() {
     return []
   })
   const [loading, setLoading] = useState(true)
+  const [mainTab, setMainTab] = useState<'home' | 'birds' | 'activities' | 'training' | 'profile'>('home')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isClockInOpen, setIsClockInOpen] = useState(false)
   const [isRegistryOpen, setIsRegistryOpen] = useState(false)
@@ -422,7 +441,7 @@ export default function Home() {
           eventTitle: targetEvent.title,
           rank: updatedBirdsList.length,
           type: 'success',
-          message: `🎯 OFFICIAL EBDS ARRIVAL RECORDED! Speed: ${calculatedSpeed.toLocaleString()} m/min · Rank #${updatedBirdsList.length}`
+          message: `OFFICIAL EBDS ARRIVAL RECORDED: Speed: ${calculatedSpeed.toLocaleString()} m/min · Rank #${updatedBirdsList.length}`
         })
 
         fetchEvents()
@@ -548,35 +567,37 @@ export default function Home() {
     setSelectedEvent(null)
   }
 
-  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat' | 'trap' | 'birds') => {
+  const navigateToTab = (tabName: 'addEvent' | 'clockIn' | 'camera' | 'history' | 'activities' | 'profile' | 'home' | 'chat' | 'trap' | 'birds' | 'training') => {
     setIsModalOpen(false)
     setIsSelectionOpen(false)
     setIsClockInOpen(false)
     setIsVerifyPhotoOpen(false)
-    setIsActivitiesOpen(false)
-    setIsProfileOpen(false)
-    setIsRegistryOpen(false)
     setIsChatOpen(false)
     setIsPadStationOpen(false)
+    setIsCalculatorOpen(false)
 
-    if (tabName === 'birds') {
-      setIsRegistryOpen(true)
-    } else if (tabName === 'addEvent') {
-      openModal(today)
+    if (tabName === 'home') {
+      setMainTab('home')
+    } else if (tabName === 'birds') {
+      setMainTab('birds')
+    } else if (tabName === 'activities') {
+      setActivitiesInitialTab('activities')
+      setMainTab('activities')
+    } else if (tabName === 'history') {
+      setActivitiesInitialTab('results')
+      setMainTab('activities')
+    } else if (tabName === 'profile') {
+      setMainTab('profile')
+    } else if (tabName === 'training') {
+      setMainTab('training')
     } else if (tabName === 'clockIn') {
       setIsClockInOpen(true)
+    } else if (tabName === 'addEvent') {
+      openModal(today)
     } else if (tabName === 'trap') {
       setIsPadStationOpen(true)
     } else if (tabName === 'camera') {
       setIsVerifyPhotoOpen(true)
-    } else if (tabName === 'activities') {
-      setActivitiesInitialTab('activities')
-      setIsActivitiesOpen(true)
-    } else if (tabName === 'history') {
-      setActivitiesInitialTab('results')
-      setIsActivitiesOpen(true)
-    } else if (tabName === 'profile') {
-      setIsProfileOpen(true)
     } else if (tabName === 'chat') {
       setIsChatOpen(true)
     }
@@ -731,7 +752,8 @@ export default function Home() {
       iconClass: 'stat-icon-gold',
       value: totalBirds.toLocaleString(),
       prefix: '+',
-      label: 'Total Birds Flown',
+      label: 'Birds Flown',
+      fullLabel: 'Total Birds Flown',
       badge: 'Flown',
       valueColor: '#FFC107',
       ringBg: 'rgba(255, 193, 7, 0.14)',
@@ -742,7 +764,8 @@ export default function Home() {
       iconClass: 'stat-icon-blue',
       value: maxSpeed > 0 ? maxSpeed.toLocaleString() : '0',
       prefix: '',
-      label: 'Max Speed (m/min)',
+      label: 'Top Velocity',
+      fullLabel: 'Top Velocity (m/min)',
       badge: 'Velocity',
       valueColor: '#38bdf8',
       ringBg: 'rgba(56, 189, 248, 0.14)',
@@ -753,7 +776,8 @@ export default function Home() {
       iconClass: 'stat-icon-green',
       value: totalTrainings.toLocaleString(),
       prefix: '+',
-      label: 'Training Tosses',
+      label: 'Road Tosses',
+      fullLabel: 'Training Road Tosses',
       badge: 'Tosses',
       valueColor: '#10b981',
       ringBg: 'rgba(16, 185, 129, 0.14)',
@@ -764,7 +788,8 @@ export default function Home() {
       iconClass: 'stat-icon-purple',
       value: totalRaces.toLocaleString(),
       prefix: '+',
-      label: 'Races Competed',
+      label: 'Derby Races',
+      fullLabel: 'Derby Races Competed',
       badge: 'Season',
       valueColor: '#c084fc',
       ringBg: 'rgba(192, 132, 252, 0.14)',
@@ -779,500 +804,228 @@ export default function Home() {
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div data-theme="dark" className="dashboard bg-base-100 text-base-content">
-      {/* ── Navigation ────────────────────────────────── */}
-      <nav className="dashboard-nav border-b border-white/10 bg-base-200/80 backdrop-blur-xl">
-        <div className="nav-brand">
-          <div className="nav-logo" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', boxShadow: '0 0 14px rgba(16, 185, 129, 0.2)' }}>
-            <img src="/icon.png" alt="FlyMetric" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+    <div data-theme="dark" className="dashboard bg-base-100 text-base-content selection:bg-amber-500/20 selection:text-amber-400">
+      {/* ── Precision Avionics Navigation Bar ────────────────── */}
+      <nav className="dashboard-nav border-b border-white/10 bg-[#0c101a]/95 backdrop-blur-xl px-4 sm:px-6 h-16 sticky top-0 z-50">
+        <div 
+          className="nav-brand flex items-center gap-2.5 sm:gap-3.5 cursor-pointer"
+          onClick={() => setMainTab('home')}
+        >
+          <div
+            className="nav-logo flex items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-sm shadow-amber-500/20"
+            style={{ width: '36px', height: '36px' }}
+            aria-hidden="true"
+          >
+            <img src="/icon.png" alt="FlyMetric" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
           </div>
-          <h1 className="nav-title">
-            Fly<span>Metric</span>
-            {loftName && (
-              <span className="mobile-loft-subtitle" style={{
-                display: 'none',
-                fontSize: '0.72rem',
-                color: 'var(--brand-gold)',
-                fontWeight: 700,
-                marginLeft: '0.5rem',
-                borderLeft: '1px solid rgba(255,255,255,0.15)',
-                paddingLeft: '0.5rem',
-                textTransform: 'uppercase',
-                verticalAlign: 'middle'
-              }}>
-                {loftName}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <h1 className="nav-title font-extrabold text-base sm:text-lg tracking-tight text-white m-0">
+                Fly<span className="text-amber-400">Metric</span>
+              </h1>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase bg-white/5 border border-white/10 text-slate-300">
+                {loftName ? loftName : 'MY LOFT'}
               </span>
-            )}
-          </h1>
-          <span className="nav-badge hidden md:inline-flex">MY LOFT</span>
-          {isOfflineMode ? (
-            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(255, 143, 0, 0.12)', border: '1px solid rgba(255, 143, 0, 0.35)', color: '#FF8F00', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FF8F00', display: 'inline-block' }}></span>
-              Offline
-            </span>
-          ) : (
-            <span className="nav-badge hidden md:inline-flex" style={{ backgroundColor: 'rgba(76, 175, 80, 0.12)', border: '1px solid rgba(76, 175, 80, 0.35)', color: '#4CAF50', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700 }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4CAF50', display: 'inline-block' }}></span>
-              Online
-            </span>
-          )}
+              {isOfflineMode ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse" />
+                  Offline
+                </span>
+              ) : (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                  Live
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-          {/* 1. Loft Registry */}
+        {/* Center Primary Tab Navigation (GitHub Underline Style) */}
+        <nav className="hidden xl:flex items-center gap-0.5 border-b border-transparent h-full">
+          <button
+            id="home-nav"
+            className={`cockpit-tab-item ${mainTab === 'home' ? 'active' : ''}`}
+            onClick={() => setMainTab('home')}
+            aria-label="Loft Dashboard Cockpit"
+          >
+            <HomeIcon size={15} />
+            <span>Cockpit</span>
+          </button>
+
           <button
             id="loft-registry-nav"
-            className="nav-btn nav-btn-secondary"
-            onClick={() => setIsRegistryOpen(true)}
+            className={`cockpit-tab-item ${mainTab === 'birds' ? 'active' : ''}`}
+            onClick={() => setMainTab('birds')}
             aria-label="Manage Loft Birds Registry"
-            style={{
-              background: 'rgba(76, 175, 80, 0.08)',
-              border: '1px solid rgba(76, 175, 80, 0.35)',
-              color: '#4CAF50',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 8px rgba(76, 175, 80, 0.1)',
-            }}
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(76, 175, 80, 0.22)',
-                border: '1px solid rgba(76, 175, 80, 0.45)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#4CAF50',
-              }}
-            >
-              <BirdIcon size={13} />
+            <BirdIcon size={15} />
+            <span>Birds</span>
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+              {registeredBirds.length}
             </span>
-            <span className="nav-btn-text">Loft Registry</span>
           </button>
 
-          {/* 2. Training Program */}
+          <button
+            id="activities-nav"
+            className={`cockpit-tab-item ${mainTab === 'activities' ? 'active' : ''}`}
+            onClick={() => {
+              setActivitiesInitialTab('activities')
+              setMainTab('activities')
+            }}
+            aria-label="Loft Activities & Calendar"
+          >
+            <CalendarIcon size={15} />
+            <span>Activities</span>
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+              {events.length}
+            </span>
+          </button>
+
           <button
             id="training-prog-nav"
-            className="nav-btn nav-btn-secondary"
-            onClick={() => setIsTrainingOpen(true)}
+            className={`cockpit-tab-item ${mainTab === 'training' ? 'active' : ''}`}
+            onClick={() => setMainTab('training')}
             aria-label="Training Program"
-            style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              color: '#10b981',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.1)',
-            }}
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(16, 185, 129, 0.22)',
-                border: '1px solid rgba(16, 185, 129, 0.45)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#10b981',
-              }}
-            >
-              <TrainingIcon size={13} />
-            </span>
-            <span className="nav-btn-text">Training Program</span>
+            <TrainingIcon size={15} />
+            <span>Training</span>
           </button>
 
-          {/* 3. Speed Calculator */}
-          <button
-            id="speed-calc-nav"
-            className="nav-btn nav-btn-secondary"
-            onClick={() => setIsCalculatorOpen(true)}
-            aria-label="Speed Calculator"
-            style={{
-              background: 'rgba(255, 193, 7, 0.08)',
-              border: '1px solid rgba(255, 193, 7, 0.35)',
-              color: 'var(--brand-gold)',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
-            }}
-          >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(255, 193, 7, 0.22)',
-                border: '1px solid rgba(255, 193, 7, 0.45)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--brand-gold)',
-              }}
-            >
-              <CalculatorIcon size={13} />
-            </span>
-            <span className="nav-btn-text">Speed Calculator</span>
-          </button>
+          <div className="h-4 w-px bg-white/10 mx-1.5" />
 
-          {/* 4. Trap Station */}
+          {/* Secondary Tools */}
           <button
             id="trap-antenna-nav"
-            className="nav-btn nav-btn-secondary"
+            className="cockpit-nav-btn !py-1 !px-2.5 !text-xs text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/40"
             onClick={() => setIsPadStationOpen(true)}
             aria-label="Live Trap Station"
-            style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.45)',
-              color: '#34d399',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 0 10px rgba(16, 185, 129, 0.15)',
-            }}
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(16, 185, 129, 0.25)',
-                border: '1px solid rgba(16, 185, 129, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#34d399',
-              }}
-            >
-              <AntennaIcon size={13} />
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <span className="nav-btn-text">Trap Station</span>
+            <AntennaIcon size={13} />
+            <span>Trap Station</span>
           </button>
 
-          {/* 5. Clock-in Bird */}
           <button
-            id="quick-clockin-nav"
-            className="nav-btn nav-btn-secondary"
-            onClick={() => setIsClockInOpen(true)}
-            aria-label="Quick Clock-in bird"
-            style={{
-              background: 'rgba(255, 193, 7, 0.08)',
-              border: '1px solid rgba(255, 193, 7, 0.35)',
-              color: 'var(--brand-gold)',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 8px rgba(255, 193, 7, 0.1)',
-            }}
+            id="speed-calc-nav"
+            className="cockpit-nav-btn !py-1 !px-2.5 !text-xs hover:text-amber-400 hover:border-amber-500/40"
+            onClick={() => setIsCalculatorOpen(true)}
+            aria-label="Speed Calculator"
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(255, 193, 7, 0.22)',
-                border: '1px solid rgba(255, 193, 7, 0.45)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--brand-gold)',
-              }}
-            >
-              <PlusIcon size={13} />
-            </span>
-            <span className="nav-btn-text">Clock-in Bird</span>
+            <CalculatorIcon size={13} />
+            <span>Calc</span>
           </button>
 
-          {/* 6. Verify Photos */}
           <button
             id="verify-photo-nav"
-            className="nav-btn nav-btn-secondary"
+            className="cockpit-nav-btn !py-1 !px-2.5 !text-xs hover:text-sky-400 hover:border-sky-500/40"
             onClick={() => setIsVerifyPhotoOpen(true)}
             aria-label="Verify clock-in photo"
-            style={{
-              background: 'rgba(33, 150, 243, 0.08)',
-              border: '1px solid rgba(33, 150, 243, 0.35)',
-              color: '#2196F3',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.8rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.1)',
-            }}
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(33, 150, 243, 0.22)',
-                border: '1px solid rgba(33, 150, 243, 0.45)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#2196F3',
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </span>
-            <span className="nav-btn-text">Verify Photos</span>
+            <CameraIcon size={13} />
+            <span>Photo Audit</span>
           </button>
 
-          {/* 7. Log Activity (Hero CTA Pill) */}
+          <button
+            id="header-ai-chat"
+            className="cockpit-nav-btn !py-1 !px-2.5 !text-xs text-purple-300 hover:text-purple-200 hover:border-purple-500/40"
+            onClick={() => setIsChatOpen(true)}
+            aria-label="Ask FlyMetric AI"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+            <span>Ask AI</span>
+          </button>
+        </nav>
+
+        {/* Right Action & Profile Toolbar */}
+        <div className="nav-actions flex items-center gap-2 sm:gap-2.5">
+          {/* Mobile AI Chat quick shortcut */}
+          <button
+            id="ai-chat-nav-mobile"
+            className="xl:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-purple-400 hover:bg-white/10 transition-colors"
+            onClick={() => setIsChatOpen(true)}
+            aria-label="FlyMetric AI"
+            title="Ask AI"
+          >
+            <span className="text-xs font-black">AI</span>
+          </button>
+
+          {/* Mobile Speed Calc quick shortcut */}
+          <button
+            id="speed-calc-nav-mobile"
+            className="xl:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-amber-400 hover:bg-white/10 transition-colors"
+            onClick={() => setIsCalculatorOpen(true)}
+            aria-label="Speed Calculator"
+            title="Speed Calculator"
+          >
+            <CalculatorIcon size={16} />
+          </button>
+
+          {/* Quick Log Activity Button */}
           <button
             id="log-new-activity-nav"
-            className="nav-btn nav-btn-primary"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all cursor-pointer"
             onClick={() => openModal(today)}
             aria-label="Log new activity"
-            style={{
-              background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
-              color: '#000',
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              padding: '0.25rem 0.95rem 0.25rem 0.35rem',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 4px 14px rgba(255, 193, 7, 0.35)',
-              border: 'none',
-            }}
           >
-            <span
-              style={{
-                width: '24px',
-                height: '24px',
-                minWidth: '24px',
-                borderRadius: '9999px',
-                background: 'rgba(0, 0, 0, 0.22)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#000',
-              }}
-            >
-              <PlusIcon size={14} />
-            </span>
-            <span className="nav-btn-text" style={{ color: '#000', fontWeight: 900 }}>Log Activity</span>
+            <PlusIcon size={13} />
+            <span>Log Flight</span>
           </button>
 
-          {/* ── Camera / Verify Photos icon ── */}
+          {/* Primary Action Button: Clock-in Bird */}
           <button
-            id="verify-photo-nav-icon"
-            onClick={() => setIsVerifyPhotoOpen(true)}
-            aria-label="Verify clock-in photo"
-            title="Verify Photos"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '9999px',
-              background: 'rgba(33, 150, 243, 0.1)',
-              border: '1px solid rgba(33, 150, 243, 0.35)',
-              color: '#2196F3',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.18s ease',
-              flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.15)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(33,150,243,0.22)'
-              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.55)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(33,150,243,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(33,150,243,0.35)'
-            }}
+            id="quick-clockin-nav"
+            className="cockpit-nav-btn-primary inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all active:scale-95"
+            onClick={() => setIsClockInOpen(true)}
+            aria-label="Quick Clock-in bird"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
+            <PlusIcon size={14} />
+            <span>Clock-in Bird</span>
           </button>
 
-          {/* ── User Avatar + Sign out ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginLeft: '0.2rem' }}>
-
+          {/* User Profile Avatar */}
+          <div className="flex items-center gap-2 pl-1 border-l border-white/10">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={displayName}
                 title="Edit Loft Profile"
-                onClick={() => setIsProfileOpen(true)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  border: '2px solid rgba(255,193,7,0.45)',
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(255,193,7,0.25)'
-                }}
+                onClick={() => setMainTab('profile')}
+                className={`w-8 h-8 rounded-full border-2 object-cover cursor-pointer transition-all shadow-sm ${mainTab === 'profile' ? 'border-amber-400 ring-2 ring-amber-400/40' : 'border-amber-500/50 hover:border-amber-400'}`}
               />
             ) : (
-              <div 
+              <button
+                type="button"
                 title="Edit Loft Profile"
-                onClick={() => setIsProfileOpen(true)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FFC107, #FF8F00)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.72rem',
-                  fontWeight: 900,
-                  color: '#000',
-                  flexShrink: 0,
-                  border: '2px solid rgba(255,193,7,0.45)',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(255,193,7,0.25)'
-                }}
+                onClick={() => setMainTab('profile')}
+                className={`w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-xs font-black text-slate-950 border-2 cursor-pointer transition-all shadow-sm ${mainTab === 'profile' ? 'border-white ring-2 ring-amber-400/40' : 'border-amber-500/50 hover:border-amber-300'}`}
               >
                 {initials}
-              </div>
+              </button>
             )}
+
             <button
               id="signout-btn"
               onClick={handleSignOut}
               title="Sign out"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '9999px',
-                color: 'rgba(255,255,255,0.7)',
-                cursor: 'pointer',
-                padding: '0.25rem 0.75rem 0.25rem 0.35rem',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                transition: 'all 0.18s ease',
-                letterSpacing: '0.02em',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.4rem',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.15)'
-                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'
-                e.currentTarget.style.color = '#f87171'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-                e.currentTarget.style.color = 'rgba(255,255,255,0.7)'
-              }}
+              aria-label="Sign out"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
             >
-              <span
-                style={{
-                  width: '22px',
-                  height: '22px',
-                  minWidth: '22px',
-                  borderRadius: '9999px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'inherit',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-              </span>
-              <span className="nav-btn-text">Sign out</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ── Main Content ──────────────────────────────── */}
-      <main className="dashboard-content">
+      {/* ── Main Cockpit Working Surface ──────────────── */}
+      <main className={`dashboard-content max-w-7xl mx-auto w-full px-3 sm:px-6 py-3 sm:py-6`}>
 
         {/* ── Grand Electronic Band Arrival HUD Overlay ── */}
         {arrivalHud && (
@@ -1312,10 +1065,9 @@ export default function Home() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.4rem',
                   flexShrink: 0
                 }}>
-                  {arrivalHud.type === 'warning' ? '⚠️' : arrivalHud.type === 'info' ? 'ℹ️' : '🎯'}
+                  <AntennaIcon size={22} className={arrivalHud.type === 'warning' ? 'text-red-400' : arrivalHud.type === 'info' ? 'text-sky-400' : 'text-emerald-400'} />
                 </div>
                 <div>
                   <div style={{
@@ -1391,84 +1143,108 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── EBDS 125kHz Trap Antenna Sensor Live Status Pill ── */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(9, 13, 22, 0.85) 100%)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
-            borderRadius: '0.875rem',
-            padding: '0.75rem 1rem',
-            marginBottom: '1rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span style={{ position: 'relative', display: 'flex', width: '10px', height: '10px', flexShrink: 0 }}>
-              <span style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '9999px', background: '#34d399', opacity: 0.75 }}></span>
-              <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '9999px', height: '10px', width: '10px', background: '#10b981' }}></span>
-            </span>
-            <div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#34d399', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                <span>📡 125kHz RFID Trap Antenna</span>
-                <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#34d399' }}>
-                  TARGET LOCKED
-                </span>
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.15rem' }}>
-                Ang RFID ay magco-clock <strong style={{ color: '#34d399' }}>LAMANG</strong> sa napiling event at sa mga ibong kasali sa laro.
+        {/* ── Full Page Tab Views Router ── */}
+        {mainTab === 'birds' && (
+          <BirdRegistryModal
+            isOpen={true}
+            isPageMode={true}
+            onClose={() => setMainTab('home')}
+            onBirdsUpdated={fetchBirds}
+            authToken={session?.access_token}
+            events={events}
+          />
+        )}
+
+        {mainTab === 'activities' && (
+          <LoftActivitiesModal
+            isOpen={true}
+            isPageMode={true}
+            events={events}
+            loading={loading}
+            initialTab={activitiesInitialTab}
+            today={today}
+            onClose={() => setMainTab('home')}
+            onDateClick={(dateStr, ev) => {
+              if (ev?.extendedProps?.isGroupRace) {
+                setSelectedGroupRace(ev)
+              } else {
+                openModal(dateStr, ev)
+              }
+            }}
+            onLogActivity={() => openModal(today)}
+            onEditActivity={(dateStr, ev) => openModal(dateStr, ev)}
+            onJoinGroupRace={() => setIsJoinGroupRaceOpen(true)}
+            onCreateGroupRace={() => setIsCreateGroupRaceOpen(true)}
+          />
+        )}
+
+        {mainTab === 'profile' && (
+          <ProfileModal
+            isOpen={true}
+            isPageMode={true}
+            onClose={() => setMainTab('home')}
+            session={session}
+            onProfileUpdated={refreshSession}
+            registeredBirds={registeredBirds}
+            onBirdsUpdated={fetchBirds}
+            events={events}
+            onEventsUpdated={fetchEvents}
+            onAddEventTrigger={() => navigateToTab('addEvent')}
+            onOpenRegistryTrigger={() => navigateToTab('birds')}
+          />
+        )}
+
+        {mainTab === 'training' && (
+          <TrainingProgramModal
+            isOpen={true}
+            isPageMode={true}
+            onClose={() => setMainTab('home')}
+          />
+        )}
+
+        {mainTab === 'home' && (
+          <>
+            {/* ── 125kHz RFID Trap Transponder Sensor Bar ── */}
+        <div className="avionics-transponder mb-5 w-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            {/* Left: Sensor Brand & Status Beacon */}
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black tracking-wider uppercase text-emerald-400 font-mono">
+                    125kHz EBDS Trap Sensor
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300">
+                    ARMED
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                  Hands-free arrival clocking for enrolled pigeons on selected flight
+                </div>
               </div>
             </div>
-          </div>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.6rem',
-              width: '100%',
-              flexWrap: 'wrap',
-              paddingTop: '0.5rem',
-              borderTop: '1px solid rgba(16, 185, 129, 0.15)',
-              marginTop: '0.2rem',
-            }}
-          >
-            {flightEvents.length > 0 && (() => {
-              const activeTarget = flightEvents.find(f => f.id === activeRfidEventId) || (flightEvents.find(f => f.extendedProps?.isRfidActive)) || flightEvents[0]
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: '170px', position: 'relative' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, flexShrink: 0 }}>Target:</span>
-                  <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
+            {/* Right: Target Selector & Open Station */}
+            <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+              {flightEvents.length > 0 && (() => {
+                const activeTarget = flightEvents.find(f => f.id === activeRfidEventId) || (flightEvents.find(f => f.extendedProps?.isRfidActive)) || flightEvents[0]
+                return (
+                  <div className="relative flex-1 sm:flex-initial min-w-[200px]">
                     <button
                       type="button"
                       onClick={() => setIsTargetDropdownOpen(!isTargetDropdownOpen)}
-                      style={{
-                        background: '#090d16',
-                        border: '1px solid rgba(16, 185, 129, 0.45)',
-                        color: '#34d399',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        padding: '0.38rem 0.65rem',
-                        borderRadius: '0.5rem',
-                        cursor: 'pointer',
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '0.4rem',
-                        textAlign: 'left',
-                        boxSizing: 'border-box',
-                      }}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#080c14] border border-emerald-500/35 hover:border-emerald-500/60 text-slate-200 text-xs font-semibold cursor-pointer transition-all text-left"
                     >
-                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        🎯 {activeTarget?.title || 'Pumili ng Karera'} ({activeTarget?.date})
+                      <span className="truncate text-emerald-400 font-bold flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>{activeTarget?.title}</span>
                       </span>
-                      <span style={{ fontSize: '0.62rem', color: '#10b981', flexShrink: 0 }}>
-                        {isTargetDropdownOpen ? '▲' : '▼'}
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                        {activeTarget?.date} ▾
                       </span>
                     </button>
 
@@ -1476,25 +1252,9 @@ export default function Home() {
                       <>
                         <div
                           onClick={() => setIsTargetDropdownOpen(false)}
-                          style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                          className="fixed inset-0 z-40"
                         />
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: 'calc(100% + 4px)',
-                            left: 0,
-                            right: 0,
-                            maxHeight: '220px',
-                            overflowY: 'auto',
-                            background: '#090d16',
-                            border: '1px solid rgba(16, 185, 129, 0.45)',
-                            borderRadius: '0.5rem',
-                            boxShadow: '0 12px 32px rgba(0,0,0,0.85)',
-                            zIndex: 9999,
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }}
-                        >
+                        <div className="absolute top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-[#0a0f1b] border border-emerald-500/40 rounded-lg shadow-2xl z-50 py-1 divide-y divide-white/5">
                           {flightEvents.map((ev, idx) => {
                             const isSelected = ev.id === activeTarget?.id
                             return (
@@ -1507,24 +1267,12 @@ export default function Home() {
                                   }
                                   setIsTargetDropdownOpen(false)
                                 }}
-                                style={{
-                                  padding: '0.5rem 0.65rem',
-                                  fontSize: '0.74rem',
-                                  fontWeight: isSelected ? 800 : 600,
-                                  color: isSelected ? '#34d399' : '#cbd5e1',
-                                  background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
-                                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  gap: '0.4rem',
-                                }}
+                                className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                                  isSelected ? 'bg-emerald-500/15 text-emerald-400 font-bold' : 'text-slate-300 hover:bg-white/5'
+                                }`}
                               >
-                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {idx === 0 ? '🔥 ' : ''}{ev.title} ({ev.date})
-                                </span>
-                                {isSelected && <span style={{ color: '#10b981', fontWeight: 900 }}>✓</span>}
+                                <span className="truncate">{ev.title}</span>
+                                <span className="text-[10px] font-mono text-slate-400 shrink-0">{ev.date}</span>
                               </div>
                             )
                           })}
@@ -1532,162 +1280,104 @@ export default function Home() {
                       </>
                     )}
                   </div>
-                </div>
-              )
-            })()}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-              <span
-                style={{
-                  fontSize: '0.64rem',
-                  fontWeight: 700,
-                  color: '#6ee7b7',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '0.4rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                }}
-                title="Screen Wake Lock is active so your phone screen will not sleep or lock while trap antenna is monitoring"
-              >
-                <span>☀️</span>
-                <span>Keep-Awake Active</span>
-              </span>
+                )
+              })()}
+
               <button
+                type="button"
                 onClick={() => setIsPadStationOpen(true)}
-                style={{
-                  background: 'rgba(16, 185, 129, 0.18)',
-                  border: '1px solid rgba(16, 185, 129, 0.45)',
-                  color: '#34d399',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  padding: '0.38rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  whiteSpace: 'nowrap',
-                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold transition-all cursor-pointer shrink-0"
               >
-                <span>📡 Open Station</span>
+                <AntennaIcon size={14} />
+                <span>Station HUD</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* ── 2nd-Image Style Loft Telemetry & Stats Dashboard ── */}
+        {/* ── Precision Flight Telemetry & Stats Dashboard ── */}
         <section
-          aria-label="Loft statistics"
-          className="flex flex-col gap-3.5 sm:gap-5 mb-5 sm:mb-7 w-full min-w-0"
+          aria-label="Loft statistics and telemetry"
+          className="flex flex-col gap-3 sm:gap-4 mb-5 sm:mb-7 w-full min-w-0"
         >
-          {/* Top Row: 4 Sleek Circular-Badge Stat Cards */}
-          <div
-            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4.5 w-full min-w-0"
-          >
+          {/* Top Row: 4 Avionics Instrument Readouts */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 w-full min-w-0">
             {STATS.map((s) => (
               <div
                 key={s.label}
-                className="group rounded-2xl bg-base-200/85 border border-white/10 hover:border-primary/50 shadow-xl transition-all duration-200 hover:-translate-y-0.5 p-3 sm:p-3.5 lg:p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 min-w-0"
+                className="cockpit-metric-card group flex flex-col justify-between min-w-0"
               >
-                {/* On Mobile: Top row is Icon + Badge. On Desktop: Icon on left */}
-                <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start gap-2.5 sm:gap-3 min-w-0">
-                  <div
-                    className="transition-transform duration-200 group-hover:scale-105 shrink-0"
-                    style={{
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      borderRadius: '9999px',
-                      background: s.ringBg,
-                      border: `1px solid ${s.ringBorder}`,
-                      color: s.valueColor,
-                      boxShadow: `0 4px 14px ${s.ringBg}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {s.icon}
+                {/* Header line: label + tactical indicator */}
+                <div className="flex items-center justify-between gap-1.5 w-full min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
+                    <span
+                      className="shrink-0 w-2 h-2 rounded-xs"
+                      style={{ background: s.valueColor }}
+                    />
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate">
+                      <span className="sm:hidden">{s.label}</span>
+                      <span className="hidden sm:inline">{s.fullLabel}</span>
+                    </span>
                   </div>
-                  {/* Badge shown on top-right on mobile */}
                   <span
-                    className="sm:hidden shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    className="hidden sm:inline-flex shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border"
                     style={{
                       background: s.ringBg,
-                      border: `1px solid ${s.ringBorder}`,
+                      borderColor: s.ringBorder,
                       color: s.valueColor,
                     }}
                   >
                     {s.badge}
                   </span>
-                  {/* Desktop text next to icon */}
-                  <div className="min-w-0 hidden sm:block">
-                    <div
-                      className="font-mono font-extrabold tracking-tight truncate text-xl lg:text-2xl"
-                      style={{
-                        color: s.valueColor,
-                        lineHeight: 1.15,
-                      }}
-                    >
-                      {s.prefix}{s.value}
-                    </div>
-                    <div
-                      className="font-medium text-base-content/60 truncate text-xs mt-0.5"
-                    >
-                      {s.label}
-                    </div>
-                  </div>
                 </div>
 
-                {/* Mobile text below icon */}
-                <div className="sm:hidden min-w-0 w-full mt-0.5">
-                  <div
-                    className="font-mono font-extrabold tracking-tight truncate text-lg"
-                    style={{ color: s.valueColor, lineHeight: 1.15 }}
+                {/* Main telemetry readout */}
+                <div className="mt-2.5 mb-1 flex items-baseline gap-1">
+                  <span
+                    className="font-mono text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums"
+                    style={{ color: s.valueColor }}
                   >
                     {s.prefix}{s.value}
-                  </div>
-                  <div
-                    className="font-medium text-base-content/60 truncate text-[11px] mt-0.5"
-                  >
-                    {s.label}
-                  </div>
+                  </span>
                 </div>
 
-                {/* Desktop badge on far right */}
-                <span
-                  className="hidden sm:inline-flex shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full"
-                  style={{
-                    background: s.ringBg,
-                    border: `1px solid ${s.ringBorder}`,
-                    color: s.valueColor,
-                  }}
-                >
-                  {s.badge}
-                </span>
+                {/* Micro-telemetry footer */}
+                <div className="text-[10px] text-slate-400/80 truncate flex items-center justify-between pt-1.5 border-t border-white/5">
+                  <span className="truncate">
+                    {s.label.includes('Speed')
+                      ? maxSpeed > 0 ? `≈ ${(maxSpeed * 0.06).toFixed(1)} km/h velocity` : 'No clocked speed yet'
+                      : s.label.includes('Flown')
+                      ? `${registeredBirds.length} in loft registry`
+                      : s.label.includes('Training')
+                      ? `${trainingPct}% of logged flights`
+                      : `${racePct}% of season derby`}
+                  </span>
+                  <span className="font-mono text-[9px] text-slate-500 shrink-0">CH-01</span>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Second Row: 3-Column Visual Telemetry Cards */}
           <div
-            className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4.5 w-full min-w-0"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 w-full min-w-0"
           >
             {/* Card 1: Multi-Segment Donut Ring Chart */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
+              className="lg:col-span-4 rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] flex flex-col justify-between p-4 sm:p-5 min-w-0 gap-3 sm:gap-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-info shadow-[0_0_8px_#38bdf8]" />
-                  <span className="text-sm font-extrabold text-base-content">Loft Activity Mix</span>
+                  <span className="h-2 w-2 rounded-xs bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+                  <span className="text-xs font-black uppercase tracking-wider text-white">Loft Flight Spectrum</span>
                 </div>
-                <span className="text-[11px] font-semibold text-base-content/50">Unit: Events</span>
+                <span className="font-mono text-[10px] font-semibold text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                  {events.length} LOGS
+                </span>
               </div>
 
               {/* Multi-Color SVG Donut Gauge */}
-              <div className="relative mx-auto flex h-40 w-40 sm:h-44 sm:w-44 items-center justify-center my-1">
+              <div className="relative mx-auto flex h-36 w-36 sm:h-40 sm:w-40 items-center justify-center my-1">
                 <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90 transform">
                   {/* Track */}
                   <circle
@@ -1696,16 +1386,16 @@ export default function Home() {
                     r="54"
                     fill="transparent"
                     stroke="rgba(255,255,255,0.06)"
-                    strokeWidth="12"
+                    strokeWidth="11"
                   />
-                  {/* Segment 1: Races (Amber #FFC107) */}
+                  {/* Segment 1: Races (Amber #f59e0b) */}
                   <circle
                     cx="70"
                     cy="70"
                     r="54"
                     fill="transparent"
-                    stroke="#FFC107"
-                    strokeWidth="12"
+                    stroke="#f59e0b"
+                    strokeWidth="11"
                     strokeLinecap="round"
                     strokeDasharray={`${segRace} ${donutC}`}
                     strokeDashoffset={0}
@@ -1718,21 +1408,21 @@ export default function Home() {
                       r="54"
                       fill="transparent"
                       stroke="#10b981"
-                      strokeWidth="12"
+                      strokeWidth="11"
                       strokeLinecap="round"
                       strokeDasharray={`${segTrain} ${donutC}`}
                       strokeDashoffset={-segRace}
                     />
                   )}
-                  {/* Segment 3: Medical (Blue #38bdf8) */}
+                  {/* Segment 3: Medical (Sky #0ea5e9) */}
                   {segMed > 0 && (
                     <circle
                       cx="70"
                       cy="70"
                       r="54"
                       fill="transparent"
-                      stroke="#38bdf8"
-                      strokeWidth="12"
+                      stroke="#0ea5e9"
+                      strokeWidth="11"
                       strokeLinecap="round"
                       strokeDasharray={`${segMed} ${donutC}`}
                       strokeDashoffset={-(segRace + segTrain)}
@@ -1746,7 +1436,7 @@ export default function Home() {
                       r="54"
                       fill="transparent"
                       stroke="#c084fc"
-                      strokeWidth="12"
+                      strokeWidth="11"
                       strokeLinecap="round"
                       strokeDasharray={`${segTask} ${donutC}`}
                       strokeDashoffset={-(segRace + segTrain + segMed)}
@@ -1756,14 +1446,14 @@ export default function Home() {
 
                 {/* Center Readout */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400">
-                    ↑ {racePct}% Race
-                  </span>
-                  <span className="font-mono text-2xl font-black text-base-content tracking-tight leading-tight">
+                  <span className="font-mono text-2xl sm:text-3xl font-black text-white tracking-tight leading-none">
                     +{events.length}
                   </span>
-                  <span className="text-[11px] text-base-content/50 font-medium">
-                    Total Logs
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 mt-1">
+                    Flight Logs
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 text-[9px] font-mono font-bold text-amber-400 mt-0.5">
+                    {racePct}% Race
                   </span>
                 </div>
               </div>
@@ -1773,93 +1463,95 @@ export default function Home() {
                 className="grid grid-cols-4 border-t border-white/5 text-center gap-1 sm:gap-2 pt-3"
               >
                 <div>
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
-                    <span className="h-2 w-2 rounded-xs bg-[#FFC107]" />
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-xs bg-[#f59e0b]" />
                     <span>Races</span>
                   </div>
-                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{racePct}%</div>
+                  <div className="font-mono text-xs font-bold text-amber-400 mt-0.5">{racePct}%</div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
-                    <span className="h-2 w-2 rounded-xs bg-[#10b981]" />
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-xs bg-[#10b981]" />
                     <span>Tosses</span>
                   </div>
-                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{trainingPct}%</div>
+                  <div className="font-mono text-xs font-bold text-emerald-400 mt-0.5">{trainingPct}%</div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
-                    <span className="h-2 w-2 rounded-xs bg-[#38bdf8]" />
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-xs bg-[#0ea5e9]" />
                     <span>Medical</span>
                   </div>
-                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{medPct}%</div>
+                  <div className="font-mono text-xs font-bold text-sky-400 mt-0.5">{medPct}%</div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-base-content/60">
-                    <span className="h-2 w-2 rounded-xs bg-[#c084fc]" />
+                  <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-xs bg-[#c084fc]" />
                     <span>Tasks</span>
                   </div>
-                  <div className="font-mono text-xs font-bold text-base-content mt-0.5">{taskPct}%</div>
+                  <div className="font-mono text-xs font-bold text-purple-400 mt-0.5">{taskPct}%</div>
                 </div>
               </div>
             </div>
 
             {/* Card 2: Active Telemetry Bar Chart + Dual Radial Progress Rings */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
+              className="lg:col-span-4 rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] flex flex-col justify-between p-4 sm:p-5 min-w-0 gap-3 sm:gap-4"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_8px_#FFC107]" />
-                    <span className="text-sm font-extrabold text-base-content">Active Loft Telemetry</span>
+                    <span className="h-2 w-2 rounded-xs bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+                    <span className="text-xs font-black uppercase tracking-wider text-white">Active Flight Telemetry</span>
                   </div>
-                  <span className="badge badge-ghost badge-xs border-white/10">Season</span>
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 px-2 py-0.5 rounded bg-white/5 border border-white/5">
+                    CYCLE 2026
+                  </span>
                 </div>
 
                 {/* 3 Summary Columns */}
-                <div className="grid grid-cols-3 text-left gap-2 sm:gap-3 mb-3.5">
+                <div className="grid grid-cols-3 text-left gap-2 sm:gap-3 mb-3.5 bg-white/5 p-2 rounded-lg border border-white/5">
                   <div>
-                    <div className="font-mono text-base font-extrabold text-base-content">
+                    <div className="font-mono text-base font-extrabold text-white">
                       {events.length}
                     </div>
-                    <div className="text-[11px] text-base-content/50">Total Events</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Events</div>
                   </div>
                   <div>
-                    <div className="font-mono text-base font-extrabold text-info">
+                    <div className="font-mono text-base font-extrabold text-sky-400">
                       +{registeredBirds.length}
                     </div>
-                    <div className="text-[11px] text-base-content/50">Loft Birds</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Loft Birds</div>
                   </div>
                   <div>
                     <div className="font-mono text-base font-extrabold text-emerald-400">
                       {activeBirdsCount}
                     </div>
-                    <div className="text-[11px] text-base-content/50">Active Flyers</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Flyers</div>
                   </div>
                 </div>
 
                 {/* 6-Bar Vertical Chart */}
                 <div
-                  className="flex items-end justify-between border-b border-white/5 h-24 gap-2 pt-1 pb-2 px-0.5"
+                  className="flex items-end justify-between border-b border-white/5 h-20 gap-2 pt-1 pb-2 px-0.5"
                 >
                   {barChartItems.map((bar, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center h-full justify-end gap-1.5 min-w-0">
-                      <div className="w-full flex items-end justify-center h-16">
+                      <div className="w-full flex items-end justify-center h-14">
                         <div
-                          className="w-full max-w-[20px] rounded-t-md transition-all duration-300"
+                          className="w-full max-w-[18px] rounded-t-xs transition-all duration-300"
                           style={{
                             height: `${bar.heightPct}%`,
                             background: bar.active
-                              ? 'linear-gradient(180deg, #38bdf8 0%, #0284c7 100%)'
-                              : 'rgba(56, 189, 248, 0.24)',
-                            boxShadow: bar.active ? '0 0 14px rgba(56, 189, 248, 0.45)' : 'none',
+                              ? 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)'
+                              : 'rgba(255, 255, 255, 0.12)',
+                            boxShadow: bar.active ? '0 0 10px rgba(245, 158, 11, 0.4)' : 'none',
                           }}
                           title={`${bar.label}: ${bar.value}`}
                         />
                       </div>
                       <span
-                        className={`text-[9px] font-semibold truncate max-w-full rounded px-1 ${
-                          bar.active ? 'bg-primary text-primary-content font-extrabold' : 'text-base-content/55'
+                        className={`text-[9px] font-mono font-bold truncate max-w-full rounded px-1 ${
+                          bar.active ? 'bg-amber-400 text-slate-950 font-black' : 'text-slate-500'
                         }`}
                       >
                         {bar.label}
@@ -1873,37 +1565,37 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                 <div
                   onClick={() => setIsRegistryOpen(true)}
-                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-info/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
+                  className="cursor-pointer rounded-lg bg-white/5 border border-white/5 hover:border-sky-500/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
                 >
                   <div
-                    className="radial-progress text-info text-[9px] sm:text-[10px] font-mono font-bold shrink-0"
-                    style={{ '--value': activeRegistryPct, '--size': '2.6rem', '--thickness': '3.5px' } as React.CSSProperties}
+                    className="radial-progress text-sky-400 text-[9px] sm:text-[10px] font-mono font-bold shrink-0"
+                    style={{ '--value': activeRegistryPct, '--size': '2.5rem', '--thickness': '3px' } as React.CSSProperties}
                     role="progressbar"
                   >
                     {activeRegistryPct}%
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-base-content truncate">Loft Ready</div>
-                    <div className="text-[10px] text-base-content/50 truncate mt-0.5">
-                      {registeredBirds.length} Registered
+                    <div className="text-xs font-bold text-white truncate">Loft Ready</div>
+                    <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
+                      {registeredBirds.length} Birds
                     </div>
                   </div>
                 </div>
 
                 <div
                   onClick={() => navigateToTab('history')}
-                  className="cursor-pointer rounded-xl bg-base-100/75 border border-white/5 hover:border-emerald-500/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
+                  className="cursor-pointer rounded-lg bg-white/5 border border-white/5 hover:border-emerald-500/40 flex items-center p-2 sm:p-2.5 gap-2 min-w-0 transition-all"
                 >
                   <div
                     className="radial-progress text-emerald-400 text-[9px] sm:text-[10px] font-mono font-bold shrink-0"
-                    style={{ '--value': flightCompletionPct, '--size': '2.6rem', '--thickness': '3.5px' } as React.CSSProperties}
+                    style={{ '--value': flightCompletionPct, '--size': '2.5rem', '--thickness': '3px' } as React.CSSProperties}
                     role="progressbar"
                   >
                     {flightCompletionPct}%
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-base-content truncate">Clocked</div>
-                    <div className="text-[10px] text-base-content/50 truncate mt-0.5">
+                    <div className="text-xs font-bold text-white truncate">Clocked</div>
+                    <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
                       {clockedEventsCount} Flights
                     </div>
                   </div>
@@ -1913,62 +1605,61 @@ export default function Home() {
 
             {/* Card 3: Top Performers Leaderboard */}
             <div
-              className="lg:col-span-4 rounded-2xl bg-base-200/85 border border-white/10 shadow-xl flex flex-col justify-between p-4 sm:p-5 lg:p-6 min-w-0 gap-3 sm:gap-4"
+              className="lg:col-span-4 rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] flex flex-col justify-between p-4 sm:p-5 min-w-0 gap-3 sm:gap-4"
             >
               <div>
                 <div className="flex items-center justify-between mb-3.5">
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
-                    <span className="text-sm font-extrabold text-base-content">Loft Leaderboard</span>
+                    <span className="h-2 w-2 rounded-xs bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                    <span className="text-xs font-black uppercase tracking-wider text-white">Top Velocity Podium</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigateToTab('history')}
-                    className="text-xs font-semibold text-base-content/50 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
+                    className="text-xs font-mono font-bold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer bg-transparent border-none"
                   >
-                    More &gt;
+                    Registry →
                   </button>
                 </div>
 
                 {leaderboardBirds.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {leaderboardBirds.map((bird, idx) => {
                       const rankColors = [
-                        { badge: 'bg-rose-500 text-white', speed: 'text-rose-400' },
-                        { badge: 'bg-amber-400 text-black', speed: 'text-amber-400' },
-                        { badge: 'bg-sky-400 text-black', speed: 'text-sky-400' },
-                      ][idx] || { badge: 'bg-base-300 text-white', speed: 'text-base-content' }
+                        { badge: 'bg-amber-400 text-slate-950 font-black', speed: 'text-amber-400' },
+                        { badge: 'bg-slate-300 text-slate-950 font-black', speed: 'text-sky-300' },
+                        { badge: 'bg-amber-700 text-white font-black', speed: 'text-emerald-400' },
+                      ][idx] || { badge: 'bg-slate-800 text-slate-300', speed: 'text-slate-300' }
 
                       return (
                         <div
                           key={bird.ringNo}
                           onClick={() => setIsRegistryOpen(true)}
-                          className="cursor-pointer flex items-center justify-between rounded-xl bg-base-100/75 border border-white/5 hover:border-white/15 transition-all"
-                          style={{ padding: '0.7rem 0.9rem', gap: '0.75rem' }}
+                          className="cursor-pointer flex items-center justify-between rounded-lg bg-white/5 border border-white/5 hover:border-amber-400/30 transition-all p-2.5 gap-2"
                         >
-                          <div className="flex items-center min-w-0" style={{ gap: '0.75rem' }}>
+                          <div className="flex items-center min-w-0 gap-2.5">
                             <div className="relative shrink-0">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-base-200 border border-white/10">
-                                <img src="/icon.png" alt={bird.ringNo} className="h-7 w-7 object-contain" />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/40 border border-white/10">
+                                <img src="/icon.png" alt={bird.ringNo} className="h-6 w-6 object-contain" />
                               </div>
                               <span
-                                className={`absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-black shadow ${rankColors.badge}`}
+                                className={`absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-xs text-[9px] font-mono shadow ${rankColors.badge}`}
                               >
-                                {idx + 1}
+                                #{idx + 1}
                               </span>
                             </div>
                             <div className="min-w-0">
-                              <div className="text-xs font-extrabold text-base-content truncate">
+                              <div className="text-xs font-bold text-white truncate font-mono">
                                 {bird.name ? `${bird.name} (${bird.ringNo})` : bird.ringNo}
                               </div>
-                              <div className="text-[10px] text-base-content/50 truncate" style={{ marginTop: '0.15rem' }}>
-                                {bird.color || 'Registered Racer'} • Total of {bird.flights} {bird.flights === 1 ? 'flight' : 'flights'}
+                              <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                                {bird.color || 'Racer'} • {bird.flights} {bird.flights === 1 ? 'flight' : 'flights'}
                               </div>
                             </div>
                           </div>
 
-                          <div className={`font-mono text-xs font-extrabold shrink-0 ${rankColors.speed}`}>
-                            {bird.maxSpeed > 0 ? `+${bird.maxSpeed.toFixed(1)}` : 'Active'}
+                          <div className={`font-mono text-xs font-black shrink-0 ${rankColors.speed}`}>
+                            {bird.maxSpeed > 0 ? `${bird.maxSpeed.toFixed(1)} m/m` : 'Active'}
                           </div>
                         </div>
                       )
@@ -1982,41 +1673,39 @@ export default function Home() {
                           <div
                             key={`open-slot-${slotNum}`}
                             onClick={() => setIsRegistryOpen(true)}
-                            className="cursor-pointer flex items-center justify-between rounded-xl bg-base-100/35 border border-dashed border-white/10 hover:border-primary/40 transition-all"
-                            style={{ padding: '0.65rem 0.9rem', gap: '0.75rem' }}
+                            className="cursor-pointer flex items-center justify-between rounded-lg bg-white/[0.02] border border-dashed border-white/10 hover:border-amber-400/30 transition-all p-2.5 gap-2"
                           >
-                            <div className="flex items-center min-w-0" style={{ gap: '0.75rem' }}>
-                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-base-200/60 border border-white/5 text-[11px] font-black text-base-content/40">
+                            <div className="flex items-center min-w-0 gap-2.5">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 border border-white/5 text-[10px] font-mono font-bold text-slate-500">
                                 #{slotNum}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-xs font-semibold text-base-content/50 truncate">
-                                  Open Leaderboard Slot
+                                <div className="text-xs font-semibold text-slate-400 truncate">
+                                  Open Podium Slot
                                 </div>
-                                <div className="text-[10px] text-base-content/35 truncate">
-                                  Click to register or clock another racer
+                                <div className="text-[10px] text-slate-500 truncate">
+                                  Register or clock bird to rank
                                 </div>
                               </div>
                             </div>
-                            <span className="text-[10px] font-bold text-primary/70">+ Add</span>
+                            <span className="text-[10px] font-mono font-bold text-amber-400/80">+ Add</span>
                           </div>
                         )
                       })}
                   </div>
                 ) : (
                   <div
-                    className="flex flex-col items-center justify-center text-center rounded-xl bg-base-100/50 border border-dashed border-white/10"
-                    style={{ padding: '1.75rem 1rem' }}
+                    className="flex flex-col items-center justify-center text-center rounded-lg bg-white/[0.02] border border-dashed border-white/10 p-5"
                   >
-                    <img src="/icon.png" alt="No birds" className="h-10 w-10 object-contain opacity-60 mb-2" />
-                    <div className="text-xs font-bold text-base-content/80">No Pigeons Ranked Yet</div>
-                    <p className="text-[11px] text-base-content/50 mt-0.5 mb-3">
-                      Register birds or clock a race to populate your speed leaderboard.
+                    <img src="/icon.png" alt="No birds" className="h-9 w-9 object-contain opacity-50 mb-2" />
+                    <div className="text-xs font-bold text-white">No Aviators Ranked Yet</div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 mb-3">
+                      Register birds or clock a flight to calculate velocity.
                     </p>
                     <button
                       type="button"
                       onClick={() => setIsRegistryOpen(true)}
-                      className="btn btn-primary btn-xs font-bold"
+                      className="cockpit-nav-btn-primary !py-1 !px-2.5 !text-xs"
                     >
                       + Register Birds
                     </button>
@@ -2025,26 +1714,25 @@ export default function Home() {
               </div>
 
               <div
-                className="border-t border-white/5 flex items-center justify-between text-[11px] text-base-content/50"
-                style={{ paddingTop: '0.85rem' }}
+                className="border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400 pt-2"
               >
-                <span>Top Velocity Unit</span>
-                <span className="font-mono font-bold text-primary">meters / min (m/min)</span>
+                <span>VELOCITY STANDARD</span>
+                <span className="font-bold text-amber-400">m/min (meters/min)</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Compact Recent & Upcoming Activities Card on Home */}
-        <section className="rounded-2xl bg-base-200/80 border border-white/10 shadow-xl p-4 sm:p-5 w-full min-w-0" aria-label="Loft activities preview">
+        {/* Flight Operations Log Preview */}
+        <section className="rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] p-4 sm:p-5 w-full min-w-0" aria-label="Loft activities preview">
           <div className="flex items-center justify-between gap-3 mb-3.5 flex-wrap">
             <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
-              <h3 className="text-sm sm:text-base font-extrabold text-white m-0">
-                Recent & Upcoming Flights
+              <span className="w-2 h-2 rounded-xs bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+              <h3 className="text-xs font-black uppercase tracking-wider text-white m-0">
+                Flight Operations Log
               </h3>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
-                {events.length}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/5 text-slate-400">
+                {events.length} ACTIVE
               </span>
             </div>
 
@@ -2057,23 +1745,24 @@ export default function Home() {
                   setModalIsClockInOnly(false)
                   setIsModalOpen(true)
                 }}
-                className="inline-flex items-center gap-1.5 py-1 px-3 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 rounded-lg text-amber-400 text-xs font-bold transition-all cursor-pointer"
+                className="cockpit-nav-btn-primary !py-1 !px-2.5 !text-xs !gap-1 cursor-pointer"
               >
                 <PlusIcon size={12} /> Log Activity
               </button>
               <button
                 type="button"
                 onClick={() => navigateToTab('activities')}
-                className="inline-flex items-center gap-1 py-1 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                className="cockpit-nav-btn !py-1 !px-2.5 !text-xs !gap-1.5 cursor-pointer"
               >
-                View Full Calendar 📅 →
+                <CalendarIcon size={12} />
+                <span>Calendar</span>
               </button>
             </div>
           </div>
 
           {events.length === 0 ? (
-            <div className="py-6 px-4 text-center rounded-xl bg-base-100/40 border border-dashed border-white/10 text-slate-400 text-xs">
-              No flights or training activities logged yet.
+            <div className="py-6 px-4 text-center rounded-lg bg-white/[0.02] border border-dashed border-white/10 text-slate-400 text-xs font-mono">
+              No flights or training activities logged in operational buffer.
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -2090,11 +1779,11 @@ export default function Home() {
                       setModalIsClockInOnly(true)
                       openModal(ev.date || '', ev)
                     }}
-                    className="p-3 rounded-xl bg-base-100/70 border border-white/5 hover:border-amber-400/30 flex items-center justify-between gap-3 transition-all cursor-pointer"
+                    className="p-2.5 sm:p-3 rounded-lg bg-white/5 border border-white/5 hover:border-amber-400/30 flex items-center justify-between gap-3 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <span
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
                           type === 'Training'
                             ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
                             : type === 'Medication'
@@ -2110,16 +1799,19 @@ export default function Home() {
                       </span>
 
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-extrabold text-white truncate">
+                        <div className="text-xs font-bold text-white truncate">
                           {ev.title}
                         </div>
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
-                          <span className="font-semibold text-amber-400">{type}</span>
+                          <span className="font-semibold text-amber-400 font-mono text-[10px]">{type.toUpperCase()}</span>
                           <span>•</span>
                           <span className="font-mono text-slate-300">{ev.date}</span>
                           <span>•</span>
-                          <span className="truncate">📍 {location}</span>
-                          {distance && distance > 0 ? <span>({distance}km)</span> : null}
+                          <span className="truncate flex items-center gap-1">
+                            <MapPinIcon size={10} className="text-slate-500 inline shrink-0" />
+                            <span>{location}</span>
+                          </span>
+                          {distance && distance > 0 ? <span className="font-mono text-amber-300">({distance}km)</span> : null}
                         </div>
                       </div>
                     </div>
@@ -2131,9 +1823,10 @@ export default function Home() {
                         setModalIsClockInOnly(false)
                         openModal(ev.date || '', ev)
                       }}
-                      className="py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-slate-300 shrink-0 cursor-pointer"
+                      className="cockpit-nav-btn !py-1 !px-2.5 !text-[11px] shrink-0 cursor-pointer flex items-center gap-1.5"
                     >
-                      ✏️ Edit
+                      <EditIcon size={12} />
+                      <span>Edit</span>
                     </button>
                   </div>
                 )
@@ -2143,14 +1836,16 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => navigateToTab('activities')}
-                  className="w-full py-2.5 mt-1 rounded-xl bg-white/5 hover:bg-amber-400/10 border border-dashed border-white/10 hover:border-amber-400/30 text-xs font-bold text-slate-300 hover:text-amber-400 transition-all text-center cursor-pointer"
+                  className="w-full py-2 mt-1 rounded-lg bg-white/5 hover:bg-amber-400/10 border border-dashed border-white/10 hover:border-amber-400/30 text-xs font-mono font-bold text-slate-400 hover:text-amber-400 transition-all text-center cursor-pointer"
                 >
-                  View All {events.length} Loft Activities & Full Calendar 📅 →
+                  View All {events.length} Loft Activities & Schedule →
                 </button>
               )}
             </div>
           )}
         </section>
+        </>
+        )}
 
       </main>
 
@@ -2167,34 +1862,8 @@ export default function Home() {
         isClockInOnly={modalIsClockInOnly}
         onOpenRegistry={() => {
           setIsModalOpen(false)
-          setIsRegistryOpen(true)
+          navigateToTab('birds')
         }}
-      />
-
-      {/* ── Profile settings Modal ──────────────────────── */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        session={session}
-        onProfileUpdated={refreshSession}
-        registeredBirds={registeredBirds}
-        onBirdsUpdated={fetchBirds}
-        events={events}
-        onEventsUpdated={fetchEvents}
-        onAddEventTrigger={() => navigateToTab('addEvent')}
-        onOpenRegistryTrigger={() => {
-          setIsProfileOpen(false) // Close the profile modal so user doesn't have stacked modals
-          setIsRegistryOpen(true)
-        }}
-      />
-
-      {/* ── Bird Registry Modal ─────────────────────────── */}
-      <BirdRegistryModal
-        isOpen={isRegistryOpen}
-        onClose={() => setIsRegistryOpen(false)}
-        onBirdsUpdated={fetchBirds}
-        authToken={session?.access_token}
-        events={events}
       />
 
       {/* ── Quick Clock-in Modal ─────────────────────── */}
@@ -2225,44 +1894,6 @@ export default function Home() {
         registeredBirds={registeredBirds}
         events={events}
         loftName={loftName}
-      />
-
-      {/* ── Loft Activities & Results Modal ───────────── */}
-      <LoftActivitiesModal
-        isOpen={isActivitiesOpen}
-        events={events}
-        loading={loading}
-        initialTab={activitiesInitialTab}
-        today={today}
-        onClose={() => setIsActivitiesOpen(false)}
-        onDateClick={(dateStr, ev) => {
-          if (ev?.extendedProps?.isGroupRace) {
-            setSelectedGroupRace(ev)
-            return
-          }
-          if (ev) {
-            setModalIsClockInOnly(true)
-            openModal(dateStr, ev)
-          } else {
-            openModal(dateStr)
-          }
-        }}
-        onLogActivity={() => {
-          setSelectedDate(today)
-          setSelectedEvent(null)
-          setModalIsClockInOnly(false)
-          setIsModalOpen(true)
-        }}
-        onEditActivity={(dateStr, ev) => {
-          setModalIsClockInOnly(false)
-          openModal(dateStr, ev)
-        }}
-        onJoinGroupRace={() => {
-          setIsJoinGroupRaceOpen(true)
-        }}
-        onCreateGroupRace={() => {
-          setIsCreateGroupRaceOpen(true)
-        }}
       />
 
       {/* ── Admin Create Group Race Modal ───────────────── */}
@@ -2448,89 +2079,51 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Floating AI Chat Button (widget launcher) ───── */}
-      {!isChatOpen &&
-        !isModalOpen &&
-        !isClockInOpen &&
-        !isVerifyPhotoOpen &&
-        !isActivitiesOpen &&
-        !isProfileOpen &&
-        !isRegistryOpen &&
-        !isPadStationOpen &&
-        !isCalculatorOpen &&
-        !isTrainingOpen && (
-          <button
-            type="button"
-            id="ai-chat-fab"
-            className="chat-fab"
-            onClick={() => setIsChatOpen(true)}
-            aria-label="Open FlyMetric AI Chat"
-            title="Chat with FlyMetric AI"
-          >
-            <span className="chat-fab-pulse" aria-hidden="true" />
-            <img src="/icon.png" alt="" className="chat-fab-icon" />
-            <span className="chat-fab-label">Ask AI</span>
-          </button>
-        )}
-
-      {/* React Native-style Mobile Bottom Tab Bar */}
+      {/* Precision Mobile Bottom Tab Bar */}
       <div className="mobile-tab-bar">
         <button 
-          className={`mobile-tab-btn ${(!isModalOpen && !isSelectionOpen && !isClockInOpen && !isVerifyPhotoOpen && !isActivitiesOpen && !isProfileOpen && !isRegistryOpen) ? 'active' : ''}`}
+          className={`mobile-tab-btn ${mainTab === 'home' && !isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('home')}
-          aria-label="Loft Dashboard Home"
+          aria-label="Loft Dashboard Cockpit"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6"/></svg>
-          <span>Home</span>
+          <HomeIcon size={20} />
+          <span>Cockpit</span>
         </button>
+
         <button 
-          className={`mobile-tab-btn ${isRegistryOpen ? 'active' : ''}`}
+          className={`mobile-tab-btn ${mainTab === 'birds' && !isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('birds')}
           aria-label="Loft Birds Registry"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/></svg>
+          <BirdIcon size={20} />
           <span>Birds</span>
         </button>
 
-        {/* CENTER: Clock-In (elevated) */}
+        {/* CENTER: Clock-In (Clean, Aligned, Uniform Height) */}
         <button 
-          className={`mobile-tab-btn mobile-tab-btn-chat ${isClockInOpen ? 'active' : ''}`}
+          className={`mobile-tab-btn ${isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('clockIn')}
           aria-label="Quick Clock-in bird"
         >
-          <div style={{
-            width: '48px', height: '48px',
-            borderRadius: '50%',
-            background: '#0d1117',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isClockInOpen
-              ? '0 0 0 3px rgba(255,193,7,0.25), 0 4px 18px rgba(255,193,7,0.35)'
-              : '0 4px 12px rgba(0,0,0,0.5)',
-            marginTop: '-20px',
-            border: `2px solid ${isClockInOpen ? '#FFC107' : 'rgba(255,193,7,0.55)'}`,
-            color: 'var(--brand-gold)',
-            transition: 'all 0.2s ease',
-            flexShrink: 0,
-          }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-          </div>
-          <span style={{ marginTop: '2px' }}>Clock-In</span>
+          <TimerIcon size={20} />
+          <span>Clock-In</span>
         </button>
 
         <button 
-          className={`mobile-tab-btn ${isActivitiesOpen ? 'active' : ''}`}
+          className={`mobile-tab-btn ${mainTab === 'activities' && !isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('activities')}
           aria-label="Loft Activities & Flights"
         >
           <CalendarIcon size={20} />
           <span>Activities</span>
         </button>
+
         <button 
-          className={`mobile-tab-btn ${isProfileOpen ? 'active' : ''}`}
+          className={`mobile-tab-btn ${mainTab === 'profile' && !isClockInOpen ? 'active' : ''}`}
           onClick={() => navigateToTab('profile')}
           aria-label="Loft Profile"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+          <UserIcon size={20} />
           <span>Profile</span>
         </button>
       </div>

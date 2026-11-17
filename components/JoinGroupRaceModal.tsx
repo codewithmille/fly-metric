@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { GlobeIcon, TrophyIcon, MapPinIcon, CalendarIcon, TagIcon } from '@/components/icons'
 
 interface JoinGroupRaceModalProps {
   isOpen: boolean
@@ -162,7 +163,7 @@ export default function JoinGroupRaceModal({
         <div
           style={{
             padding: '0.85rem 1.15rem',
-            background: 'linear-gradient(135deg, #111827 0%, #1e1b4b 60%, #0f172a 100%)',
+            background: '#0e1420',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -174,20 +175,19 @@ export default function JoinGroupRaceModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <span
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '0.55rem',
+                width: '32px',
+                height: '32px',
+                borderRadius: '0.5rem',
                 background: 'rgba(56, 189, 248, 0.15)',
                 border: '1px solid rgba(56, 189, 248, 0.35)',
                 color: '#38bdf8',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.1rem',
                 flexShrink: 0,
               }}
             >
-              🎟️
+              <GlobeIcon size={16} />
             </span>
             <div>
               <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: '#fff' }}>
@@ -265,10 +265,10 @@ export default function JoinGroupRaceModal({
                   gap: '0.35rem',
                 }}
               >
-                <div>📅 <strong>Race Date:</strong> {foundRace?.date} • Rel: {foundRace?.releaseTime || '06:00'}</div>
-                <div>📍 <strong>Release Point:</strong> {foundRace?.location}</div>
-                <div>📏 <strong>Calculated Distance:</strong> {loftDistance || foundRace?.distance} km</div>
-                <div>⚡ <strong>Status:</strong> Ready for live RFID / Clock-in Telemetry</div>
+                <div><strong>Race Date:</strong> {foundRace?.date} • Rel: {foundRace?.releaseTime || '06:00'}</div>
+                <div><strong>Release Point:</strong> {foundRace?.location}</div>
+                <div><strong>Calculated Distance:</strong> {loftDistance || foundRace?.distance} km</div>
+                <div><strong>Status:</strong> Ready for live RFID / Clock-in Telemetry</div>
               </div>
 
               <button
@@ -277,11 +277,11 @@ export default function JoinGroupRaceModal({
                 style={{
                   width: '100%',
                   padding: '0.6rem',
-                  borderRadius: '0.6rem',
-                  background: '#FFC107',
+                  borderRadius: '0.5rem',
+                  background: '#f59e0b',
                   border: 'none',
-                  color: '#000',
-                  fontWeight: 900,
+                  color: '#090d16',
+                  fontWeight: 800,
                   fontSize: '0.8rem',
                   cursor: 'pointer',
                 }}
@@ -393,8 +393,8 @@ export default function JoinGroupRaceModal({
                 <h4 style={{ margin: '0.2rem 0', color: '#fff', fontSize: '0.95rem', fontWeight: 800 }}>
                   {foundRace.title}
                 </h4>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                  📅 {foundRace.date} • 📍 {foundRace.location} • 📏 {foundRace.distance} km
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                  {foundRace.date} • {foundRace.location} • {foundRace.distance} km
                 </div>
               </div>
 
@@ -566,17 +566,21 @@ export default function JoinGroupRaceModal({
                   style={{
                     flex: 2,
                     padding: '0.6rem',
-                    borderRadius: '0.6rem',
-                    background: '#4ade80',
-                    border: 'none',
-                    color: '#000',
-                    fontWeight: 900,
+                    borderRadius: '0.5rem',
+                    background: '#22c55e',
+                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                    color: '#052e16',
+                    fontWeight: 800,
                     fontSize: '0.82rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(74, 222, 128, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem',
                   }}
                 >
-                  {submitting ? 'Enrolling…' : `🎟️ Basket & Join (${selectedRings.length} Birds)`}
+                  <TagIcon size={14} />
+                  <span>{submitting ? 'Enrolling…' : `Basket & Join (${selectedRings.length} Birds)`}</span>
                 </button>
               </div>
             </div>

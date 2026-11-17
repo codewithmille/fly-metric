@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon } from '@/components/icons'
+import { BirdIcon, VideoIcon, DownloadIcon } from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
 
 interface LoftBird {
@@ -790,7 +790,7 @@ export default function VerifyPhotoModal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="modal-backdrop modal-floating" style={{ zIndex: 10500 }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div
         className="modal-container"
         ref={modalRef}
@@ -800,21 +800,17 @@ export default function VerifyPhotoModal({
         style={{ maxWidth: '480px', borderRadius: '1rem', overflow: 'hidden' }}
       >
         {/* Header */}
-        <div className="modal-header" style={{ background: 'linear-gradient(135deg, #FFC107, #FF8F00)', padding: '0.9rem 1.2rem' }}>
+        <div className="modal-header">
           <div className="modal-header-left">
-            <span style={{ color: '#000', display: 'flex', alignItems: 'center' }}>
-              <CameraIcon size={22} />
+            <span className="modal-pigeon-icon">
+              <CameraIcon size={18} />
             </span>
             <div>
-              <h2 className="modal-title" style={{ color: '#000', fontSize: '1.05rem', fontWeight: 800 }}>
-                Verified Camera Clock-In
-              </h2>
-              <p className="modal-subtitle" style={{ color: 'rgba(0,0,0,0.65)' }}>
-                Stamp time & GPS onto verification logs
-              </p>
+              <h2 className="modal-title">Verified Camera Clock-In</h2>
+              <p className="modal-subtitle">Stamp time &amp; GPS onto verification logs</p>
             </div>
           </div>
-          <button className="modal-close-btn camera-close-btn" style={{ color: '#000', background: 'rgba(0,0,0,0.08)' }} onClick={onClose} aria-label="Close modal">✕</button>
+          <button className="modal-close-btn camera-close-btn" onClick={onClose} aria-label="Close modal">✕</button>
         </div>
 
         {/* Modal Body */}
@@ -843,10 +839,15 @@ export default function VerifyPhotoModal({
                   background: mode === 'photo' ? 'var(--brand-gold)' : 'transparent',
                   color: mode === 'photo' ? '#000' : 'var(--text-secondary)',
                   cursor: 'pointer',
-                  transition: 'all 0.15s'
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
                 }}
               >
-                📷 Photo
+                <CameraIcon size={13} />
+                <span>Photo</span>
               </button>
               <button
                 type="button"
@@ -861,10 +862,15 @@ export default function VerifyPhotoModal({
                   background: mode === 'video' ? 'var(--brand-gold)' : 'transparent',
                   color: mode === 'video' ? '#000' : 'var(--text-secondary)',
                   cursor: 'pointer',
-                  transition: 'all 0.15s'
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
                 }}
               >
-                📹 Video (max 15s)
+                <VideoIcon size={13} />
+                <span>Video (max 15s)</span>
               </button>
             </div>
           )}
@@ -1158,7 +1164,8 @@ export default function VerifyPhotoModal({
                     borderColor: 'rgba(255,255,255,0.15)'
                   }}
                 >
-                  📥 Save file
+                  <DownloadIcon size={13} />
+                  <span>Save file</span>
                 </button>
                 
                 <button

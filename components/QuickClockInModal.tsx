@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, TrophyIcon, TagIcon, TimerIcon, PlusIcon, CalendarIcon } from '@/components/icons'
+import {
+  BirdIcon,
+  TrophyIcon,
+  TagIcon,
+  TimerIcon,
+  PlusIcon,
+  CalendarIcon,
+  AntennaIcon,
+  RocketIcon,
+} from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
 import { useRfidScanner } from '@/hooks/useRfidScanner'
 
@@ -343,7 +352,7 @@ export default function QuickClockInModal({
         // 3. Valid new arrival
         setRfidFlash({
           status: 'success',
-          message: `📡 RFID Scanned: ${matched.ringNo} (${matched.name || matched.color}) at ${timeNow}`
+          message: `RFID Scanned: ${matched.ringNo} (${matched.name || matched.color}) at ${timeNow}`
         })
         setTimeout(() => setRfidFlash(null), 4000)
 
@@ -422,7 +431,7 @@ export default function QuickClockInModal({
   }
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="modal-backdrop modal-floating" style={{ zIndex: 10500 }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div
         className="modal-container"
         ref={modalRef}
@@ -449,7 +458,7 @@ export default function QuickClockInModal({
         <div
           className="modal-header"
           style={{
-            background: 'linear-gradient(135deg, #111827 0%, #1f293d 100%)',
+            background: '#0e1420',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             padding: '0.8rem 1.15rem',
             display: 'flex',
@@ -457,22 +466,8 @@ export default function QuickClockInModal({
             justifyContent: 'space-between',
             flexShrink: 0,
             position: 'relative',
-            overflow: 'hidden',
           }}
         >
-          {/* Subtle gold glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-20px',
-              right: '20px',
-              width: '100px',
-              height: '100px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255, 193, 7, 0.25) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }}
-          />
 
           <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', zIndex: 1, minWidth: 0, flex: 1 }}>
             <div
@@ -572,7 +567,7 @@ export default function QuickClockInModal({
               transition: 'all 0.15s ease',
             }}
           >
-            <span>🏆</span>
+            <TrophyIcon size={14} />
             <span>Event Arrivals ({clockedBirds.length})</span>
           </button>
 
@@ -643,8 +638,8 @@ export default function QuickClockInModal({
                     <TrophyIcon size={13} /> Scheduled Flight Event
                   </label>
                   {selectedEvent && (
-                    <span style={{ fontSize: '0.68rem', color: 'var(--brand-gold)', fontWeight: 700 }}>
-                      📏 {selectedEvent.extendedProps?.distance || 0} km • ⏰ Rel: {selectedEvent.extendedProps?.releaseTime || '06:00'}
+                    <span style={{ fontSize: '0.68rem', color: '#f59e0b', fontWeight: 700, fontFamily: 'monospace' }}>
+                      {selectedEvent.extendedProps?.distance || 0} km • Rel: {selectedEvent.extendedProps?.releaseTime || '06:00'}
                     </span>
                   )}
                 </div>
@@ -667,7 +662,7 @@ export default function QuickClockInModal({
                 >
                   {flightEvents.map((e, idx) => (
                     <option key={e.id} value={e.id}>
-                      {idx === 0 ? '🔥 LATEST · ' : ''}{e.extendedProps?.club === 'Training' ? 'Toss' : 'Race'}: {e.title} ({new Date(e.date).toLocaleDateString()}) · {e.extendedProps?.distance || 0} km
+                      {idx === 0 ? '[LATEST] ' : ''}{e.extendedProps?.club === 'Training' ? 'Toss' : 'Race'}: {e.title} ({new Date(e.date).toLocaleDateString()}) · {e.extendedProps?.distance || 0} km
                     </option>
                   ))}
                 </select>
@@ -713,8 +708,9 @@ export default function QuickClockInModal({
                         <span style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite', position: 'absolute', display: 'inline-flex', height: '100%', width: '100%', borderRadius: '50%', background: '#FFC107', opacity: 0.75 }}></span>
                         <span style={{ position: 'relative', display: 'inline-flex', borderRadius: '50%', height: '8px', width: '8px', background: '#FFC107' }}></span>
                       </span>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#FFC107' }}>
-                        📡 125kHz RFID Scanner Active
+                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <AntennaIcon size={12} />
+                        <span>125kHz RFID Scanner Active</span>
                       </span>
                     </div>
 
@@ -756,7 +752,7 @@ export default function QuickClockInModal({
                         gap: '0.5rem',
                       }}
                     >
-                      <span>🕊️ Walang ibon na naka-clock in pa sa larong ito.</span>
+                      <span>No pigeons clocked in yet for this flight.</span>
                       <button
                         type="button"
                         onClick={() => setActiveTab('clockin')}
@@ -843,26 +839,10 @@ export default function QuickClockInModal({
                   <button
                     type="button"
                     onClick={() => setActiveTab('clockin')}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem',
-                      borderRadius: '0.65rem',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #FFC107, #FF9800)',
-                      color: '#000',
-                      fontWeight: 900,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      boxShadow: '0 4px 14px rgba(255, 193, 7, 0.25)',
-                      marginTop: '0.35rem',
-                    }}
+                    className="cockpit-nav-btn-primary !w-full !py-2.5 !text-xs !justify-center !mt-1.5"
                   >
-                    <PlusIcon size={15} />
-                    <span>+ Record Another Bird (Manual)</span>
+                    <PlusIcon size={14} />
+                    <span>Record Another Bird (Manual)</span>
                   </button>
                 </div>
               )}
@@ -972,13 +952,17 @@ export default function QuickClockInModal({
                                       fontSize: '0.62rem',
                                       padding: '0.05rem 0.35rem',
                                       borderRadius: '3px',
-                                      background: 'rgba(255,193,7,0.12)',
-                                      color: '#FFC107',
-                                      border: '1px solid rgba(255,193,7,0.3)',
+                                      background: 'rgba(245,158,11,0.12)',
+                                      color: '#f59e0b',
+                                      border: '1px solid rgba(245,158,11,0.3)',
                                       fontFamily: 'monospace',
-                                      fontWeight: 600
+                                      fontWeight: 600,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.2rem',
                                     }} title={`125kHz RFID: ${selectedBird.rfidTag}`}>
-                                      📡 {selectedBird.rfidTag}
+                                      <AntennaIcon size={10} />
+                                      <span>{selectedBird.rfidTag}</span>
                                     </span>
                                   )}
                                 </div>
@@ -1053,7 +1037,8 @@ export default function QuickClockInModal({
                           }}
                           title="Set to Current Clock Time"
                         >
-                          🕒 Now
+                          <TimerIcon size={11} className="inline mr-1" />
+                          <span>Now</span>
                         </button>
                         <button
                           type="button"
@@ -1182,7 +1167,7 @@ export default function QuickClockInModal({
                             borderTop: '1px solid rgba(255,255,255,0.06)',
                           }}
                         >
-                          <span>🚀</span>
+                          <RocketIcon size={12} className="text-amber-400 shrink-0" />
                           <span>This speed will claim the <strong>#1 Leaderboard Rank</strong> for this event!</span>
                         </div>
                       )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, TrophyIcon, TimerIcon, LightningIcon, CalendarIcon } from '@/components/icons'
+import { BirdIcon, TrophyIcon, TimerIcon, LightningIcon, CalendarIcon, AntennaIcon } from '@/components/icons'
 import { playElectronicChime, speakPigeonArrival } from '@/hooks/useRfidScanner'
 
 function LiveClock() {
@@ -249,7 +249,7 @@ export default function ElectronicPadModal({
 
       setActionNotice({
         type: 'success',
-        message: `🎯 PIGEON CLOCKED! ${birdToClock.ringNo} (${birdToClock.name || birdToClock.color}) at ${timeNow}!`,
+        message: `PIGEON CLOCKED: ${birdToClock.ringNo} (${birdToClock.name || birdToClock.color}) at ${timeNow}`,
       })
       setTimeout(() => setActionNotice(null), 6000)
       setTestTagInput('')
@@ -262,7 +262,7 @@ export default function ElectronicPadModal({
 
   return (
     <div
-      className="modal-backdrop"
+      className="modal-backdrop modal-floating"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -287,9 +287,9 @@ export default function ElectronicPadModal({
         {/* ── High-Tech Antenna Station Header ── */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #064e3b 0%, #022c22 45%, #090d16 100%)',
-            padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+            background: '#0e1420',
+            padding: '1rem 1.25rem',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -314,7 +314,7 @@ export default function ElectronicPadModal({
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: '1.4rem' }}>📡</span>
+              <AntennaIcon size={20} />
             </div>
 
             <div>
@@ -428,7 +428,7 @@ export default function ElectronicPadModal({
                     }}
                   >
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      🎯 {currentFlight?.title || 'Pumili ng Karera'} ({currentFlight?.date}) · {currentFlight?.extendedProps?.distance || 0}km
+                      {currentFlight?.title || 'Select Flight Event'} ({currentFlight?.date}) · {currentFlight?.extendedProps?.distance || 0}km
                     </span>
                     <span style={{ fontSize: '0.62rem', color: '#10b981', flexShrink: 0 }}>
                       {isFlightPickerOpen ? '▲' : '▼'}
@@ -486,7 +486,7 @@ export default function ElectronicPadModal({
                               }}
                             >
                               <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {idx === 0 ? '🔥 LATEST · ' : ''}🎯 {ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km
+                                {idx === 0 ? '[LATEST] ' : ''}{ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km
                               </span>
                               {isSelected && <span style={{ color: '#10b981', fontWeight: 900 }}>✓</span>}
                             </div>
@@ -516,10 +516,11 @@ export default function ElectronicPadModal({
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.3rem',
+                gap: '0.35rem',
               }}
             >
-              <span>{soundEnabled ? '🔔 Chime ON' : '🔕 Chime OFF'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${soundEnabled ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+              <span>{soundEnabled ? 'Chime ON' : 'Chime OFF'}</span>
             </button>
 
             <button
@@ -536,19 +537,20 @@ export default function ElectronicPadModal({
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.3rem',
+                gap: '0.35rem',
               }}
             >
-              <span>{speechEnabled ? '🗣️ Voice Voice ON' : '🤐 Voice OFF'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${speechEnabled ? 'bg-sky-400' : 'bg-slate-500'}`} />
+              <span>{speechEnabled ? 'Voice ON' : 'Voice OFF'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDimmed(true)}
               style={{
-                background: 'rgba(255, 193, 7, 0.12)',
-                border: '1px solid rgba(255, 193, 7, 0.35)',
-                color: 'var(--brand-gold)',
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#f59e0b',
                 borderRadius: '6px',
                 padding: '0.3rem 0.65rem',
                 fontSize: '0.72rem',
@@ -556,11 +558,11 @@ export default function ElectronicPadModal({
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.3rem',
+                gap: '0.35rem',
               }}
               title="Black screen saver to save phone battery while continuously listening for 125kHz arrivals"
             >
-              <span>🌙 Dim Screen</span>
+              <span>Dim Screen</span>
             </button>
           </div>
         </div>
@@ -584,8 +586,8 @@ export default function ElectronicPadModal({
               borderRadius: '1.25rem',
             }}
           >
-            <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'pulse 1.8s infinite' }}>
-              📡
+            <div style={{ marginBottom: '1rem', animation: 'pulse 1.8s infinite' }}>
+              <AntennaIcon size={48} className="text-emerald-400" />
             </div>
             <div style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
               LOFT TRAP ACTIVE · BATTERY SAVER
@@ -765,7 +767,9 @@ export default function ElectronicPadModal({
                   color: '#94a3b8',
                 }}
               >
-                <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>📡</div>
+                <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                  <AntennaIcon size={36} className="text-emerald-400" />
+                </div>
                 <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc' }}>
                   Pad Antenna Armed & Waiting for Arrivals
                 </div>
@@ -817,8 +821,8 @@ export default function ElectronicPadModal({
                                 </span>
                               )}
                               {matched?.rfidTag && (
-                                <span style={{ fontSize: '0.6rem', padding: '0.05rem 0.3rem', borderRadius: '3px', background: 'rgba(255,193,7,0.12)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.3)', fontFamily: 'monospace' }}>
-                                  📡 {matched.rfidTag}
+                                <span style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem', borderRadius: '3px', background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontFamily: 'monospace', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <AntennaIcon size={10} /> {matched.rfidTag}
                                 </span>
                               )}
                             </div>

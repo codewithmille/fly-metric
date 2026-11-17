@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { BirdIcon, CalculatorIcon, TrainingIcon, TrophyIcon, LightningIcon } from '@/components/icons'
+import { BirdIcon, CalculatorIcon, TrainingIcon, TrophyIcon, LightningIcon, CameraIcon } from '@/components/icons'
 import SpeedCalculatorModal from '@/components/SpeedCalculatorModal'
 
 export default function LandingPage() {
@@ -71,83 +71,80 @@ export default function LandingPage() {
   return (
     <div
       data-theme="dark"
-      className="min-h-screen bg-base-100 text-base-content relative overflow-x-hidden selection:bg-primary/30 selection:text-primary"
+      className="min-h-screen bg-[#080c14] text-slate-100 relative overflow-x-hidden selection:bg-amber-400/30 selection:text-amber-400"
     >
-      {/* Ambient Dark Glows + Subtle Grid Backdrop */}
+      {/* Precision Avionics Grid Backdrop */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20"
           style={{
             backgroundImage:
-              'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-            maskImage: 'radial-gradient(ellipse 80% 55% at 50% 0%, #000 60%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 55% at 50% 0%, #000 60%, transparent 100%)',
+              'linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+            maskImage: 'radial-gradient(ellipse 90% 60% at 50% 0%, #000 70%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 90% 60% at 50% 0%, #000 70%, transparent 100%)',
           }}
         />
-        <div className="absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-primary/15 blur-[130px]" />
-        <div className="absolute top-1/3 right-[-120px] h-[520px] w-[520px] rounded-full bg-secondary/15 blur-[140px]" />
-        <div className="absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full bg-accent/10 blur-[130px]" />
+        <div className="absolute -top-40 -left-40 h-[460px] w-[460px] rounded-full bg-amber-500/10 blur-[140px]" />
+        <div className="absolute top-1/4 right-[-100px] h-[500px] w-[500px] rounded-full bg-sky-500/10 blur-[150px]" />
       </div>
 
-      {/* 1. Sticky daisyUI Navbar + Mobile Dropdown */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-base-100/80 backdrop-blur-xl">
-        <div className="navbar mx-auto max-w-7xl px-4 sm:px-8 h-16">
-          <div className="navbar-start gap-2">
+      {/* 1. Tactical Flight Command Header */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0c121e]/90 backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             {/* Mobile Dropdown Menu */}
             <div className="dropdown lg:hidden">
-              <div tabIndex={0} role="button" aria-label="Open menu" className="btn btn-ghost btn-sm btn-square">
+              <div tabIndex={0} role="button" aria-label="Open menu" className="cockpit-nav-btn !p-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
               </div>
               <ul
                 tabIndex={0}
-                className="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-2xl bg-base-200 border border-white/10 rounded-box w-56 gap-1"
+                className="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-2xl bg-[#0e1420] border border-white/10 rounded-lg w-56 gap-1"
               >
-                <li><a href="#features">✨ Features</a></li>
-                <li><a href="#calculator">🧮 Live Speed Calculator</a></li>
-                <li><a href="#install">📲 PWA Install Guide</a></li>
-                <li><a href="#faq">❓ Racing FAQ</a></li>
+                <li><a href="#features" className="text-slate-300 hover:text-white">Capabilities</a></li>
+                <li><a href="#calculator" className="text-slate-300 hover:text-amber-400">Live Velocity Engine</a></li>
+                <li><a href="#install" className="text-slate-300 hover:text-white">PWA Direct Install</a></li>
+                <li><a href="#faq" className="text-slate-300 hover:text-white">Racing Standard FAQ</a></li>
               </ul>
             </div>
 
             <a href="#" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-base-200/90 border border-emerald-500/35 shadow-md shadow-emerald-500/15">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/50 border border-amber-400/40 shadow-sm">
                 <img src="/icon.png" alt="FlyMetric" className="h-7 w-7 object-contain" />
               </div>
-              <span className="text-xl font-extrabold tracking-tight">
-                Fly<span className="text-primary">Metric</span>
+              <span className="text-lg font-black tracking-tight text-white uppercase">
+                Fly<span className="text-amber-400">Metric</span>
               </span>
             </a>
-            <span className="badge badge-warning badge-outline badge-xs hidden sm:inline-flex font-bold ml-1">
-              PWA v2.0
+            <span className="hidden sm:inline-flex font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400">
+              AVIONICS v2.4
             </span>
           </div>
 
-          <div className="navbar-center hidden lg:flex">
-            <ul className="menu menu-horizontal gap-1 px-1 text-sm font-medium text-base-content/75">
-              <li><a href="#features" className="rounded-lg hover:text-base-content">Features</a></li>
-              <li><a href="#calculator" className="rounded-lg hover:text-primary">Live Calculator</a></li>
-              <li><a href="#install" className="rounded-lg hover:text-base-content">PWA Install</a></li>
-              <li><a href="#faq" className="rounded-lg hover:text-base-content">FAQ</a></li>
-            </ul>
+          <div className="hidden lg:flex items-center gap-6 text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+            <a href="#features" className="hover:text-white transition-colors">Capabilities</a>
+            <a href="#calculator" className="text-amber-400 hover:text-amber-300 transition-colors">Live Engine</a>
+            <a href="#install" className="hover:text-white transition-colors">PWA Guide</a>
+            <a href="#faq" className="hover:text-white transition-colors">Standards</a>
           </div>
 
-          <div className="navbar-end gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => setIsCalcOpen(true)}
-              className="btn btn-ghost btn-sm hidden sm:inline-flex border border-white/10 bg-base-200/60 hover:border-primary/40 hover:text-primary"
+              className="cockpit-nav-btn !py-1.5 !px-3 !text-xs hidden sm:inline-flex"
             >
-              <CalculatorIcon size={15} />
+              <CalculatorIcon size={14} />
               Quick Calc
             </button>
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="btn btn-primary btn-sm font-extrabold shadow-md shadow-primary/20"
+              className="cockpit-nav-btn-primary !py-1.5 !px-3.5 !text-xs"
             >
               Sign In
             </button>
@@ -155,88 +152,83 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* 2. Hero Section + Interactive daisyUI Mockup Window */}
-      <section className="relative z-10 mx-auto max-w-7xl px-4 pt-12 pb-20 sm:px-8 lg:pt-16 lg:pb-24">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
+      {/* 2. Hero Section + Interactive Cockpit Sandbox Window */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pt-12 pb-16 sm:px-8 lg:pt-16 lg:pb-20">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
           {/* Left Column: Copy & CTAs */}
           <div className="lg:col-span-6 flex flex-col items-center text-center lg:items-start lg:text-left">
-            <div className="badge badge-warning badge-outline gap-2 py-3.5 px-4 mb-6 bg-primary/10 border-primary/30 text-xs font-bold tracking-wider uppercase">
-              <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
-              ⚡ Offline-First Pigeon Racing PWA
+            <div className="inline-flex items-center gap-2 py-1 px-3 mb-5 rounded bg-white/5 border border-amber-400/30 text-[10px] font-mono font-bold tracking-widest uppercase text-amber-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              FLIGHT TELEMETRY &amp; CLOCKING INSTRUMENT
             </div>
 
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl leading-[1.08] mb-6">
-              Modernize Your{' '}
-              <span className="bg-gradient-to-r from-amber-300 via-primary to-amber-500 bg-clip-text text-transparent">
-                Pigeon Racing
-              </span>{' '}
-              Loft
+            <h1 className="text-3xl font-black tracking-tight sm:text-5xl lg:text-5xl leading-[1.1] mb-5 text-white">
+              Aeronautical Precision For Your Racing Loft.
             </h1>
 
-            <p className="text-base sm:text-lg text-base-content/70 leading-relaxed mb-8 max-w-xl">
-              The professional clocking &amp; loft management dashboard for pigeon fanciers. Compute exact velocity in{' '}
-              <span className="font-semibold text-base-content">meters per minute (m/min)</span>, verify clock-in photos, track bloodlines &amp; medical schedules, and log training tosses—100% offline-ready.
+            <p className="text-sm sm:text-base text-slate-400 leading-relaxed mb-6 max-w-xl font-normal">
+              High-accuracy velocity computation in <strong className="text-amber-400 font-mono font-bold">meters per minute (m/min)</strong>. Automatic multi-day rollover timing, 125kHz RFID trap telemetry, EXIF timestamp verification, and deep pedigree records—engineered 100% offline-ready.
             </p>
 
             {/* Primary & Secondary CTAs */}
-            <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto mb-8">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mb-6">
               <button
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="btn btn-primary btn-lg w-full sm:w-auto font-extrabold shadow-xl shadow-primary/25 border border-amber-300/40 gap-3"
+                className="cockpit-nav-btn-primary !py-2.5 !px-5 !text-sm w-full sm:w-auto !justify-center"
               >
                 {loading ? (
                   <>
-                    <span className="loading loading-spinner loading-sm" />
-                    Redirecting to Google…
+                    <span className="loading loading-spinner loading-xs" />
+                    Connecting to Loft Console…
                   </>
                 ) : (
                   <>
-                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white shadow-sm">
-                      <svg width="16" height="16" viewBox="0 0 48 48">
+                    <span className="flex h-5 w-5 items-center justify-center rounded bg-white shadow-sm shrink-0">
+                      <svg width="13" height="13" viewBox="0 0 48 48">
                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
                         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
                         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
                         <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                       </svg>
                     </span>
-                    Continue with Google
+                    Launch Flight Deck (Google)
                   </>
                 )}
               </button>
 
               <a
                 href="#calculator"
-                className="btn btn-outline btn-lg w-full sm:w-auto border-white/15 bg-base-200/60 hover:bg-base-200 hover:border-primary/50 hover:text-primary font-semibold gap-2"
+                className="cockpit-nav-btn !py-2.5 !px-4 !text-sm w-full sm:w-auto !justify-center"
               >
-                <CalculatorIcon size={18} />
-                Try Live Calculator
+                <CalculatorIcon size={16} />
+                Live Velocity Engine
               </a>
             </div>
 
             {error && (
-              <div role="alert" className="alert alert-error alert-soft mb-6 py-2.5 text-sm">
+              <div role="alert" className="alert alert-error alert-soft mb-5 py-2 text-xs font-mono">
                 <span>{error}</span>
               </div>
             )}
 
-            {/* daisyUI Stats Strip */}
-            <div className="stats stats-vertical sm:stats-horizontal w-full border border-white/10 bg-base-200/60 backdrop-blur-md shadow-lg">
-              <div className="stat py-3 px-4">
-                <div className="stat-title text-xs uppercase tracking-wider text-base-content/60">Offline Support</div>
-                <div className="stat-value text-xl text-primary font-extrabold">100%</div>
-                <div className="stat-desc text-xs">Local Queue &amp; Sync</div>
+            {/* Tactical Instrument Specs Bar */}
+            <div className="grid grid-cols-3 gap-2 w-full max-w-xl">
+              <div className="p-2.5 rounded-lg bg-[#0e1420] border border-white/10 text-left">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">PROTOCOL</div>
+                <div className="font-mono text-base font-extrabold text-amber-400">100% PWA</div>
+                <div className="text-[10px] text-slate-500 font-mono">Local Sync Buffer</div>
               </div>
-              <div className="stat py-3 px-4">
-                <div className="stat-title text-xs uppercase tracking-wider text-base-content/60">Velocity Unit</div>
-                <div className="stat-value text-xl text-info font-extrabold">m/min</div>
-                <div className="stat-desc text-xs">+ km/h &amp; m/s</div>
+              <div className="p-2.5 rounded-lg bg-[#0e1420] border border-white/10 text-left">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">VELOCITY METRIC</div>
+                <div className="font-mono text-base font-extrabold text-sky-400">m/min</div>
+                <div className="text-[10px] text-slate-500 font-mono">+ km/h conversion</div>
               </div>
-              <div className="stat py-3 px-4">
-                <div className="stat-title text-xs uppercase tracking-wider text-base-content/60">Clock-In Proof</div>
-                <div className="stat-value text-xl text-success font-extrabold">EXIF</div>
-                <div className="stat-desc text-xs">Photo Verification</div>
+              <div className="p-2.5 rounded-lg bg-[#0e1420] border border-white/10 text-left">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">AUDIT PROOF</div>
+                <div className="font-mono text-base font-extrabold text-emerald-400">EXIF 2.3</div>
+                <div className="text-[10px] text-slate-500 font-mono">Photo Metadata</div>
               </div>
             </div>
           </div>
@@ -519,8 +511,8 @@ export default function LandingPage() {
 
             {/* Floating shadcn/daisyUI Verification Toast */}
             <div className="mt-4 sm:mt-0 sm:absolute sm:-bottom-5 sm:left-6 flex items-center gap-3 rounded-2xl border border-primary/40 bg-base-200/95 px-4 py-3 shadow-2xl backdrop-blur-xl">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-lg">
-                📸
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <CameraIcon size={18} />
               </div>
               <div>
                 <div className="text-xs font-bold text-base-content">Clock-In Photo Verified</div>
@@ -535,24 +527,24 @@ export default function LandingPage() {
       </section>
 
       {/* 3. Interactive Inline Live Velocity Calculator Section (#calculator) */}
-      <section id="calculator" className="relative z-10 py-16 px-4 sm:px-8 border-t border-white/10 bg-base-200/30">
+      <section id="calculator" className="relative z-10 py-16 px-4 sm:px-8 border-t border-white/10 bg-[#0a0f19]">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
-              <span className="badge badge-warning badge-outline font-bold tracking-widest uppercase">
-                Live Interactive Tool
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                Test the Pigeon Velocity Calculator
+              <div className="inline-flex items-center gap-2 py-0.5 px-2.5 rounded bg-white/5 border border-amber-400/30 text-[10px] font-mono font-bold tracking-widest uppercase text-amber-400">
+                // VELOCITY COMPUTATION BENCH
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                Live Flight Velocity Sandbox
               </h2>
-              <p className="text-base-content/70 leading-relaxed text-sm sm:text-base">
-                Try calculating a race or training toss right now. Adjust the release distance slider or pick a preset toss distance below to see instant speed calculations in <strong className="text-primary">meters per minute (m/min)</strong>, <strong className="text-info">km/h</strong>, and <strong className="text-success">m/s</strong>.
+              <p className="text-slate-400 leading-relaxed text-sm sm:text-base">
+                Test the exact mathematical engine used by racing federations. Adjust flight distance or pick standard toss benchmarks to inspect instant output in <strong className="text-amber-400 font-mono">meters per minute (m/min)</strong> alongside <strong className="text-sky-400 font-mono">km/h</strong> and <strong className="text-emerald-400 font-mono">m/s</strong>.
               </p>
 
               {/* Quick Distance Presets */}
-              <div className="space-y-2 pt-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50">
-                  Quick Race Presets:
+              <div className="space-y-2 pt-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  Standard Race Benchmarks:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -570,10 +562,10 @@ export default function LandingPage() {
                         setInlineRelease(p.rel)
                         setInlineArrival(p.arr)
                       }}
-                      className={`btn btn-xs sm:btn-sm ${
+                      className={`cockpit-nav-btn !py-1 !px-2.5 !text-xs ${
                         inlineDistance === p.dist && inlineUnit === 'km'
-                          ? 'btn-primary font-bold'
-                          : 'btn-ghost border border-white/10 bg-base-200/60'
+                          ? '!border-amber-400 !text-amber-400 !bg-amber-400/10'
+                          : ''
                       }`}
                     >
                       {p.label}
@@ -583,134 +575,132 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Interactive daisyUI Calculator Card */}
+            {/* Interactive Avionics Instrument Calculator Card */}
             <div className="lg:col-span-7">
-              <div className="card bg-base-200/80 border border-white/10 shadow-2xl backdrop-blur-xl">
-                <div className="card-body p-6 sm:p-8 space-y-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30">
-                        <CalculatorIcon size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-extrabold text-base">Real-Time Velocity Sandbox</h3>
-                        <p className="text-xs text-base-content/60">Formula: Distance (meters) ÷ Flight Time (minutes)</p>
-                      </div>
+              <div className="rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 sm:p-7 space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400/15 text-amber-400 border border-amber-400/30">
+                      <CalculatorIcon size={18} />
                     </div>
-                    <span className="badge badge-success badge-soft badge-sm font-mono font-bold">
-                      LIVE COMPUTATION
+                    <div>
+                      <h3 className="font-bold text-sm text-white uppercase tracking-wider">Velocity Calculator Bench</h3>
+                      <p className="text-[11px] font-mono text-slate-400">Formula: D_meters ÷ T_minutes</p>
+                    </div>
+                  </div>
+                  <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                    BENCH ACTIVE
+                  </span>
+                </div>
+
+                {/* Distance Slider + Direct Input */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-300 font-mono text-[11px]">FLIGHT DISTANCE ({inlineUnit.toUpperCase()})</span>
+                    <span className="text-amber-400 font-mono text-sm">
+                      {inlineDistance.toLocaleString()} {inlineUnit} ({distMeters.toLocaleString()} m)
                     </span>
                   </div>
-
-                  {/* Distance Slider + Join Input */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-base-content/80">📏 Flight Distance ({inlineUnit})</span>
-                      <span className="text-primary font-mono text-sm">
-                        {inlineDistance.toLocaleString()} {inlineUnit} ({distMeters.toLocaleString()} m)
-                      </span>
-                    </div>
+                  <input
+                    type="range"
+                    min={inlineUnit === 'km' ? 10 : 1000}
+                    max={inlineUnit === 'km' ? 800 : 800000}
+                    step={inlineUnit === 'km' ? 5 : 500}
+                    value={inlineDistance}
+                    onChange={(e) => setInlineDistance(Number(e.target.value))}
+                    className="range range-warning range-xs w-full cursor-pointer accent-amber-400"
+                  />
+                  <div className="flex gap-2 pt-1">
                     <input
-                      type="range"
-                      min={inlineUnit === 'km' ? 10 : 1000}
-                      max={inlineUnit === 'km' ? 800 : 800000}
-                      step={inlineUnit === 'km' ? 5 : 500}
+                      type="number"
+                      min={1}
                       value={inlineDistance}
-                      onChange={(e) => setInlineDistance(Number(e.target.value))}
-                      className="range range-warning range-xs w-full"
+                      onChange={(e) => setInlineDistance(Math.max(0, Number(e.target.value)))}
+                      className="input input-bordered input-sm w-full bg-[#080c14] border-white/10 font-mono text-white text-xs"
                     />
-                    <div className="join w-full pt-1">
-                      <input
-                        type="number"
-                        min={1}
-                        value={inlineDistance}
-                        onChange={(e) => setInlineDistance(Math.max(0, Number(e.target.value)))}
-                        className="input input-bordered input-sm join-item w-full bg-base-100 border-white/10 font-mono"
-                      />
-                      <select
-                        aria-label="Inline distance unit"
-                        value={inlineUnit}
-                        onChange={(e) => {
-                          const nextUnit = e.target.value as 'km' | 'm'
-                          if (nextUnit === 'm' && inlineUnit === 'km') setInlineDistance(inlineDistance * 1000)
-                          if (nextUnit === 'km' && inlineUnit === 'm') setInlineDistance(Math.round(inlineDistance / 1000))
-                          setInlineUnit(nextUnit)
-                        }}
-                        className="select select-bordered select-sm join-item bg-base-300 border-white/10 font-bold"
-                      >
-                        <option value="km">km</option>
-                        <option value="m">meters</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Release & Arrival Inputs */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/80">⏰ Release Time</span>
-                      </label>
-                      <input
-                        type="time"
-                        step="1"
-                        value={inlineRelease}
-                        onChange={(e) => setInlineRelease(e.target.value)}
-                        className="input input-bordered input-sm w-full bg-base-100 border-white/10 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/80">⏱️ Arrival Time</span>
-                      </label>
-                      <input
-                        type="time"
-                        step="1"
-                        value={inlineArrival}
-                        onChange={(e) => setInlineArrival(e.target.value)}
-                        className="input input-bordered input-sm w-full bg-base-100 border-white/10 font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Live Output daisyUI Stats */}
-                  <div className="stats stats-vertical sm:stats-horizontal w-full bg-base-100 border border-white/10 shadow-inner">
-                    <div className="stat py-3 px-4">
-                      <div className="stat-title text-[11px] uppercase font-bold text-base-content/60">Velocity (Standard)</div>
-                      <div className="stat-value text-2xl text-primary font-mono font-black">
-                        {inlineValid ? `${inlineMmin.toFixed(2)}` : '—'}
-                      </div>
-                      <div className="stat-desc text-xs font-semibold text-primary/80">meters / minute (m/min)</div>
-                    </div>
-                    <div className="stat py-3 px-4">
-                      <div className="stat-title text-[11px] uppercase font-bold text-base-content/60">Speed (km/h &amp; m/s)</div>
-                      <div className="stat-value text-xl text-info font-mono font-extrabold">
-                        {inlineValid ? `${inlineKmh.toFixed(1)} km/h` : '—'}
-                      </div>
-                      <div className="stat-desc text-xs font-mono text-success">
-                        {inlineValid ? `${inlineMs.toFixed(2)} m/s` : '—'}
-                      </div>
-                    </div>
-                    <div className="stat py-3 px-4">
-                      <div className="stat-title text-[11px] uppercase font-bold text-base-content/60">Flight Duration</div>
-                      <div className="stat-value text-xl text-base-content font-mono font-bold">
-                        {inlineDuration}
-                      </div>
-                      <div className="stat-desc text-xs">Auto next-day support</div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <span className="text-xs text-base-content/60">
-                      Want to save this result to your pigeon&apos;s ring record?
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      className="btn btn-primary btn-sm font-bold"
+                    <select
+                      aria-label="Inline distance unit"
+                      value={inlineUnit}
+                      onChange={(e) => {
+                        const nextUnit = e.target.value as 'km' | 'm'
+                        if (nextUnit === 'm' && inlineUnit === 'km') setInlineDistance(inlineDistance * 1000)
+                        if (nextUnit === 'km' && inlineUnit === 'm') setInlineDistance(Math.round(inlineDistance / 1000))
+                        setInlineUnit(nextUnit)
+                      }}
+                      className="select select-bordered select-sm bg-[#080c14] border-white/10 font-mono font-bold text-xs"
                     >
-                      Save to Loft Registry →
-                    </button>
+                      <option value="km">KM</option>
+                      <option value="m">METERS</option>
+                    </select>
                   </div>
+                </div>
+
+                {/* Release & Arrival Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase mb-1">
+                      Release Timestamp
+                    </label>
+                    <input
+                      type="time"
+                      step="1"
+                      value={inlineRelease}
+                      onChange={(e) => setInlineRelease(e.target.value)}
+                      className="input input-bordered input-sm w-full bg-[#080c14] border-white/10 font-mono text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold text-slate-400 uppercase mb-1">
+                      Clock-In Arrival
+                    </label>
+                    <input
+                      type="time"
+                      step="1"
+                      value={inlineArrival}
+                      onChange={(e) => setInlineArrival(e.target.value)}
+                      className="input input-bordered input-sm w-full bg-[#080c14] border-white/10 font-mono text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Output Instrument Readouts */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-[#080c14] p-3 rounded-lg border border-white/10">
+                  <div className="p-2 border-b sm:border-b-0 sm:border-r border-white/5">
+                    <div className="text-[10px] font-mono uppercase font-bold text-slate-400">VELOCITY STANDARD</div>
+                    <div className="text-2xl text-amber-400 font-mono font-black tabular-nums">
+                      {inlineValid ? `${inlineMmin.toFixed(2)}` : '—'}
+                    </div>
+                    <div className="text-[10px] font-mono text-amber-400/80">meters / min</div>
+                  </div>
+                  <div className="p-2 border-b sm:border-b-0 sm:border-r border-white/5">
+                    <div className="text-[10px] font-mono uppercase font-bold text-slate-400">GROUND SPEED</div>
+                    <div className="text-xl text-sky-400 font-mono font-extrabold tabular-nums">
+                      {inlineValid ? `${inlineKmh.toFixed(1)} km/h` : '—'}
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400">
+                      {inlineValid ? `${inlineMs.toFixed(2)} m/s` : '—'}
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <div className="text-[10px] font-mono uppercase font-bold text-slate-400">AIR DURATION</div>
+                    <div className="text-xl text-white font-mono font-bold tabular-nums">
+                      {inlineDuration}
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-400">Next-Day Verified</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Results are computed according to official FCF &amp; FCI velocity formulas.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="cockpit-nav-btn-primary !py-1.5 !px-3 !text-xs font-mono"
+                  >
+                    Open Loft Deck →
+                  </button>
                 </div>
               </div>
             </div>
@@ -718,125 +708,106 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Capabilities / 6-Card Bento Features Grid (#features) */}
-      <section id="features" className="relative z-10 border-t border-b border-white/10 bg-base-200/40 py-20 px-4 sm:px-8">
+      {/* 4. Specialized Capabilities & Avionics Architecture (#features) */}
+      <section id="features" className="relative z-10 border-t border-b border-white/10 bg-[#080c14] py-16 px-4 sm:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-2xl text-center mb-14">
-            <span className="badge badge-warning badge-outline font-bold tracking-widest uppercase mb-3">
-              Capabilities
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-              Built Specifically for Pigeon Racers
+          <div className="mx-auto max-w-2xl text-center mb-12">
+            <div className="inline-flex items-center gap-2 py-0.5 px-2.5 rounded bg-white/5 border border-amber-400/30 text-[10px] font-mono font-bold tracking-widest uppercase text-amber-400 mb-3">
+              AVIONICS CAPABILITIES
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-3">
+              Engineered For Modern Avian Competition
             </h2>
-            <p className="text-base-content/70">
-              Every tool you need to compute race speeds, verify clock-in timestamps, manage bloodlines, and condition your birds in a modern dark UI.
+            <p className="text-sm text-slate-400">
+              Purpose-built tools for race telemetry, electronic trap antennas, forensic photo auditing, and bloodline pedigree science.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25">
-                    <CalculatorIcon size={24} />
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10 font-mono">m/min • km/h • m/s</span>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Module 1: Wide Top Banner - Trap Antenna Station */}
+            <div className="md:col-span-12 rounded-xl bg-[#0c121e] border border-white/10 p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-xs bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                    MODULE 01 // HARDWARE TELEMETRY
+                  </span>
                 </div>
-                <h3 className="card-title text-lg font-bold">Precision Velocity Calculator</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Input release time, clock-in arrival, and flight distance in km or meters. Instantly computes flight duration (including multi-day arrivals) and velocity in <strong className="text-base-content">meters per minute (m/min)</strong>.
+                <h3 className="text-lg font-black text-white">
+                  125kHz Electronic Trap Antenna &amp; Live Station HUD
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                  Connect high-frequency RFID trap antennas directly to FlyMetric. Incoming racers crossing the entry loop trigger instant milliseconds-accurate clock-ins with audio chimes and duplicate ring filtration.
                 </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 p-3 rounded-lg bg-black/40 border border-white/10 font-mono text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-emerald-400 font-bold">ANTENNA ARMED</span>
+                </div>
+                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">FREQ: 125 kHz</span>
+                <span className="text-slate-600">|</span>
+                <span className="text-amber-400 font-bold">BUFF: OK</span>
               </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/15 text-secondary border border-secondary/25">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10">List &amp; Calendar</span>
-                </div>
-                <h3 className="card-title text-lg font-bold">Loft Activity &amp; Race Calendar</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Color-coded schedule tracks every loft routine. Toggle between chronological list view and monthly calendar for official races, training tosses, vaccinations, and daily loft tasks.
-                </p>
+            {/* Module 2: Velocity Mathematical Engine */}
+            <div className="md:col-span-6 rounded-xl bg-[#0c121e] border border-white/10 p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+                  MODULE 02 // NUMERICAL ENGINE
+                </span>
+                <span className="font-mono text-[9px] text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                  FCI FORMULA
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-white">High-Velocity Multi-Day Calculation</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Precision velocity computing across meters per minute, km/h, and meters per second. Automatically handles multi-day cross-country derby flights with sunset to sunrise clock deductions.
+              </p>
+              <div className="p-3 rounded-lg bg-black/30 border border-white/5 font-mono text-[11px] text-slate-300 space-y-1">
+                <div className="text-amber-400 font-bold">V = D_meters / (T_arrival - T_release)_minutes</div>
+                <div className="text-slate-500 text-[10px]">Sample: 182,000m ÷ 125.4min = 1,451.36 m/min</div>
               </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/15 text-success border border-success/25">
-                    <BirdIcon size={24} />
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10">Pedigree &amp; Rings</span>
-                </div>
-                <h3 className="card-title text-lg font-bold">Bird Registry &amp; Bloodlines</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Digitize your loft ledger. Record band/ring numbers, feather colors, gender (Cock/Hen), strain, and <strong className="text-base-content">Sire &amp; Dam pedigree lineage</strong> for instant race-day lookup.
-                </p>
+            {/* Module 3: EXIF Forensic Photo Proofing */}
+            <div className="md:col-span-6 rounded-xl bg-[#0c121e] border border-white/10 p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400">
+                  MODULE 03 // AUDIT COMPLIANCE
+                </span>
+                <span className="font-mono text-[9px] text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                  EXIF 2.3
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-white">Forensic Camera Timestamp &amp; GPS Audit</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Clock-in photos are checked against hardware camera EXIF timestamps and embedded GPS coordinates, preventing photo tampering and ensuring fair club results.
+              </p>
+              <div className="p-3 rounded-lg bg-black/30 border border-white/5 font-mono text-[11px] text-slate-300 flex items-center justify-between">
+                <span className="text-sky-400">PHA-2026-0912 // EXIF METADATA</span>
+                <span className="text-emerald-400 font-bold">TIMESTAMP VERIFIED ✓</span>
               </div>
             </div>
 
-            {/* Card 4 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-info/15 text-info border border-info/25">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10">Timestamp Proof</span>
-                </div>
-                <h3 className="card-title text-lg font-bold">Photo Clock-In Verification</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Inspect and verify arrival clock-in photos with embedded timestamp and camera EXIF metadata for transparent, accurate club race verification.
+            {/* Module 4: Pedigree Lineage & Sire/Dam Matrix */}
+            <div className="md:col-span-12 rounded-xl bg-[#0c121e] border border-white/10 p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1 max-w-xl">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400">
+                  MODULE 04 // BIOLOGICAL ARCHIVES
+                </span>
+                <h3 className="text-base font-bold text-white">Pedigree Lineage &amp; Bloodline Analytics</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Digitize your breeding registry. Correlate velocity trophies against Sire, Dam, and Strain genetics to identify top-performing racing lines.
                 </p>
               </div>
-            </div>
-
-            {/* Card 5 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/15 text-accent border border-accent/25">
-                    <TrainingIcon size={24} />
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10">Smart Conditioning</span>
-                </div>
-                <h3 className="card-title text-lg font-bold">Training Programs &amp; AI Advisor</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Follow structured road-training toss progressions and consult the built-in <strong className="text-base-content">AI Pigeon Advisor</strong> for conditioning, nutrition, and recovery schedules.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 6 */}
-            <div className="card bg-base-200/70 border border-white/10 hover:border-primary/40 transition-all duration-200 shadow-xl hover:-translate-y-1">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-warning/15 text-warning border border-warning/25">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </div>
-                  <span className="badge badge-ghost badge-sm border-white/10">Zero Signal Ready</span>
-                </div>
-                <h3 className="card-title text-lg font-bold">Offline-First PWA Cloud Sync</h3>
-                <p className="text-sm text-base-content/70 leading-relaxed">
-                  Clock birds at remote release points without mobile data. Entries are stored locally on your device and automatically synchronize to the cloud once reconnected.
-                </p>
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-slate-300">Sire Lineage</span>
+                <span className="text-amber-400">✕</span>
+                <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-slate-300">Dam Lineage</span>
+                <span className="text-emerald-400 font-bold ml-1">→ Champion Speed</span>
               </div>
             </div>
           </div>
@@ -919,9 +890,9 @@ export default function LandingPage() {
                     <div className="h-5 w-24 rounded-full bg-black border border-white/10 flex items-center justify-end pr-2.5">
                       <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
                     </div>
-                    <div className="w-14 flex items-center justify-end gap-1 text-[10px] font-mono text-success">
+                    <div className="w-14 flex items-center justify-end gap-1.5 text-[10px] font-mono text-success">
                       <span>5G</span>
-                      <span>🔋</span>
+                      <span className="inline-block w-4 h-2 border border-emerald-500 rounded-xs relative before:content-[''] before:absolute before:inset-0.5 before:bg-emerald-500 after:content-[''] after:absolute after:-right-1 after:top-0.5 after:bottom-0.5 after:w-0.5 after:bg-emerald-500" />
                     </div>
                   </div>
 

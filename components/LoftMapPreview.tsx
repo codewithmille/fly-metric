@@ -169,7 +169,7 @@ export default function LoftMapPreview({
       import('leaflet').then(({ default: L }) => {
         loftMarkerRef.current = L.marker(p, { icon: lIconRef.current })
           .addTo(map)
-          .bindPopup(`<b>🏡 Loft</b><br>${la.toFixed(5)}, ${lo.toFixed(5)}`)
+          .bindPopup(`<b>Home Loft</b><br>${la.toFixed(5)}, ${lo.toFixed(5)}`)
       })
     }
 
@@ -180,7 +180,7 @@ export default function LoftMapPreview({
       import('leaflet').then(({ default: L }) => {
         relMarkerRef.current = L.marker(p, { icon: rIconRef.current })
           .addTo(map)
-          .bindPopup(`<b>🎯 Release</b><br>${ra.toFixed(5)}, ${ro.toFixed(5)}`)
+          .bindPopup(`<b>Release Point</b><br>${ra.toFixed(5)}, ${ro.toFixed(5)}`)
       })
     }
 
@@ -258,7 +258,7 @@ export default function LoftMapPreview({
           border: '1px solid rgba(255,193,7,0.4)',
           pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 1000,
         }}>
-          📍 {isFullscreen ? 'Tap anywhere to pin · ✕ top-left to close' : 'Tap to pin · ⛶ to fullscreen'}
+          {isFullscreen ? 'Tap anywhere to pin · ✕ top-left to close' : 'Tap to pin · ⛶ to fullscreen'}
         </div>
       )}
     </div>

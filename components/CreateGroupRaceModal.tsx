@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PlusIcon, TrophyIcon } from '@/components/icons'
+import { PlusIcon, TrophyIcon, RocketIcon, MapPinIcon, GlobeIcon, NotesIcon } from '@/components/icons'
 import LoftMapPreview from '@/components/LoftMapPreview'
 
 interface CreateGroupRaceModalProps {
@@ -93,7 +93,7 @@ export default function CreateGroupRaceModal({
         const lng = pos.coords.longitude
         setReleaseLat(lat)
         setReleaseLng(lng)
-        setLocation(`📍 GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+        setLocation(`GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`)
         const dist = calculateDistance(lat, lng)
         if (dist > 0) setDistance(dist)
         setFetchingGps(false)
@@ -111,7 +111,7 @@ export default function CreateGroupRaceModal({
   const handleMapClick = (lat: number, lng: number) => {
     setReleaseLat(lat)
     setReleaseLng(lng)
-    setLocation(`📍 Map Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`)
+    setLocation(`Map Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`)
     const dist = calculateDistance(lat, lng)
     if (dist > 0) setDistance(dist)
   }
@@ -220,7 +220,7 @@ export default function CreateGroupRaceModal({
         <div
           style={{
             padding: '0.85rem 1.15rem',
-            background: 'linear-gradient(135deg, #111827 0%, #1e1b4b 60%, #0f172a 100%)',
+            background: '#0e1420',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -232,19 +232,19 @@ export default function CreateGroupRaceModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <span
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '0.55rem',
-                background: 'rgba(255, 193, 7, 0.15)',
-                border: '1px solid rgba(255, 193, 7, 0.35)',
-                color: '#FFC107',
+                width: '32px',
+                height: '32px',
+                borderRadius: '0.5rem',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                color: '#f59e0b',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              <TrophyIcon size={18} />
+              <TrophyIcon size={16} />
             </span>
             <div>
               <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: '#fff' }}>
@@ -293,17 +293,18 @@ export default function CreateGroupRaceModal({
                   justifyContent: 'center',
                   fontSize: '2rem',
                   marginTop: '0.5rem',
+                  color: '#4ade80',
                 }}
               >
-                🏁
+                <TrophyIcon size={28} />
               </div>
 
               <div>
                 <h4 style={{ margin: '0 0 0.25rem 0', color: '#fff', fontSize: '1.1rem', fontWeight: 900 }}>
                   {createdRace.title}
                 </h4>
-                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.78rem' }}>
-                  📅 {createdRace.date} • 📍 {createdRace.location} • 📏 {createdRace.distance} km
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.78rem', fontFamily: 'monospace' }}>
+                  {createdRace.date} • {createdRace.location} • {createdRace.distance} km
                 </p>
               </div>
 
@@ -311,8 +312,8 @@ export default function CreateGroupRaceModal({
               <div
                 style={{
                   width: '100%',
-                  background: 'rgba(255, 193, 7, 0.08)',
-                  border: '1px solid rgba(255, 193, 7, 0.3)',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
                   borderRadius: '0.75rem',
                   padding: '1rem',
                   display: 'flex',
@@ -321,7 +322,7 @@ export default function CreateGroupRaceModal({
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#FFC107', fontWeight: 800 }}>
+                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f59e0b', fontWeight: 800, fontFamily: 'monospace' }}>
                   Official Join Code
                 </span>
                 <span
@@ -346,8 +347,8 @@ export default function CreateGroupRaceModal({
                     marginTop: '0.5rem',
                     padding: '0.45rem 1.25rem',
                     borderRadius: '0.5rem',
-                    background: copied ? '#4ade80' : '#FFC107',
-                    color: '#000',
+                    background: copied ? '#22c55e' : '#f59e0b',
+                    color: '#090d16',
                     border: 'none',
                     fontWeight: 800,
                     fontSize: '0.78rem',
@@ -358,7 +359,8 @@ export default function CreateGroupRaceModal({
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <span>{copied ? '✓ Copied to Clipboard!' : '📋 Copy Join Code'}</span>
+                  <NotesIcon size={14} />
+                  <span>{copied ? 'Copied to Clipboard' : 'Copy Join Code'}</span>
                 </button>
               </div>
 
@@ -527,10 +529,10 @@ export default function CreateGroupRaceModal({
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.25rem',
+                      gap: '0.3rem',
                     }}
                   >
-                    <span>📍</span>
+                    <MapPinIcon size={12} />
                     <span>{fetchingGps ? 'Getting GPS…' : 'Use Current GPS'}</span>
                   </button>
 
@@ -540,18 +542,18 @@ export default function CreateGroupRaceModal({
                     style={{
                       padding: '0.25rem 0.55rem',
                       borderRadius: '0.45rem',
-                      background: showMapPicker ? 'rgba(255, 193, 7, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-                      border: showMapPicker ? '1px solid rgba(255, 193, 7, 0.45)' : '1px solid rgba(255, 255, 255, 0.12)',
-                      color: showMapPicker ? '#FFC107' : '#cbd5e1',
+                      background: showMapPicker ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                      border: showMapPicker ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      color: showMapPicker ? '#f59e0b' : '#cbd5e1',
                       fontSize: '0.68rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.25rem',
+                      gap: '0.3rem',
                     }}
                   >
-                    <span>🗺️</span>
+                    <GlobeIcon size={12} />
                     <span>{showMapPicker ? 'Hide Map Picker' : 'Select on Map / Presets'}</span>
                   </button>
                 </div>
@@ -698,22 +700,24 @@ export default function CreateGroupRaceModal({
                   disabled={submitting}
                   style={{
                     flex: 2,
-                    padding: '0.6rem',
-                    borderRadius: '0.6rem',
-                    background: '#FFC107',
-                    border: 'none',
-                    color: '#000',
-                    fontWeight: 900,
+                    padding: '0.6rem 1rem',
+                    borderRadius: '0.5rem',
+                    background: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    color: '#090d16',
+                    fontWeight: 800,
                     fontSize: '0.82rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(255, 193, 7, 0.3)',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem',
+                    gap: '0.45rem',
+                    opacity: submitting ? 0.7 : 1,
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {submitting ? 'Generating Join Code…' : '🚀 Launch Group Race'}
+                  <RocketIcon size={14} />
+                  <span>{submitting ? 'Generating Join Code…' : 'Launch Group Race'}</span>
                 </button>
               </div>
             </form>

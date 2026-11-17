@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { GlobeIcon, TrophyIcon, MapPinIcon, TimerIcon, NotesIcon } from '@/components/icons'
 
 interface GroupRaceCockpitModalProps {
   isOpen: boolean
@@ -134,19 +135,19 @@ export default function GroupRaceCockpitModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
             <span
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '0.65rem',
-                background: 'rgba(255, 193, 7, 0.15)',
-                border: '1px solid rgba(255, 193, 7, 0.35)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '0.5rem',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#f59e0b',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.3rem',
                 flexShrink: 0,
               }}
             >
-              🌐
+              <GlobeIcon size={18} />
             </span>
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
@@ -164,27 +165,27 @@ export default function GroupRaceCockpitModal({
                         ? 'rgba(56, 189, 248, 0.18)'
                         : currentStatus === 'completed'
                         ? 'rgba(74, 222, 128, 0.18)'
-                        : 'rgba(255, 193, 7, 0.18)',
+                        : 'rgba(245, 158, 11, 0.18)',
                     border:
                       currentStatus === 'released'
                         ? '1px solid rgba(56, 189, 248, 0.4)'
                         : currentStatus === 'completed'
                         ? '1px solid rgba(74, 222, 128, 0.4)'
-                        : '1px solid rgba(255, 193, 7, 0.4)',
+                        : '1px solid rgba(245, 158, 11, 0.4)',
                     color:
                       currentStatus === 'released'
                         ? '#38bdf8'
                         : currentStatus === 'completed'
                         ? '#4ade80'
-                        : '#FFC107',
+                        : '#f59e0b',
                     textTransform: 'uppercase',
                   }}
                 >
                   {currentStatus}
                 </span>
               </div>
-              <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.7rem', color: '#94a3b8' }}>
-                📍 {race.extendedProps?.location || race.location} • 📏 {race.extendedProps?.distance || race.distance} km • ⏰ Rel: {race.extendedProps?.releaseTime || race.releaseTime || '06:00'}
+              <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace' }}>
+                {race.extendedProps?.location || race.location} • {race.extendedProps?.distance || race.distance} km • Rel: {race.extendedProps?.releaseTime || race.releaseTime || '06:00'}
               </p>
             </div>
           </div>
@@ -197,11 +198,11 @@ export default function GroupRaceCockpitModal({
                 onClick={copyJoinCode}
                 title="Click to copy Join Code"
                 style={{
-                  background: 'rgba(255, 193, 7, 0.12)',
-                  border: '1px solid rgba(255, 193, 7, 0.35)',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
                   borderRadius: '0.5rem',
                   padding: '0.3rem 0.65rem',
-                  color: '#FFC107',
+                  color: '#f59e0b',
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   fontFamily: 'monospace',
@@ -211,7 +212,7 @@ export default function GroupRaceCockpitModal({
                   gap: '0.3rem',
                 }}
               >
-                <span>{copied ? '✓ Copied' : `🔑 ${race.extendedProps?.joinCode || race.joinCode}`}</span>
+                <span>{copied ? 'Copied' : `CODE: ${race.extendedProps?.joinCode || race.joinCode}`}</span>
               </button>
             )}
 
@@ -265,7 +266,7 @@ export default function GroupRaceCockpitModal({
               gap: '0.35rem',
             }}
           >
-            <span>🏆</span>
+            <TrophyIcon size={14} />
             <span>Leaderboard ({arrivals.length})</span>
           </button>
 
@@ -288,7 +289,7 @@ export default function GroupRaceCockpitModal({
               gap: '0.35rem',
             }}
           >
-            <span>🏠</span>
+            <NotesIcon size={14} />
             <span>Lofts ({lofts.length})</span>
           </button>
 
@@ -359,7 +360,9 @@ export default function GroupRaceCockpitModal({
                     border: '1px dashed rgba(255,255,255,0.1)',
                   }}
                 >
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📭</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem', color: '#64748b' }}>
+                    <TrophyIcon size={32} />
+                  </div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc' }}>
                     No Arrivals Clocked In Yet
                   </div>
@@ -372,9 +375,9 @@ export default function GroupRaceCockpitModal({
                     style={{
                       padding: '0.45rem 1rem',
                       borderRadius: '0.5rem',
-                      background: 'rgba(255, 193, 7, 0.15)',
-                      border: '1px solid rgba(255, 193, 7, 0.4)',
-                      color: '#FFC107',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      color: '#f59e0b',
                       fontWeight: 800,
                       fontSize: '0.75rem',
                       cursor: 'pointer',
@@ -401,28 +404,29 @@ export default function GroupRaceCockpitModal({
                             style={{
                               padding: '0.55rem 0.3rem',
                               fontWeight: 800,
-                              color: idx === 0 ? '#FFC107' : idx === 1 ? '#cbd5e1' : idx === 2 ? '#f59e0b' : '#94a3b8',
+                              fontFamily: 'monospace',
+                              color: idx === 0 ? '#f59e0b' : idx === 1 ? '#cbd5e1' : idx === 2 ? '#d97706' : '#64748b',
                             }}
                           >
-                            {idx === 0 ? '🥇 1st' : idx === 1 ? '🥈 2nd' : idx === 2 ? '🥉 3rd' : `#${idx + 1}`}
+                            {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `#${idx + 1}`}
                           </td>
                           <td style={{ padding: '0.55rem 0.3rem' }}>
                             <div style={{ fontWeight: 800, color: '#f8fafc', fontFamily: 'monospace' }}>
                               {arrival.ringNo}
                             </div>
                             <div style={{ fontSize: '0.66rem', color: '#38bdf8' }}>
-                              🏠 {arrival.loftName || 'Participant Loft'} • {arrival.fancierName}
+                              {arrival.loftName || 'Participant Loft'} • {arrival.fancierName}
                             </div>
                           </td>
                           <td style={{ padding: '0.55rem 0.3rem', color: '#cbd5e1', fontFamily: 'monospace' }}>
                             {arrival.clockInTime}
                           </td>
                           <td style={{ padding: '0.55rem 0.3rem', textAlign: 'right' }}>
-                            <div style={{ fontWeight: 900, color: '#FFC107', fontFamily: 'monospace', fontSize: '0.78rem' }}>
+                            <div style={{ fontWeight: 900, color: '#f59e0b', fontFamily: 'monospace', fontSize: '0.78rem' }}>
                               {arrival.speed.toLocaleString()} m/m
                             </div>
                             <div style={{ fontSize: '0.64rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>
-                              ⚡ {arrival.kph || (arrival.speed * 0.06).toFixed(1)} km/h
+                              {arrival.kph || (arrival.speed * 0.06).toFixed(1)} km/h
                             </div>
                           </td>
                         </tr>
@@ -470,7 +474,7 @@ export default function GroupRaceCockpitModal({
                         )}
                       </div>
                       <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700 }}>
-                        📏 {l.loftDistance || race.distance} km
+                        {l.loftDistance || race.distance} km
                       </span>
                     </div>
 

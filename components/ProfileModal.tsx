@@ -5,7 +5,24 @@ import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, PlusIcon, TagIcon, NotesIcon, NameIcon, DnaIcon, TrashIcon, SettingsIcon, CalendarIcon } from '@/components/icons'
+import {
+  BirdIcon,
+  PlusIcon,
+  TagIcon,
+  NotesIcon,
+  NameIcon,
+  DnaIcon,
+  TrashIcon,
+  SettingsIcon,
+  CalendarIcon,
+  MapPinIcon,
+  TrophyIcon,
+  AntennaIcon,
+  CameraIcon,
+  VideoIcon,
+  DownloadIcon,
+  EditIcon,
+} from '@/components/icons'
 import { saveBird, deleteBird, saveEvent, generateLocalId, resetLoftRecords } from '@/lib/apiClient'
 import { useRfidScanner } from '@/hooks/useRfidScanner'
 
@@ -42,6 +59,7 @@ interface ProfileModalProps {
   onEventsUpdated?: () => void
   onAddEventTrigger?: () => void
   onOpenRegistryTrigger?: () => void
+  isPageMode?: boolean
 }
 
 export default function ProfileModal({
@@ -55,6 +73,7 @@ export default function ProfileModal({
   onEventsUpdated,
   onAddEventTrigger,
   onOpenRegistryTrigger,
+  isPageMode = false,
 }: ProfileModalProps) {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
@@ -121,7 +140,7 @@ export default function ProfileModal({
       const raw = scannedTag.trim()
       if (!raw || !editingBird) return
       setEditRfidTag(raw)
-      setScanNotice(`📡 RFID Tag ${raw} linked to ${editingBird.ringNo}!`)
+      setScanNotice(`RFID Tag ${raw} linked to ${editingBird.ringNo}.`)
       setTimeout(() => setScanNotice(null), 4000)
     }
   })
@@ -407,7 +426,7 @@ export default function ProfileModal({
           
           ctx.fillStyle = '#FFC107'
           ctx.font = 'bold 11px sans-serif'
-          ctx.fillText('🛡️ VERIFIED FLYMETRIC CLOCK-IN', 25, 224)
+          ctx.fillText('VERIFIED FLYMETRIC CLOCK-IN', 25, 224)
           
           ctx.fillStyle = '#fff'
           ctx.font = '10px monospace'
@@ -905,97 +924,98 @@ export default function ProfileModal({
 
   if (!isOpen || !session?.user) return null
 
-  return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+  const profileMainView = (
+    <>
       <div
-        className="modal-container"
-        ref={modalRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
+        className={isPageMode ? "w-full max-w-7xl mx-auto rounded-xl bg-[#0c121e] border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] overflow-hidden" : "modal-container"}
+      ref={modalRef}
+      tabIndex={-1}
+      role={isPageMode ? "region" : "dialog"}
+      aria-modal={isPageMode ? undefined : "true"}
+      style={isPageMode ? undefined : {
+        maxWidth: '610px',
+        padding: 0,
+        background: '#0d121d',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 28px 64px rgba(0, 0, 0, 0.7)',
+      }}
+    >
+      {/* ── Pro Telemetry Banner Area ── */}
+      <div
         style={{
-          maxWidth: '610px',
-          padding: 0,
-          background: '#0d121d',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 28px 64px rgba(0, 0, 0, 0.7)',
+          position: 'relative',
+          height: '118px',
+          background: 'linear-gradient(135deg, #0f172a 0%, #111827 50%, #1e1b4b 100%)',
+          overflow: 'hidden',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         }}
       >
-        {/* ── Pro Telemetry Banner Area ── */}
+        {/* Subtle Grid + Radial Gold & Emerald Glow */}
         <div
           style={{
-            position: 'relative',
-            height: '118px',
-            background: 'linear-gradient(135deg, #0f172a 0%, #111827 50%, #1e1b4b 100%)',
-            overflow: 'hidden',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            position: 'absolute',
+            inset: 0,
+            backgroundImage:
+              'radial-gradient(circle at 82% 22%, rgba(255, 193, 7, 0.25) 0%, transparent 55%), radial-gradient(circle at 18% 80%, rgba(16, 185, 129, 0.18) 0%, transparent 50%)',
           }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0.12,
+            backgroundSize: '24px 24px',
+            backgroundImage:
+              'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)',
+          }}
+        />
+
+        {/* Top Left Verified Loft Badge (hidden on mobile to give room) */}
+        <div
+          className="hidden sm:inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md absolute top-3.5 left-4.5"
         >
-          {/* Subtle Grid + Radial Gold & Emerald Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage:
-                'radial-gradient(circle at 82% 22%, rgba(255, 193, 7, 0.25) 0%, transparent 55%), radial-gradient(circle at 18% 80%, rgba(16, 185, 129, 0.18) 0%, transparent 50%)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: 0.12,
-              backgroundSize: '24px 24px',
-              backgroundImage:
-                'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)',
-            }}
-          />
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+          FlyMetric Loft Profile
+        </div>
 
-          {/* Top Left Verified Loft Badge (hidden on mobile to give room) */}
-          <div
-            className="hidden sm:inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md absolute top-3.5 left-4.5"
+        {/* Quick Edit Profile Pill + Settings Gear + Close Button */}
+        <div
+          className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 flex items-center gap-1.5 z-20"
+        >
+          <button
+            type="button"
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-amber-400 text-xs font-bold inline-flex items-center gap-1.5 backdrop-blur-md transition-all"
+            title="Edit Loft Name & GPS"
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-            FlyMetric Loft Profile
-          </div>
+            <EditIcon size={12} /> <span className="hidden xs:inline">Edit</span> Loft
+          </button>
 
-          {/* Quick Edit Profile Pill + Settings Gear + Close Button */}
-          <div
-            className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 flex items-center gap-1.5 z-20"
+          <button
+            type="button"
+            className="profile-settings-btn"
+            onClick={() => setIsSettingsMenuOpen(true)}
+            style={{
+              position: 'static',
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              background: 'rgba(15, 23, 42, 0.65)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+            }}
+            aria-label="Settings"
+            title="Loft Options"
           >
-            <button
-              type="button"
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-amber-400 text-xs font-bold inline-flex items-center gap-1 backdrop-blur-md transition-all"
-              title="Edit Loft Name & GPS"
-            >
-              ✏️ <span className="hidden xs:inline">Edit</span> Loft
-            </button>
+            <SettingsIcon size={16} />
+          </button>
 
-            <button
-              type="button"
-              className="profile-settings-btn"
-              onClick={() => setIsSettingsMenuOpen(true)}
-              style={{
-                position: 'static',
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-              }}
-              aria-label="Settings"
-              title="Loft Options"
-            >
-              <SettingsIcon size={16} />
-            </button>
-
+          {!isPageMode && (
             <button
               onClick={onClose}
               className="profile-close-btn"
@@ -1011,16 +1031,17 @@ export default function ProfileModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.95rem',
-                fontWeight: 'bold',
                 backdropFilter: 'blur(8px)',
+                lineHeight: 1,
               }}
               aria-label="Close"
+              title="Close Profile"
             >
               ✕
             </button>
-          </div>
+          )}
         </div>
+      </div>
 
         {/* ── Profile Identity Header Overlay ── */}
         <div
@@ -1104,7 +1125,7 @@ export default function ProfileModal({
                 className="mt-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full py-0.5 sm:py-1 px-2 sm:px-2.5 text-[11px] sm:text-xs text-slate-300 inline-flex items-center gap-1 max-w-full truncate transition-all"
                 title="Click to configure Loft GPS location"
               >
-                <span className="shrink-0">📍</span>
+                <MapPinIcon size={12} className="shrink-0 text-slate-400" />
                 <span className="truncate">{locationText || 'Set GPS'}</span>
                 {latitude && longitude && (
                   <span className="text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">
@@ -1118,7 +1139,7 @@ export default function ProfileModal({
 
         {/* ── Modal Scrollable Body ── */}
         <div className="modal-scroll-body" style={{ overflowY: 'auto', padding: '1rem 1rem calc(6.5rem + env(safe-area-inset-bottom, 0px)) 1rem' }}>
-          {/* 📊 2nd-Image Style Loft Telemetry Statistics */}
+          {/* Loft Telemetry Statistics */}
           <div style={{ marginBottom: '1.25rem' }}>
             <div
               style={{
@@ -1386,8 +1407,9 @@ export default function ProfileModal({
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
-                              📅 {row.date}
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <CalendarIcon size={11} className="text-slate-400" />
+                              <span>{row.date}</span>
                             </span>
                             <span
                               style={{
@@ -1395,8 +1417,8 @@ export default function ProfileModal({
                                 fontWeight: 700,
                                 padding: '0.1rem 0.45rem',
                                 borderRadius: '9999px',
-                                background: row.type === 'Training' ? 'rgba(56, 189, 248, 0.14)' : 'rgba(255, 193, 7, 0.14)',
-                                color: row.type === 'Training' ? '#38bdf8' : 'var(--brand-gold)',
+                                background: row.type === 'Training' ? 'rgba(56, 189, 248, 0.14)' : 'rgba(245, 158, 11, 0.14)',
+                                color: row.type === 'Training' ? '#38bdf8' : '#f59e0b',
                               }}
                             >
                               {row.type}
@@ -1406,12 +1428,15 @@ export default function ProfileModal({
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                               <strong style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{row.title}</strong>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
-                                📍 {row.location} · 📏 {row.distance} km
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontFamily: 'monospace' }}>
+                                <MapPinIcon size={10} className="text-slate-500 inline shrink-0" />
+                                <span>{row.location}</span>
+                                <span>•</span>
+                                <span>{row.distance} km</span>
                               </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--brand-gold)', display: 'block', fontFamily: 'monospace' }}>
+                              <strong style={{ fontSize: '0.85rem', color: '#f59e0b', display: 'block', fontFamily: 'monospace' }}>
                                 {row.speed.toLocaleString()} m/min
                               </strong>
                               <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
@@ -1444,13 +1469,17 @@ export default function ProfileModal({
                                     border: '1px solid rgba(56, 189, 248, 0.25)',
                                     borderRadius: '4px',
                                     color: '#38bdf8',
-                                    padding: '0.15rem 0.45rem',
+                                    padding: '0.1rem 0.35rem',
                                     fontSize: '0.62rem',
                                     cursor: 'pointer',
                                     fontWeight: 700,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
                                   }}
                                 >
-                                  📷 Photo
+                                  <CameraIcon size={10} />
+                                  <span>Photo</span>
                                 </button>
                               )}
                               {video && (
@@ -1462,13 +1491,17 @@ export default function ProfileModal({
                                     border: '1px solid rgba(16, 185, 129, 0.25)',
                                     borderRadius: '4px',
                                     color: '#10b981',
-                                    padding: '0.15rem 0.45rem',
+                                    padding: '0.1rem 0.35rem',
                                     fontSize: '0.62rem',
                                     cursor: 'pointer',
                                     fontWeight: 700,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
                                   }}
                                 >
-                                  📹 Video
+                                  <VideoIcon size={10} />
+                                  <span>Video</span>
                                 </button>
                               )}
                             </div>
@@ -1644,8 +1677,9 @@ export default function ProfileModal({
                                         {b.ringNo}
                                       </span>
                                       {b.rfidTag && (
-                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0">
-                                          📡 {b.rfidTag}
+                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0 inline-flex items-center gap-1">
+                                          <AntennaIcon size={9} />
+                                          <span>{b.rfidTag}</span>
                                         </span>
                                       )}
                                     </div>
@@ -2283,9 +2317,10 @@ export default function ProfileModal({
                   link.click()
                   document.body.removeChild(link)
                 }}
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700 }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               >
-                📥 Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}
+                <DownloadIcon size={14} />
+                <span>Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}</span>
               </button>
               <button
                 type="button"
@@ -2426,7 +2461,8 @@ export default function ProfileModal({
                       height: '2rem'
                     }}
                   >
-                    🛰️ {fetchingGps ? 'Fetching GPS…' : 'Use Current Device GPS'}
+                    <MapPinIcon size={12} />
+                    <span>{fetchingGps ? 'Fetching GPS…' : 'Use Current Device GPS'}</span>
                   </button>
 
                   {/* Map Preview */}
@@ -2604,8 +2640,9 @@ export default function ProfileModal({
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
-                      🏁 Flight Events & Races
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <TrophyIcon size={13} />
+                      <span>Flight Events & Races</span>
                     </span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
                       {events.length} {events.length === 1 ? 'record' : 'records'}
@@ -2641,8 +2678,9 @@ export default function ProfileModal({
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
-                      ⏱️ Clocked Arrivals Only
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <CalendarIcon size={13} />
+                      <span>Clocked Arrivals Only</span>
                     </span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(245,158,11,0.2)', color: '#fbbf24' }}>
                       {totalClocked} clocked
@@ -2676,8 +2714,9 @@ export default function ProfileModal({
                 />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
-                      🐦 Loft Pigeon Registry
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <BirdIcon size={13} />
+                      <span>Loft Pigeon Registry</span>
                     </span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>
                       {registeredBirds.length} {registeredBirds.length === 1 ? 'bird' : 'birds'}
@@ -3015,12 +3054,13 @@ export default function ProfileModal({
                         alignItems: 'center',
                         gap: '0.35rem',
                         fontSize: '0.72rem',
-                        color: '#FFC107',
+                        color: '#f59e0b',
                         fontWeight: 700,
                         margin: 0,
                       }}
                     >
-                      📡 125kHz RFID Snap Ring Tag
+                      <AntennaIcon size={12} />
+                      <span>125kHz RFID Snap Ring Tag</span>
                     </label>
                     <span
                       style={{
@@ -3268,6 +3308,20 @@ export default function ProfileModal({
           </div>
         </div>
       )}
+    </>
+  )
+
+  if (isPageMode) {
+    return (
+      <div className="w-full">
+        {profileMainView}
+      </div>
+    )
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      {profileMainView}
     </div>
   )
 }

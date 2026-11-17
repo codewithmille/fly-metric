@@ -2,7 +2,27 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { RaceEvent } from '@/app/api/race-events/route'
-import { BirdIcon, PlusIcon, TagIcon, TimerIcon, NotesIcon, RulerIcon, TrashIcon, PillIcon, CalendarIcon, TrophyIcon, TrainingIcon, LightningIcon } from '@/components/icons'
+import {
+  BirdIcon,
+  PlusIcon,
+  TagIcon,
+  TimerIcon,
+  NotesIcon,
+  RulerIcon,
+  TrashIcon,
+  PillIcon,
+  CalendarIcon,
+  TrophyIcon,
+  TrainingIcon,
+  LightningIcon,
+  GlobeIcon,
+  MapPinIcon,
+  EditIcon,
+  AntennaIcon,
+  CameraIcon,
+  VideoIcon,
+  DownloadIcon,
+} from '@/components/icons'
 import { saveEvent } from '@/lib/apiClient'
 import type { Session } from '@supabase/supabase-js'
 import LoftMapPreview from '@/components/LoftMapPreview'
@@ -311,7 +331,7 @@ export default function ActivityModal({
         setTotalBirds(registeredBirds.length.toString())
         setWinner('TBD')
         setNotes('')
-        setTitle(`🏆 90km Race`)
+        setTitle(`90km Race`)
         setBirdsList([])
         setParticipatingRings(registeredBirds.map(b => b.ringNo.toUpperCase()))
         setIsRfidTarget(true)
@@ -406,12 +426,12 @@ export default function ActivityModal({
       if (matched) {
         setRfidFlash({
           status: 'success',
-          message: `📡 Scanned RFID: ${matched.ringNo}${matched.name ? ` (${matched.name})` : ''} at ${currTime}!`,
+          message: `Scanned RFID: ${matched.ringNo}${matched.name ? ` (${matched.name})` : ''} at ${currTime}`,
         })
       } else {
         setRfidFlash({
           status: 'warning',
-          message: `📡 Scanned RFID tag ${scannedTag}. (Tip: Register in Loft Registry to link)`,
+          message: `Scanned RFID tag ${scannedTag}. (Tip: Register in Loft Registry to link)`,
         })
       }
       setTimeout(() => setRfidFlash(null), 4000)
@@ -687,7 +707,7 @@ export default function ActivityModal({
   const sortedBirdsList = [...birdsList].sort((a, b) => b.speed - a.speed)
 
   return (
-    <div className="modal-backdrop" style={{ zIndex: 10200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="modal-backdrop modal-floating" style={{ zIndex: 10500 }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div
         className="modal-container"
         ref={modalRef}
@@ -709,21 +729,14 @@ export default function ActivityModal({
       >
         {/* Header styling adapts to activity type */}
         <div className="modal-header" style={{
-          background: (clockInOnly || eventToEdit)
-            ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.16) 0%, rgba(13, 21, 39, 0.98) 100%)'
-            : activityType === 'race' ? 'linear-gradient(135deg, #FFC107, #FF8F00)' :
-              activityType === 'training' ? 'linear-gradient(135deg, #2196F3, #1565C0)' :
-              activityType === 'medication' ? 'linear-gradient(135deg, #4CAF50, #2E7D32)' :
-              'linear-gradient(135deg, #9C27B0, #6A1B9A)',
+          background: '#0e1420',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.45rem',
           width: '100%',
           boxSizing: 'border-box',
           padding: '0.9rem 1.15rem',
-          borderTopLeftRadius: '1.25rem',
-          borderTopRightRadius: '1.25rem',
-          borderBottom: '1px solid rgba(255, 193, 7, 0.2)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           flexShrink: 0,
         }}>
           {/* Top Row: Title + Entries + Close */}
@@ -779,7 +792,7 @@ export default function ActivityModal({
                   }}
                   title="View & Edit Race Entries"
                 >
-                  <span>🕊️</span>
+                  <BirdIcon size={12} />
                   <span>Entries ({participatingRings.length}/{registeredBirds.length})</span>
                 </button>
               )}
@@ -820,19 +833,23 @@ export default function ActivityModal({
               fontSize: '0.72rem',
               color: 'var(--text-secondary)',
               flexWrap: 'wrap',
+              fontFamily: 'monospace',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span>📅</span> {raceDate}
+                  <CalendarIcon size={11} className="text-slate-400" />
+                  <span>{raceDate}</span>
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span>📏</span> {distanceKmStr} km
+                  <MapPinIcon size={11} className="text-slate-400" />
+                  <span>{distanceKmStr} km</span>
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span>⏰</span> Rel: {releaseTime}
+                  <TimerIcon size={11} className="text-slate-400" />
+                  <span>Rel: {releaseTime}</span>
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span>⏱️</span> Cut: {clockInTime}
+                  <span>Cut: {clockInTime}</span>
                 </span>
               </div>
 
@@ -841,9 +858,9 @@ export default function ActivityModal({
                   type="button"
                   onClick={() => setClockInOnly(!clockInOnly)}
                   style={{
-                    background: clockInOnly ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 193, 7, 0.2)',
-                    border: clockInOnly ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 193, 7, 0.5)',
-                    color: clockInOnly ? 'var(--text-secondary)' : 'var(--brand-gold)',
+                    background: clockInOnly ? 'rgba(255, 255, 255, 0.06)' : 'rgba(245, 158, 11, 0.2)',
+                    border: clockInOnly ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(245, 158, 11, 0.5)',
+                    color: clockInOnly ? 'var(--text-secondary)' : '#f59e0b',
                     borderRadius: '9999px',
                     padding: '0.15rem 0.55rem',
                     fontSize: '0.68rem',
@@ -855,7 +872,8 @@ export default function ActivityModal({
                   }}
                   title={clockInOnly ? "Edit Date, Distance, or Release time" : "Switch back to Live Cockpit"}
                 >
-                  <span>{clockInOnly ? '✏️ Edit Info' : '🏆 Cockpit'}</span>
+                  {clockInOnly ? <EditIcon size={11} /> : <TrophyIcon size={11} />}
+                  <span>{clockInOnly ? 'Edit Info' : 'Cockpit'}</span>
                 </button>
 
                 <button
@@ -1024,7 +1042,10 @@ export default function ActivityModal({
 
                   {/* Distance Input */}
                   <div className="form-group">
-                    <label htmlFor="distance-km" className="form-label">📏 Distance</label>
+                    <label htmlFor="distance-km" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <RulerIcon size={13} />
+                      <span>Distance</span>
+                    </label>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <input
                         id="distance-km"
@@ -1052,7 +1073,10 @@ export default function ActivityModal({
 
                   {/* Release Point GPS coordinates (Optional calculator) */}
                   <div style={{ borderTop: '1px solid var(--border-muted)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
-                    <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>🛰️ Release GPS (Distance Calculator)</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                      <MapPinIcon size={13} />
+                      <span>Release GPS (Distance Calculator)</span>
+                    </span>
                     <div className="form-row">
                       <div className="form-group">
                         <label htmlFor="rel-lat" className="form-label" style={{ fontSize: '0.72rem' }}>Release Lat</label>
@@ -1100,7 +1124,8 @@ export default function ActivityModal({
                           height: '2.2rem'
                         }}
                       >
-                        📍 {fetchingGps ? 'Locating…' : 'Use Current GPS'}
+                        <MapPinIcon size={12} />
+                        <span>{fetchingGps ? 'Locating…' : 'Use Current GPS'}</span>
                       </button>
 
                       <button
@@ -1115,13 +1140,14 @@ export default function ActivityModal({
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '0.3rem',
-                          borderColor: 'rgba(255, 193, 7, 0.3)',
-                          color: 'var(--brand-gold)',
-                          background: 'rgba(255, 193, 7, 0.05)',
+                          borderColor: 'rgba(245, 158, 11, 0.3)',
+                          color: '#f59e0b',
+                          background: 'rgba(245, 158, 11, 0.05)',
                           height: '2.2rem'
                         }}
                       >
-                        🌐 Calculate Distance
+                        <GlobeIcon size={12} />
+                        <span>Calculate Distance</span>
                       </button>
                     </div>
 
@@ -1162,12 +1188,13 @@ export default function ActivityModal({
                         <span style={{
                           fontSize: '0.78rem',
                           fontWeight: 700,
-                          color: 'var(--brand-gold)',
+                          color: '#f59e0b',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.35rem'
                         }}>
-                          📈 Velocity Arrival Forecast
+                          <LightningIcon size={13} />
+                          <span>Velocity Arrival Forecast</span>
                         </span>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                           {showForecast ? '▼ Collapse' : '▶ Expand'}
@@ -1259,8 +1286,8 @@ export default function ActivityModal({
           {/* ── Participating Birds Bar (When editing event details) ── */}
           {!clockInOnly && (activityType === 'race' || activityType === 'training') && (
             <div style={{
-              background: 'rgba(255, 193, 7, 0.06)',
-              border: '1px solid rgba(255, 193, 7, 0.25)',
+              background: 'rgba(245, 158, 11, 0.06)',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
               borderRadius: '0.75rem',
               padding: '0.65rem 0.85rem',
               marginTop: '0.4rem',
@@ -1271,12 +1298,12 @@ export default function ActivityModal({
               flexWrap: 'wrap'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>🕊️</span>
+                <span style={{ color: '#f59e0b' }}><BirdIcon size={16} /></span>
                 <div>
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fff' }}>
-                    Kasali sa Laro (Entries)
+                    Flight Entries
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--brand-gold)' }}>
+                  <div style={{ fontSize: '0.68rem', color: '#f59e0b', fontFamily: 'monospace' }}>
                     {participatingRings.length} of {registeredBirds.length} birds enrolled
                   </div>
                 </div>
@@ -1285,9 +1312,9 @@ export default function ActivityModal({
                 type="button"
                 onClick={() => setIsEntriesModalOpen(true)}
                 style={{
-                  background: 'rgba(255, 193, 7, 0.15)',
-                  border: '1px solid rgba(255, 193, 7, 0.4)',
-                  color: 'var(--brand-gold)',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  color: '#f59e0b',
                   borderRadius: '9999px',
                   padding: '0.28rem 0.8rem',
                   fontSize: '0.72rem',
@@ -1298,7 +1325,7 @@ export default function ActivityModal({
                   gap: '0.3rem',
                 }}
               >
-                <span>Piliin ang mga Ibon</span>
+                <span>Select Birds</span>
                 <span>➔</span>
               </button>
             </div>
@@ -1315,7 +1342,7 @@ export default function ActivityModal({
               {/* Leaderboard Section Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ color: 'var(--brand-gold)' }}>🏆</span>
+                  <TrophyIcon size={14} className="text-amber-500" />
                   <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#fff' }}>
                     Clocked Arrivals ({birdsList.length})
                   </span>
@@ -1466,7 +1493,7 @@ export default function ActivityModal({
                   fontSize: '0.76rem',
                   color: 'var(--text-secondary)'
                 }}>
-                  🕊️ Walang ibon na naka-clock in pa. Piliin ang ibon sa itaas at i-click ang Clock, o itapat sa 125kHz RFID pad!
+                  No arrivals clocked in yet for this flight.
                 </div>
               ) : (
                 <div style={{
@@ -1540,14 +1567,18 @@ export default function ActivityModal({
                                         border: '1px solid rgba(33, 150, 243, 0.4)',
                                         borderRadius: '4px',
                                         color: '#60a5fa',
-                                        padding: '0.05rem 0.35rem',
+                                        padding: '0.1rem 0.35rem',
                                         fontSize: '0.62rem',
                                         cursor: 'pointer',
                                         fontWeight: 800,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
                                       }}
                                       title="View Verification Photo"
                                     >
-                                      📷
+                                      <CameraIcon size={10} />
+                                      <span>Photo</span>
                                     </button>
                                   )}
                                   {localVideos[bird.ringNo.toUpperCase()] && (
@@ -1559,14 +1590,18 @@ export default function ActivityModal({
                                         border: '1px solid rgba(76, 175, 80, 0.4)',
                                         borderRadius: '4px',
                                         color: '#4ade80',
-                                        padding: '0.05rem 0.35rem',
+                                        padding: '0.1rem 0.35rem',
                                         fontSize: '0.62rem',
                                         cursor: 'pointer',
                                         fontWeight: 800,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
                                       }}
                                       title="View Verification Video"
                                     >
-                                      📹
+                                      <VideoIcon size={10} />
+                                      <span>Video</span>
                                     </button>
                                   )}
                                 </div>
@@ -1757,13 +1792,13 @@ export default function ActivityModal({
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>🕊️</span>
+                <span style={{ color: '#f59e0b' }}><BirdIcon size={18} /></span>
                 <div>
                   <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>
-                    Kasali sa Laro (Entries)
+                    Flight Entries
                   </div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                    Piliin ang mga ibon na makikipag-karera sa flight na ito
+                    Select pigeons competing in this race flight
                   </div>
                 </div>
               </div>
@@ -1792,7 +1827,7 @@ export default function ActivityModal({
 
             {/* Quick Select & Counter */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '0.5rem', border: '1px solid var(--border-default)' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--brand-gold)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b', fontFamily: 'monospace' }}>
                 {participatingRings.length} of {registeredBirds.length} birds enrolled
               </span>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -1823,7 +1858,8 @@ export default function ActivityModal({
                   onChange={(e) => setIsRfidTarget(e.target.checked)}
                   style={{ cursor: 'pointer', accentColor: '#10b981' }}
                 />
-                <span>📡 125kHz RFID Sensor Target Flight</span>
+                <AntennaIcon size={13} />
+                <span>125kHz RFID Sensor Target Flight</span>
               </label>
               <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '9999px', background: isRfidTarget ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)', color: isRfidTarget ? '#34d399' : 'var(--text-muted)' }}>
                 {isRfidTarget ? 'TARGET LOCKED' : 'OFF'}
@@ -1966,9 +2002,10 @@ export default function ActivityModal({
                   link.click()
                   document.body.removeChild(link)
                 }}
-                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700 }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.88rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               >
-                📥 Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}
+                <DownloadIcon size={14} />
+                <span>Download {selectedMedia.type === 'photo' ? 'Photo' : 'Video'}</span>
               </button>
               <button
                 type="button"
