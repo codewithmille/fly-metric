@@ -23,7 +23,11 @@
 ## Project Conventions
 
 ### UI & Styling Standards
-1. **Default Theme**: Always target `data-theme="dark"` on the root `<html>` element.
+1. **Design System & Anti-Slop Policy**:
+   - Strictly follow `.agents/skills/design-distinctive-ui/SKILL.md` (Zero AI Slop policy).
+   - Zero emojis in UI features/actions/alerts — strictly use SVG icons from `@/components/icons`.
+   - Main tab navigation (Cockpit, Birds, Activities, Profile) renders full page (`isPageMode={true}`), not floating modal popups.
+2. **Default Theme**: Always target `data-theme="dark"` on the root `<html>` element.
 2. **Component Classes**:
    - Prefer **daisyUI v5** semantic component classes (`btn`, `badge`, `card`, `stats`, `stat`, `navbar`, `mockup-window`, `mockup-phone`, `tabs`, `tab`, `modal`, `input`, `select`, `table`, `alert`, `avatar`, `divider`) combined with **shadcn-style** border and surface refinements (`border border-white/10`, `bg-base-200/60`, `backdrop-blur-md`, `shadow-xl`).
    - Brand Accent: Retain `#FFC107` (Amber/Gold) for primary racing highlights, badges, and key velocity readouts.

@@ -312,7 +312,7 @@ export default function Home() {
         eventTitle: 'Loft Trap Station',
         rank: 0,
         type: 'warning',
-        message: `⚠️ Walang aktibong Race o Training flight para sa RFID sensor clock-in.`
+        message: `Walang aktibong Race o Training flight para sa RFID sensor clock-in.`
       })
       return
     }
@@ -348,7 +348,7 @@ export default function Home() {
         eventTitle: targetEvent.title,
         rank: 0,
         type: 'warning',
-        message: `⚠️ HINDI KASALI SA LARO: Si ${matchedBird.ringNo} ay hindi kasali sa "${targetEvent.title}"! Hindi ito iko-clock.`
+        message: `HINDI KASALI SA LARO: Si ${matchedBird.ringNo} ay hindi kasali sa "${targetEvent.title}"! Hindi ito iko-clock.`
       })
       return // DO NOT CLOCK IN! NEVER CLOCK IN OTHER EVENTS!
     }
@@ -376,7 +376,7 @@ export default function Home() {
         eventTitle: targetEvent.title,
         rank: rankIdx,
         type: 'info',
-        message: `ℹ️ NAKA-CLOCK NA: Si ${matchedBird.ringNo} ay naitala na kaninang ${existingRecord.clockInTime} (+${existingRecord.speed.toLocaleString()} m/min, Rank #${rankIdx}). Hindi na kailangan i-tap ulit.`
+        message: `NAKA-CLOCK NA: Si ${matchedBird.ringNo} ay naitala na kaninang ${existingRecord.clockInTime} (+${existingRecord.speed.toLocaleString()} m/min, Rank #${rankIdx}). Hindi na kailangan i-tap ulit.`
       })
       return
     }
@@ -454,7 +454,7 @@ export default function Home() {
           eventTitle: targetEvent.title,
           rank: 0,
           type: 'warning',
-          message: `⚠️ Error saving automatic clock-in to database.`
+          message: `Error saving automatic clock-in to database.`
         })
       }
     } catch (err: any) {

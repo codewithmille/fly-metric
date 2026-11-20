@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Room — incident review</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#incident">Skip to incident</a>
+  <header class="topbar">
+    <a class="wordmark" href="#incident" aria-label="Signal Room home">
+      <span aria-hidden="true">SR/</span> SIGNAL ROOM
+    </a>
+    <div class="topbar-meta">
+      <span class="demo-flag">FICTIONAL DEMO DATA</span>
+      <span class="shift">
+        <span class="status-dot" aria-hidden="true"></span>
+        EU SHIFT · 03:14 UTC
+      </span>
+    </div>
+  </header>
+
+  <main class="workbench" id="incident">
+    <aside class="queue" aria-label="Incident queue">
+      <p class="section-label">QUEUE / 04</p>
+      <ol>
+        <li class="active">
+          <a href="#case">
+            <span class="severity">HIGH</span>
+            <strong>Unusual sign-in</strong>
+            <small>Identity · 2m ago</small>
+          </a>
+        </li>
+        <li>
+          <a href="#case">
+            <span class="severity medium">MED</span>
+            <strong>Mailbox rule</strong>
+            <small>Email · 11m ago</small>
+          </a>
+        </li>
+        <li>
+          <a href="#case">
+            <span class="severity low">LOW</span>
+            <strong>Blocked binary</strong>
+            <small>Endpoint · 24m ago</small>
+          </a>
+        </li>
+      </ol>
+    </aside>
+
+    <article class="case" id="case">
+      <header class="case-head">
+        <div>
+          <p class="section-label">INC-0248 · IDENTITY</p>
+          <h1>Unusual sign-in for<br>maya.chen@example.test</h1>
+        </div>
+        <span class="risk">HIGH RISK</span>
+      </header>
+
+      <section class="decision" aria-labelledby="decision-title">
+        <p class="section-label" id="decision-title">DECISION WINDOW</p>
+        <p class="finding">A valid password was used from a new device 1,840 km from the user's last verified session.</p>
+        <div class="actions">
+          <button type="button" class="primary">Contain account</button>
+          <button type="button">Mark expected</button>
+          <button type="button" aria-label="Open more incident actions">•••</button>
+        </div>
+      </section>
+
+      <section class="timeline" aria-labelledby="timeline-title">
+        <div class="section-row">
+          <h2 id="timeline-title">Evidence timeline</h2>
+          <span>3 signals</span>
+        </div>
+        <ol>
+          <li>
+            <time datetime="2026-07-25T03:11:08Z">03:11:08</time>
+            <div><strong>Sign-in accepted</strong><p>Password + remembered session token</p></div>
+          </li>
+          <li>
+            <time datetime="2026-07-25T03:11:12Z">03:11:12</time>
+            <div><strong>New device observed</strong><p>Safari on macOS · first seen today</p></div>
+          </li>
+          <li>
+            <time datetime="2026-07-25T03:12:41Z">03:12:41</time>
+            <div><strong>Mailbox opened</strong><p>Four message previews · no export detected</p></div>
+          </li>
+        </ol>
+      </section>
+    </article>
+
+    <aside class="evidence" aria-label="Evidence summary">
+      <p class="section-label">EVIDENCE / 03</p>
+      <dl>
+        <div><dt>Source</dt><dd>Lisbon, PT</dd></div>
+        <div><dt>Previous</dt><dd>Berlin, DE</dd></div>
+        <div><dt>Device trust</dt><dd>Unknown</dd></div>
+        <div><dt>MFA</dt><dd>Not challenged</dd></div>
+      </dl>
+      <div class="note">
+        <span aria-hidden="true">!</span>
+        <p><strong>Analyst note</strong>Location distance alone is not proof of compromise.</p>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

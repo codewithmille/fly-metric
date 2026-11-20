@@ -18,6 +18,9 @@ import {
   CameraIcon,
   VideoIcon,
   DownloadIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  LightningIcon,
 } from '@/components/icons'
 
 interface BirdRecord {
@@ -915,8 +918,8 @@ export default function LoftActivitiesModal({
                                 <span style={{ color: '#38bdf8' }}>{distance} km</span>
                               </div>
                             </div>
-                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', paddingLeft: '0.5rem' }}>
-                              {isExpanded ? '▼' : '▶'}
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', paddingLeft: '0.5rem', display: 'flex', alignItems: 'center' }}>
+                              {isExpanded ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
                             </span>
                           </div>
 
@@ -1048,8 +1051,9 @@ export default function LoftActivitiesModal({
                                         <div style={{ fontWeight: 800, color: '#FFC107', fontFamily: 'monospace', fontSize: '0.76rem' }}>
                                           {bird.speed.toLocaleString()} m/m
                                         </div>
-                                        <div style={{ fontSize: '0.65rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>
-                                          ⚡ {(bird.speed * 0.06).toFixed(1)} km/h
+                                        <div style={{ fontSize: '0.65rem', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                                          <LightningIcon size={10} />
+                                          <span>{(bird.speed * 0.06).toFixed(1)} km/h</span>
                                         </div>
                                       </td>
                                     </tr>

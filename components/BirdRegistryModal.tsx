@@ -12,7 +12,11 @@ import {
   CalendarIcon,
   AntennaIcon,
   TimerIcon,
+  AlertTriangleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
 } from '@/components/icons'
+import { getBirdAge } from '@/lib/birdAge'
 import { getBirds, saveBird, deleteBird } from '@/lib/apiClient'
 import { useRfidScanner } from '@/hooks/useRfidScanner'
 
@@ -617,13 +621,16 @@ export default function BirdRegistryModal({
                     <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-default)', color: 'var(--text-secondary)', position: 'sticky', top: 0, zIndex: 10 }}>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Ring Number</th>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Breed/Strain</th>
+                      <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700 }}>Age</th>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, width: '3.5rem', textAlign: 'center' }}>Sex</th>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, width: '4.5rem', textAlign: 'center' }}>Status</th>
                       <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, width: '2.5rem', textAlign: 'center' }}></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBirds.map((bird) => (
+                    {filteredBirds.map((bird) => {
+                      const age = getBirdAge(bird.birthdate, bird.ringNo)
+                      return (
                       <tr 
                         key={bird.id} 
                         onClick={() => setSelectedBird(bird)}
@@ -662,6 +669,18 @@ export default function BirdRegistryModal({
                         <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-secondary)' }}>
                           {bird.strain || '—'}
                           <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{bird.color}</div>
+                        </td>
+                        <td style={{ padding: '0.5rem 0.75rem', whiteSpace: 'nowrap' }}>
+                          {age ? (
+                            <div>
+                              <div style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.74rem' }}>{age.formatted}</div>
+                              <div style={{ fontSize: '0.62rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                {bird.birthdate ? `Hatched ${bird.birthdate}` : age.isEstimated ? 'Est. hatch year' : ''}
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#64748b' }}>—</span>
+                          )}
                         </td>
                         <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                           <span style={{
@@ -706,7 +725,7 @@ export default function BirdRegistryModal({
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
@@ -771,7 +790,7 @@ export default function BirdRegistryModal({
                   <div className="form-group">
                     {error && (
                       <div style={{ padding: '0.6rem 0.8rem', borderRadius: '0.5rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                        <span>⚠️</span>
+                        <AlertTriangleIcon size={14} className="shrink-0" />
                         <span>{error}</span>
                       </div>
                     )}
@@ -909,7 +928,8 @@ export default function BirdRegistryModal({
                     width: 'fit-content'
                   }}
                 >
-                  {showPedigree ? '▼ Hide Pedigree Details (Optional)' : '▶ Show Pedigree Details (Optional)'}
+                  {showPedigree ? <ChevronDownIcon size={13} /> : <ChevronRightIcon size={13} />}
+                  <span>{showPedigree ? 'Hide Pedigree Details (Optional)' : 'Show Pedigree Details (Optional)'}</span>
                 </button>
 
                 {showPedigree && (
@@ -927,6 +947,16 @@ export default function BirdRegistryModal({
                           onChange={(e) => setBirthdate(e.target.value)}
                           style={{ height: '2.2rem', fontSize: '0.8rem', colorScheme: 'dark' }}
                         />
+                        {birthdate && (() => {
+                          const previewAge = getBirdAge(birthdate, ringNo)
+                          if (!previewAge) return null
+                          return (
+                            <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', color: '#f59e0b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(245, 158, 11, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                              <span>Calculated Age: {previewAge.formatted}</span>
+                              <span style={{ color: '#94a3b8' }}>({previewAge.totalDays} days)</span>
+                            </div>
+                          )
+                        })()}
                       </div>
                       <div className="form-group">
                         <label htmlFor="reg-strain" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
@@ -1085,6 +1115,68 @@ export default function BirdRegistryModal({
             </div>
             
             <div className="modal-body modal-scroll-body" style={{ padding: '1.25rem', maxHeight: '72dvh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Telemetry Age Banner */}
+              {(() => {
+                const age = getBirdAge(selectedBird.birthdate, selectedBird.ringNo)
+                return (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(13, 18, 29, 0.95) 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    borderRadius: '0.75rem',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                      <span style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: 'rgba(245, 158, 11, 0.15)',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        color: '#f59e0b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <TimerIcon size={18} />
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 800, letterSpacing: '0.04em', fontFamily: 'monospace' }}>
+                          Pigeon Age Telemetry
+                        </div>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f59e0b', lineHeight: 1.2 }}>
+                          {age ? age.formatted : 'Age not recorded'}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748b', fontFamily: 'monospace', marginTop: '0.15rem' }}>
+                          {selectedBird.birthdate ? `Hatched: ${selectedBird.birthdate} (${age?.totalDays || 0} days old)` : age?.isEstimated ? 'Estimated from ring year' : 'Set hatch date below'}
+                        </div>
+                      </div>
+                    </div>
+                    {age && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '9999px',
+                        background: (age.years ?? 0) >= 1 ? 'rgba(56, 189, 248, 0.15)' : 'rgba(74, 222, 128, 0.15)',
+                        border: (age.years ?? 0) >= 1 ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(74, 222, 128, 0.35)',
+                        color: (age.years ?? 0) >= 1 ? '#38bdf8' : '#4ade80',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.03em',
+                        flexShrink: 0,
+                        fontFamily: 'monospace',
+                      }}>
+                        {(age.years ?? 0) >= 1 ? 'Old Bird' : 'Young Bird'}
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
+
               <form onSubmit={handleUpdateBird} style={{
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border-default)',
@@ -1218,6 +1310,16 @@ export default function BirdRegistryModal({
                         onChange={(e) => setEditBirthdate(e.target.value)}
                         style={{ height: '2.2rem', fontSize: '0.8rem', colorScheme: 'dark' }}
                       />
+                      {editBirthdate && (() => {
+                        const previewAge = getBirdAge(editBirthdate, editRingNo)
+                        if (!previewAge) return null
+                        return (
+                          <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', color: '#f59e0b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(245, 158, 11, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                            <span>Calculated Age: {previewAge.formatted}</span>
+                            <span style={{ color: '#94a3b8' }}>({previewAge.totalDays} days)</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                     <div className="form-group">
                       <label htmlFor="edit-strain" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>

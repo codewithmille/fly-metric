@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" role="img" aria-labelledby="title desc">
+  <title id="title">Design Distinctive UI</title>
+  <desc id="desc">A technical editorial diagram showing a brief transformed into a verified interface.</desc>
+  <rect width="1280" height="520" fill="#101311"/>
+  <path d="M0 0H1280V8H0Z" fill="#D8FF3E"/>
+  <g stroke="#2B302D" stroke-width="1">
+    <path d="M64 0V520M160 0V520M256 0V520M352 0V520M448 0V520M544 0V520M640 0V520M736 0V520M832 0V520M928 0V520M1024 0V520M1120 0V520M1216 0V520"/>
+    <path d="M0 72H1280M0 136H1280M0 200H1280M0 264H1280M0 328H1280M0 392H1280M0 456H1280"/>
+  </g>
+  <rect x="64" y="52" width="138" height="28" fill="#D8FF3E"/>
+  <text x="78" y="72" fill="#101311" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="700" letter-spacing="1.6">AGENT SKILL</text>
+  <text x="64" y="145" fill="#F4F0E8" font-family="Arial, Helvetica, sans-serif" font-size="63" font-weight="800" letter-spacing="-2.5">DESIGN DISTINCTIVE UI</text>
+  <text x="68" y="183" fill="#A9B0AB" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">BRIEF-SPECIFIC · HOST-NEUTRAL · VERIFIED</text>
+  <g transform="translate(64 248)">
+    <rect width="270" height="176" fill="#171B18" stroke="#4A514D"/>
+    <text x="20" y="28" fill="#D8FF3E" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700">01 / READ</text>
+    <text x="20" y="68" fill="#F4F0E8" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Surface + task</text>
+    <text x="20" y="102" fill="#A9B0AB" font-family="Arial, Helvetica, sans-serif" font-size="15">Audience, evidence,</text>
+    <text x="20" y="126" fill="#A9B0AB" font-family="Arial, Helvetica, sans-serif" font-size="15">constraints, real content.</text>
+    <path d="M20 148H250" stroke="#4A514D"/>
+  </g>
+  <path d="M350 336H408" stroke="#D8FF3E" stroke-width="2"/>
+  <path d="M397 329L408 336L397 343" fill="none" stroke="#D8FF3E" stroke-width="2"/>
+  <g transform="translate(424 248)">
+    <rect width="270" height="176" fill="#F4F0E8"/>
+    <text x="20" y="28" fill="#3754E8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700">02 / COMMIT</text>
+    <text x="20" y="68" fill="#101311" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">One visual thesis</text>
+    <text x="20" y="102" fill="#505651" font-family="Arial, Helvetica, sans-serif" font-size="15">Structure before style.</text>
+    <text x="20" y="126" fill="#505651" font-family="Arial, Helvetica, sans-serif" font-size="15">Tokens before decoration.</text>
+    <path d="M20 148H250" stroke="#C7C8C2"/>
+  </g>
+  <path d="M710 336H768" stroke="#D8FF3E" stroke-width="2"/>
+  <path d="M757 329L768 336L757 343" fill="none" stroke="#D8FF3E" stroke-width="2"/>
+  <g transform="translate(784 248)">
+    <rect width="432" height="176" fill="#D8FF3E"/>
+    <text x="20" y="28" fill="#101311" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700">03 / VERIFY</text>
+    <text x="20" y="68" fill="#101311" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">Rendered. Tested. Specific.</text>
+    <g fill="#101311" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+      <text x="20" y="105">[✓] ACCESSIBILITY</text>
+      <text x="218" y="105">[✓] REAL STATES</text>
+      <text x="20" y="132">[✓] RESPONSIVE</text>
+      <text x="218" y="132">[✓] HONEST COPY</text>
+    </g>
+    <path d="M20 148H412" stroke="#101311" opacity=".35"/>
+  </g>
+  <g fill="#717A74" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">
+    <text x="64" y="480">CLAUDE CODE</text>
+    <text x="182" y="480">OPENCODE</text>
+    <text x="278" y="480">CODEX</text>
+    <text x="345" y="480">KIMI CODE</text>
+    <text x="1122" y="480">MIT / 2026</text>
+  </g>
+</svg>

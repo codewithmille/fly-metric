@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const targetUserId = searchParams.get('userId') || 'local-dev-user-id'
     const targetUserEmail = searchParams.get('email') || 'dev@example.com'
 
-    // 1. Seed 10 Birds
+    // 1. Seed 10 Birds with authentic hatch dates & ages
     const birds = [
       {
         ringNo: 'PH-2026-88001',
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
         name: 'Sky King',
         gender: 'Cock',
         strain: 'Janssen / Aarden',
+        birthdate: '2026-10-06', // 1 month and 2 weeks
         status: 'Active',
         notes: 'Ace pigeon candidate. 1st place Dagupan Beach release.',
         rfidTag: '0007070841',
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
         name: 'Wind Racer',
         gender: 'Hen',
         strain: 'Van den Bulck',
+        birthdate: '2026-10-27', // 3 weeks and 3 days
         status: 'Active',
         notes: 'Consistent top 5 clocked racer.',
         rfidTag: '0007070842',
@@ -35,6 +37,7 @@ export async function GET(request: Request) {
         name: 'Silver Arrow',
         gender: 'Cock',
         strain: 'Koopman',
+        birthdate: '2026-11-15', // 5 days
         status: 'Active',
         notes: '1st place winner in Aparri Grand Classic 2026.',
         rfidTag: '0007070843',
@@ -45,6 +48,7 @@ export async function GET(request: Request) {
         name: 'Gold Wing',
         gender: 'Cock',
         strain: 'De Rauw-Sablon',
+        birthdate: '2026-08-20', // 3 months
         status: 'Active',
         notes: 'High velocity specialist in long distance.',
         rfidTag: '0007070844',
@@ -55,6 +59,7 @@ export async function GET(request: Request) {
         name: 'Dark Shadow',
         gender: 'Hen',
         strain: 'Heremans-Ceusters',
+        birthdate: '2026-05-10', // 6 months
         status: 'Active',
         notes: 'Fast recovery and excellent navigation instincts.',
         rfidTag: '0007070845',
@@ -65,6 +70,7 @@ export async function GET(request: Request) {
         name: 'Storm Bringer',
         gender: 'Cock',
         strain: 'Bricoux',
+        birthdate: '2026-02-14', // 9 months
         status: 'Active',
         notes: 'Headwind specialist in stormy weather conditions.',
         rfidTag: '0007070846',
@@ -75,6 +81,7 @@ export async function GET(request: Request) {
         name: 'Lightning Jet',
         gender: 'Hen',
         strain: 'Gaby Vandenabeele',
+        birthdate: '2025-08-10', // 1 year and 3 months
         status: 'Active',
         notes: 'Quick trapper on landing board pad sensor.',
         rfidTag: '0007070847',
@@ -85,6 +92,7 @@ export async function GET(request: Request) {
         name: 'White Cloud',
         gender: 'Hen',
         strain: 'Sion',
+        birthdate: '2025-03-01', // 1 year and 8 months
         status: 'Active',
         notes: 'Strong homing endurance in tossing sessions.',
         rfidTag: '0007070848',
@@ -95,6 +103,7 @@ export async function GET(request: Request) {
         name: 'Sonic Speed',
         gender: 'Cock',
         strain: 'Meulemans',
+        birthdate: '2024-11-15', // 2 years
         status: 'Active',
         notes: 'High velocity sprinter for short to mid tosses.',
         rfidTag: '0007070849',
@@ -105,6 +114,7 @@ export async function GET(request: Request) {
         name: 'Alpha Leader',
         gender: 'Cock',
         strain: 'Stichelbaut',
+        birthdate: '2026-11-01', // 2 weeks and 5 days
         status: 'Active',
         notes: 'Experienced veteran racer and breeding sire.',
         rfidTag: '0007070850',

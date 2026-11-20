@@ -1,0 +1,4 @@
+interface:
+  display_name: "Distinctive UI Director"
+  short_description: "Build and audit intentional, non-generic UI"
+  default_prompt: "Use $design-distinctive-ui to design or audit this interface with a specific visual direction and production-ready verification."

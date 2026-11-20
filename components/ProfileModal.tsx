@@ -22,7 +22,11 @@ import {
   VideoIcon,
   DownloadIcon,
   EditIcon,
+  TimerIcon,
+  LightningIcon,
+  AlertTriangleIcon,
 } from '@/components/icons'
+import { getBirdAge } from '@/lib/birdAge'
 import { saveBird, deleteBird, saveEvent, generateLocalId, resetLoftRecords } from '@/lib/apiClient'
 import { useRfidScanner } from '@/hooks/useRfidScanner'
 
@@ -366,18 +370,18 @@ export default function ProfileModal({
         }
       }
 
-      // 1. Seed 10 Birds
+      // 1. Seed 10 Birds with authentic hatch dates & ages
       const birdsToSeed = [
-        { ringNo: 'PH-2026-88001', color: 'Blue Bar', name: 'Sky King', gender: 'Cock' },
-        { ringNo: 'PH-2026-88002', color: 'Red Checker', name: 'Wind Racer', gender: 'Hen' },
-        { ringNo: 'PH-2026-88003', color: 'Silver Grizzle', name: 'Silver Arrow', gender: 'Cock' },
-        { ringNo: 'PH-2026-88004', color: 'Pencil', name: 'Gold Wing', gender: 'Cock' },
-        { ringNo: 'PH-2026-88005', color: 'Dark Cheq', name: 'Dark Shadow', gender: 'Hen' },
-        { ringNo: 'PH-2026-88006', color: 'Black', name: 'Storm Bringer', gender: 'Cock' },
-        { ringNo: 'PH-2026-88007', color: 'Blue Bar Pied', name: 'Lightning Jet', gender: 'Hen' },
-        { ringNo: 'PH-2026-88008', color: 'Pure White', name: 'White Cloud', gender: 'Hen' },
-        { ringNo: 'PH-2026-88009', color: 'Red Bar', name: 'Sonic Speed', gender: 'Cock' },
-        { ringNo: 'PH-2026-88010', color: 'Mealy', name: 'Alpha Leader', gender: 'Cock' },
+        { ringNo: 'PH-2026-88001', color: 'Blue Bar', name: 'Sky King', gender: 'Cock', birthdate: '2026-10-06' },
+        { ringNo: 'PH-2026-88002', color: 'Red Checker', name: 'Wind Racer', gender: 'Hen', birthdate: '2026-10-27' },
+        { ringNo: 'PH-2026-88003', color: 'Silver Grizzle', name: 'Silver Arrow', gender: 'Cock', birthdate: '2026-11-15' },
+        { ringNo: 'PH-2026-88004', color: 'Pencil', name: 'Gold Wing', gender: 'Cock', birthdate: '2026-08-20' },
+        { ringNo: 'PH-2026-88005', color: 'Dark Cheq', name: 'Dark Shadow', gender: 'Hen', birthdate: '2026-05-10' },
+        { ringNo: 'PH-2026-88006', color: 'Black', name: 'Storm Bringer', gender: 'Cock', birthdate: '2026-02-14' },
+        { ringNo: 'PH-2026-88007', color: 'Blue Bar Pied', name: 'Lightning Jet', gender: 'Hen', birthdate: '2025-08-10' },
+        { ringNo: 'PH-2026-88008', color: 'Pure White', name: 'White Cloud', gender: 'Hen', birthdate: '2025-03-01' },
+        { ringNo: 'PH-2026-88009', color: 'Red Bar', name: 'Sonic Speed', gender: 'Cock', birthdate: '2024-11-15' },
+        { ringNo: 'PH-2026-88010', color: 'Mealy', name: 'Alpha Leader', gender: 'Cock', birthdate: '2026-11-01' },
       ]
 
       for (const bird of birdsToSeed) {
@@ -1682,6 +1686,15 @@ export default function ProfileModal({
                                           <span>{b.rfidTag}</span>
                                         </span>
                                       )}
+                                      {(() => {
+                                        const age = getBirdAge(b.birthdate, b.ringNo)
+                                        if (!age) return null
+                                        return (
+                                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0 font-bold">
+                                            {age.formatted}
+                                          </span>
+                                        )
+                                      })()}
                                     </div>
                                     <div className="text-[11px] text-slate-400 truncate mt-0.5">
                                       {b.name ? <span className="text-slate-200 font-semibold">{b.name} • </span> : ''}
@@ -1716,7 +1729,7 @@ export default function ProfileModal({
                                     className="w-7 h-7 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 flex items-center justify-center text-xs"
                                     title="View History"
                                   >
-                                    ⏱️
+                                    <TimerIcon size={12} />
                                   </button>
                                   <button
                                     type="button"
@@ -1757,6 +1770,9 @@ export default function ProfileModal({
                           </th>
                           <th style={{ padding: '0.6rem 0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             Gender
+                          </th>
+                          <th style={{ padding: '0.6rem 0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Age
                           </th>
                           <th style={{ padding: '0.6rem 0.85rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>
                             Actions
@@ -1929,6 +1945,26 @@ export default function ProfileModal({
                                     {b.gender || '—'}
                                   </span>
                                 )}
+                              </td>
+                              <td style={{ padding: '0.55rem 0.75rem', whiteSpace: 'nowrap' }}>
+                                {(() => {
+                                  const age = getBirdAge(b.birthdate, b.ringNo)
+                                  if (!age) return <span style={{ color: '#64748b' }}>—</span>
+                                  return (
+                                    <div>
+                                      <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.73rem' }}>{age.formatted}</span>
+                                      {b.birthdate ? (
+                                        <span style={{ display: 'block', fontSize: '0.62rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                          Hatch: {b.birthdate}
+                                        </span>
+                                      ) : age.isEstimated ? (
+                                        <span style={{ display: 'block', fontSize: '0.62rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                          Est. hatch year
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  )
+                                })()}
                               </td>
                               <td style={{ padding: '0.55rem 0.85rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
@@ -2238,7 +2274,9 @@ export default function ProfileModal({
                   }}
                   disabled={seeding}
                 >
-                  <span style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>⚡</span>
+                  <span style={{ color: '#f59e0b', fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
+                    <LightningIcon size={18} />
+                  </span>
                   <div>
                     <div style={{ fontWeight: 700 }}>{seeding ? 'Seeding...' : 'Seed Demo Data'}</div>
                     <div style={{ fontSize: '0.68rem', color: 'rgba(255, 193, 7, 0.7)', marginTop: '0.15rem' }}>[DEV MODE] Populate mock pigeons & flights</div>
@@ -2484,7 +2522,7 @@ export default function ProfileModal({
 
                 {error && (
                   <div className="form-error" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem', fontSize: '0.75rem' }}>
-                    <span>⚠️</span>
+                    <AlertTriangleIcon size={14} className="shrink-0" />
                     <span>{error}</span>
                   </div>
                 )}
@@ -2783,7 +2821,7 @@ export default function ProfileModal({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#f87171', fontSize: '0.72rem', fontWeight: 800 }}>
-                  <span>⚠️</span>
+                  <AlertTriangleIcon size={14} className="shrink-0" />
                   <span>Babala: Hindi na mababawi ang mga mabuburang data.</span>
                 </div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.45rem', cursor: 'pointer' }}>
@@ -2801,8 +2839,9 @@ export default function ProfileModal({
 
               {/* Error / Success Feedback */}
               {resetErrorMsg && (
-                <div style={{ color: '#f87171', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0' }}>
-                  ⚠️ {resetErrorMsg}
+                <div style={{ color: '#f87171', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <AlertTriangleIcon size={13} className="shrink-0" />
+                  <span>{resetErrorMsg}</span>
                 </div>
               )}
               {resetSuccessMsg && (
@@ -2931,7 +2970,7 @@ export default function ProfileModal({
                     gap: '0.4rem',
                   }}
                 >
-                  <span>⚡</span>
+                  <AntennaIcon size={14} className="shrink-0" />
                   <span>{scanNotice}</span>
                 </div>
               )}
@@ -3133,6 +3172,16 @@ export default function ProfileModal({
                         onChange={(e) => setEditBirthdate(e.target.value)}
                         style={{ height: '2.2rem', fontSize: '0.8rem', colorScheme: 'dark' }}
                       />
+                      {editBirthdate && (() => {
+                        const previewAge = getBirdAge(editBirthdate, editRingNo)
+                        if (!previewAge) return null
+                        return (
+                          <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', color: '#f59e0b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(245, 158, 11, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                            <span>Calculated Age: {previewAge.formatted}</span>
+                            <span style={{ color: '#94a3b8' }}>({previewAge.totalDays} days)</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                     <div className="form-group">
                       <label
