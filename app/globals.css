@@ -1735,7 +1735,7 @@ body {
   position: fixed;
   right: 1.25rem;
   bottom: 1.5rem;
-  z-index: 8600;
+  z-index: 10500;
   width: 390px;
   max-width: calc(100vw - 1.5rem);
   height: 600px;
@@ -1762,8 +1762,9 @@ body {
     left: 0.5rem;
     width: auto;
     max-width: none;
-    bottom: calc(4.4rem + 0.5rem + env(safe-area-inset-bottom, 0px));
-    height: calc(100dvh - 4.4rem - 1.5rem);
-    max-height: calc(100dvh - 4.4rem - 1.5rem);
+    bottom: calc(3.65rem + 0.5rem + env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - 3.65rem - 1.5rem);
+    max-height: calc(100dvh - 3.65rem - 1.5rem);
+    z-index: 10500;
   }
 }

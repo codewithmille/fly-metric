@@ -1599,7 +1599,7 @@ export default function ProfileModal({
                 ) : (
                   <>
                     {/* Mobile Pigeon Card List (sm:hidden) */}
-                    <div className="sm:hidden flex flex-col gap-2 mb-3">
+                    <div className="sm:hidden flex flex-col gap-2.5 mb-16 pb-8">
                       {filteredBirds.map((b) => {
                         const draft = inlineDrafts[b.id] || {
                           ringNo: b.ringNo || '',
@@ -1610,7 +1610,7 @@ export default function ProfileModal({
                         return (
                           <div
                             key={b.id}
-                            className="p-3 rounded-xl bg-slate-900/80 border border-white/10 flex flex-col gap-2.5 hover:border-amber-400/30 transition-all"
+                            className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 flex flex-col gap-2.5 hover:border-amber-400/30 transition-all"
                           >
                             {isInlineEditMode ? (
                               <div className="flex flex-col gap-2">
@@ -1667,78 +1667,108 @@ export default function ProfileModal({
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-center justify-between gap-2.5">
-                                <div
-                                  onClick={() => setSelectedHistoryBird(b)}
-                                  className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
-                                >
-                                  <div className="w-9 h-9 rounded-lg bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0">
-                                    <img src="/icon.png" alt="" className="w-5 h-5 object-contain" />
+                              <div className="flex flex-col gap-2.5">
+                                {/* ROW 1: Identity & Action Bar */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <div
+                                    onClick={() => setSelectedHistoryBird(b)}
+                                    className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
+                                    title="Tap to view performance history"
+                                  >
+                                    <div className="w-7 h-7 rounded-lg bg-amber-400/10 border border-amber-400/25 flex items-center justify-center shrink-0 text-amber-400">
+                                      <BirdIcon size={14} />
+                                    </div>
+                                    <span className="font-mono font-bold text-amber-400 text-sm tracking-tight whitespace-nowrap">
+                                      {b.ringNo}
+                                    </span>
+                                    <span
+                                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                                        b.gender === 'Hen'
+                                          ? 'bg-pink-500/15 text-pink-300 border border-pink-500/30'
+                                          : b.gender === 'Cock'
+                                          ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                                          : 'bg-white/5 text-slate-400 border border-white/10'
+                                      }`}
+                                    >
+                                      {b.gender || '—'}
+                                    </span>
                                   </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="font-mono font-extrabold text-amber-400 text-xs tracking-tight">
-                                        {b.ringNo}
-                                      </span>
-                                      {b.rfidTag && (
-                                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0 inline-flex items-center gap-1">
-                                          <AntennaIcon size={9} />
-                                          <span>{b.rfidTag}</span>
-                                        </span>
-                                      )}
-                                      {(() => {
-                                        const age = getBirdAge(b.birthdate, b.ringNo)
-                                        if (!age) return null
-                                        return (
-                                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 shrink-0 font-bold">
-                                            {age.formatted}
-                                          </span>
-                                        )
-                                      })()}
-                                    </div>
-                                    <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                                      {b.name ? <span className="text-slate-200 font-semibold">{b.name} • </span> : ''}
-                                      {b.color}
-                                    </div>
+
+                                  {/* Action Buttons */}
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedHistoryBird(b)}
+                                      className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-amber-400/15 text-slate-400 hover:text-amber-300 border border-white/[0.08] hover:border-amber-400/30 transition-colors flex items-center justify-center cursor-pointer"
+                                      title="Flight History"
+                                    >
+                                      <TimerIcon size={12} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingBird(b)}
+                                      className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-sky-500/15 text-slate-400 hover:text-sky-300 border border-white/[0.08] hover:border-sky-500/30 transition-colors flex items-center justify-center cursor-pointer"
+                                      title="Edit Bird Profile"
+                                    >
+                                      <NotesIcon size={12} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteBird(b.id)}
+                                      className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/15 text-slate-400 hover:text-red-400 border border-white/[0.08] hover:border-red-500/30 transition-colors flex items-center justify-center cursor-pointer"
+                                      title="Delete Bird"
+                                    >
+                                      <TrashIcon size={12} />
+                                    </button>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <span
-                                    className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                                      b.gender === 'Hen'
-                                        ? 'bg-pink-500/15 text-pink-400 border border-pink-500/30'
-                                        : b.gender === 'Cock'
-                                        ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
-                                        : 'bg-white/5 text-slate-400 border border-white/10'
-                                    }`}
-                                  >
-                                    {b.gender || '—'}
+                                {/* ROW 2: Pigeon Name & Color/Strain */}
+                                <div
+                                  onClick={() => setSelectedHistoryBird(b)}
+                                  className="flex items-center gap-1.5 text-xs cursor-pointer min-w-0"
+                                >
+                                  <span className="font-semibold text-slate-100 truncate">
+                                    {b.name || 'Unnamed Bird'}
                                   </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingBird(b)}
-                                    className="w-7 h-7 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/30 text-sky-400 flex items-center justify-center text-xs"
-                                    title="Edit Bird"
-                                  >
-                                    <NotesIcon size={12} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedHistoryBird(b)}
-                                    className="w-7 h-7 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 flex items-center justify-center text-xs"
-                                    title="View History"
-                                  >
-                                    <TimerIcon size={12} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteBird(b.id)}
-                                    className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 flex items-center justify-center text-xs"
-                                    title="Delete Bird"
-                                  >
-                                    <TrashIcon size={12} />
-                                  </button>
+                                  {b.color && (
+                                    <>
+                                      <span className="text-slate-600 text-[10px] shrink-0">•</span>
+                                      <span className="text-slate-400 text-xs truncate">{b.color}</span>
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* ROW 3: Dedicated Metadata Badges */}
+                                <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-white/[0.06]">
+                                  {b.rfidTag ? (
+                                    <span
+                                      className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.03] text-slate-300 border border-white/[0.08] inline-flex items-center gap-1"
+                                      title={`125kHz RFID: ${b.rfidTag}`}
+                                    >
+                                      <AntennaIcon size={10} className="text-amber-400" />
+                                      <span>{b.rfidTag}</span>
+                                    </span>
+                                  ) : null}
+
+                                  {(() => {
+                                    const age = getBirdAge(b.birthdate, b.ringNo)
+                                    if (!age) return null
+                                    return (
+                                      <span
+                                        className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.03] text-slate-300 border border-white/[0.08] font-medium inline-flex items-center gap-1"
+                                        title={b.birthdate ? `Hatched: ${b.birthdate}` : age.isEstimated ? 'Estimated from band year' : ''}
+                                      >
+                                        <span>{age.formatted}</span>
+                                      </span>
+                                    )
+                                  })()}
+
+                                  {b.strain && (
+                                    <span className="text-[10px] font-sans px-1.5 py-0.5 rounded bg-white/[0.03] text-slate-400 border border-white/[0.06]">
+                                      {b.strain}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             )}

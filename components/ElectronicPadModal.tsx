@@ -285,95 +285,37 @@ export default function ElectronicPadModal({
         }}
       >
         {/* ── High-Tech Antenna Station Header ── */}
-        <div
-          style={{
-            background: '#0e1420',
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div className="bg-[#0e1420] p-3.5 sm:p-4 border-b border-white/[0.08] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
             {/* Pulsing Radar Icon */}
-            <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '2px solid rgba(16, 185, 129, 0.5)',
-                boxShadow: '0 0 16px rgba(16, 185, 129, 0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#34d399',
-                flexShrink: 0,
-              }}
-            >
-              <AntennaIcon size={20} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+              <AntennaIcon size={18} />
             </div>
 
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight truncate m-0">
                   Electronic Trap Station
                 </h2>
-                <span
-                  style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 800,
-                    padding: '0.15rem 0.5rem',
-                    borderRadius: '9999px',
-                    background: 'rgba(16, 185, 129, 0.25)',
-                    border: '1px solid rgba(16, 185, 129, 0.6)',
-                    color: '#6ee7b7',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '7px',
-                      height: '7px',
-                      borderRadius: '50%',
-                      background: '#34d399',
-                      boxShadow: '0 0 8px #34d399',
-                      animation: 'pulse 1.4s infinite',
-                    }}
-                  />
-                  ANTENNA 1: ARMED & LIVE
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 inline-flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  ANTENNA 1: ARMED
                 </span>
               </div>
-              <p style={{ fontSize: '0.74rem', color: '#a7f3d0', margin: '0.2rem 0 0 0', opacity: 0.9 }}>
-                Hands-Free Mode: Pigeons stepping on the 125kHz pad clock-in automatically with ZERO human clicks!
+              <p className="text-[11px] text-emerald-200/70 truncate m-0 mt-0.5 hidden xs:block">
+                Pigeons stepping on 125kHz pad clock-in automatically with zero clicks
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Live Clock Display (Isolated from parent to avoid re-rendering modal inputs) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Live Clock Display */}
             <LiveClock />
 
             <button
               onClick={onClose}
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
+              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              title="Close station"
             >
               ✕
             </button>
@@ -381,56 +323,29 @@ export default function ElectronicPadModal({
         </div>
 
         {/* ── Station Control Bar (Active Race + Sound / TTS Toggles) ── */}
-        <div
-          style={{
-            padding: '0.85rem 1.5rem',
-            background: 'rgba(15, 23, 42, 0.8)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}
-        >
+        <div className="p-3 sm:px-4 sm:py-2.5 bg-slate-900/80 border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           {/* Active Race Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '220px', flex: 1 }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>
-              Clocking Flight:
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider shrink-0">
+              Flight:
             </span>
             {flightEvents.length === 0 ? (
-              <span style={{ fontSize: '0.76rem', color: '#f87171', fontWeight: 700 }}>
+              <span className="text-xs text-red-400 font-bold">
                 No active race found!
               </span>
             ) : (() => {
               const currentFlight = flightEvents.find(e => e.id === (selectedEventId || selectedEvent?.id)) || flightEvents[0]
               return (
-                <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: '360px' }}>
+                <div className="relative flex-1 min-w-0 max-w-full sm:max-w-md">
                   <button
                     type="button"
                     onClick={() => setIsFlightPickerOpen(!isFlightPickerOpen)}
-                    style={{
-                      background: '#0d1527',
-                      border: '1px solid rgba(16, 185, 129, 0.45)',
-                      color: '#fff',
-                      borderRadius: '6px',
-                      padding: '0.38rem 0.65rem',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.4rem',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      boxSizing: 'border-box',
-                    }}
+                    className="w-full h-8 px-2.5 bg-[#0d1527] border border-emerald-500/40 text-white rounded-lg text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer text-left"
                   >
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span className="truncate">
                       {currentFlight?.title || 'Select Flight Event'} ({currentFlight?.date}) · {currentFlight?.extendedProps?.distance || 0}km
                     </span>
-                    <span style={{ fontSize: '0.62rem', color: '#10b981', flexShrink: 0 }}>
+                    <span className="text-[10px] text-emerald-400 shrink-0">
                       {isFlightPickerOpen ? '▲' : '▼'}
                     </span>
                   </button>
@@ -439,25 +354,9 @@ export default function ElectronicPadModal({
                     <>
                       <div
                         onClick={() => setIsFlightPickerOpen(false)}
-                        style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                        className="fixed inset-0 z-[9998]"
                       />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 'calc(100% + 4px)',
-                          left: 0,
-                          right: 0,
-                          maxHeight: '220px',
-                          overflowY: 'auto',
-                          background: '#0d1527',
-                          border: '1px solid rgba(16, 185, 129, 0.45)',
-                          borderRadius: '6px',
-                          boxShadow: '0 12px 32px rgba(0,0,0,0.85)',
-                          zIndex: 9999,
-                          display: 'flex',
-                          flexDirection: 'column',
-                        }}
-                      >
+                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 max-h-56 overflow-y-auto bg-[#0d1527] border border-emerald-500/40 rounded-lg shadow-2xl z-[9999] py-1 flex flex-col">
                         {flightEvents.map((ev, idx) => {
                           const isSelected = ev.id === currentFlight?.id
                           return (
@@ -471,24 +370,14 @@ export default function ElectronicPadModal({
                                 }
                                 setIsFlightPickerOpen(false)
                               }}
-                              style={{
-                                padding: '0.5rem 0.65rem',
-                                fontSize: '0.75rem',
-                                fontWeight: isSelected ? 800 : 600,
-                                color: isSelected ? '#34d399' : '#cbd5e1',
-                                background: isSelected ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
-                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '0.4rem',
-                              }}
+                              className={`px-3 py-2 text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                                isSelected ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'text-slate-200 hover:bg-white/5'
+                              }`}
                             >
-                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <span className="truncate">
                                 {idx === 0 ? '[LATEST] ' : ''}{ev.title} ({ev.date}) · {ev.extendedProps?.distance || 0}km
                               </span>
-                              {isSelected && <span style={{ color: '#10b981', fontWeight: 900 }}>✓</span>}
+                              {isSelected && <span className="text-emerald-400 font-bold shrink-0">✓</span>}
                             </div>
                           )
                         })}
@@ -501,68 +390,40 @@ export default function ElectronicPadModal({
           </div>
 
           {/* Audio Toggles */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
             <button
               type="button"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              style={{
-                background: soundEnabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)',
-                border: soundEnabled ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.1)',
-                color: soundEnabled ? '#34d399' : '#94a3b8',
-                borderRadius: '6px',
-                padding: '0.3rem 0.65rem',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
+              className={`h-7 px-2.5 rounded-md text-xs font-mono font-bold border transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
+                soundEnabled
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                  : 'bg-white/5 border-white/10 text-slate-400'
+              }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${soundEnabled ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-              <span>{soundEnabled ? 'Chime ON' : 'Chime OFF'}</span>
+              <span>Chime</span>
             </button>
 
             <button
               type="button"
               onClick={() => setSpeechEnabled(!speechEnabled)}
-              style={{
-                background: speechEnabled ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255,255,255,0.05)',
-                border: speechEnabled ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255,255,255,0.1)',
-                color: speechEnabled ? '#38bdf8' : '#94a3b8',
-                borderRadius: '6px',
-                padding: '0.3rem 0.65rem',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
+              className={`h-7 px-2.5 rounded-md text-xs font-mono font-bold border transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
+                speechEnabled
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
+                  : 'bg-white/5 border-white/10 text-slate-400'
+              }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${speechEnabled ? 'bg-sky-400' : 'bg-slate-500'}`} />
-              <span>{speechEnabled ? 'Voice ON' : 'Voice OFF'}</span>
+              <span>Voice</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDimmed(true)}
-              style={{
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                color: '#f59e0b',
-                borderRadius: '6px',
-                padding: '0.3rem 0.65rem',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-              }}
+              className="h-7 px-2.5 rounded-md text-xs font-mono font-bold bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 transition-colors inline-flex items-center gap-1 cursor-pointer"
               title="Black screen saver to save phone battery while continuously listening for 125kHz arrivals"
             >
-              <span>Dim Screen</span>
+              <span>Dim</span>
             </button>
           </div>
         </div>
@@ -778,21 +639,14 @@ export default function ElectronicPadModal({
                 </p>
               </div>
             ) : (
-              <div
-                style={{
-                  borderRadius: '0.85rem',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  background: 'rgba(15, 23, 42, 0.5)',
-                  overflow: 'hidden',
-                }}
-              >
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'left' }}>
+              <div className="rounded-xl border border-white/[0.08] bg-slate-900/50 overflow-hidden">
+                <table className="w-full border-collapse text-xs text-left">
                   <thead>
-                    <tr style={{ background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                      <th style={{ padding: '0.55rem 0.85rem', color: '#94a3b8', width: '3rem' }}>Rank</th>
-                      <th style={{ padding: '0.55rem 0.85rem', color: '#94a3b8' }}>Pigeon Ring No.</th>
-                      <th style={{ padding: '0.55rem 0.85rem', color: '#94a3b8' }}>Arrival Time</th>
-                      <th style={{ padding: '0.55rem 0.85rem', color: '#94a3b8', textAlign: 'right' }}>Velocity</th>
+                    <tr className="bg-white/[0.03] border-b border-white/[0.08]">
+                      <th className="px-3 py-2 text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider w-12 text-center">Rank</th>
+                      <th className="px-3 py-2 text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider">Pigeon</th>
+                      <th className="px-3 py-2 text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Time</th>
+                      <th className="px-3 py-2 text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Velocity</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -802,40 +656,44 @@ export default function ElectronicPadModal({
                       return (
                         <tr
                           key={b.ringNo}
-                          style={{
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                            background: isWinner ? 'rgba(255, 193, 7, 0.06)' : 'transparent',
-                          }}
+                          className={`border-b border-white/[0.04] transition-colors ${
+                            isWinner ? 'bg-amber-400/[0.06]' : 'hover:bg-white/[0.02]'
+                          }`}
                         >
-                          <td style={{ padding: '0.65rem 0.85rem', fontWeight: 900, color: isWinner ? '#FFC107' : '#94a3b8' }}>
+                          <td className={`px-3 py-2.5 font-mono font-bold text-center text-xs sm:text-sm ${
+                            isWinner ? 'text-amber-400' : 'text-slate-400'
+                          }`}>
                             #{idx + 1}
                           </td>
-                          <td style={{ padding: '0.65rem 0.85rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#fff', fontSize: '0.84rem' }}>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono font-bold text-white text-xs sm:text-sm">
                                 {b.ringNo}
                               </span>
                               {matched?.name && (
-                                <span style={{ color: '#cbd5e1', fontSize: '0.72rem' }}>
+                                <span className="text-slate-300 text-xs">
                                   ({matched.name})
                                 </span>
                               )}
                               {matched?.rfidTag && (
-                                <span style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem', borderRadius: '3px', background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontFamily: 'monospace', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                  <AntennaIcon size={10} /> {matched.rfidTag}
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30 inline-flex items-center gap-1">
+                                  <AntennaIcon size={9} />
+                                  <span>{matched.rfidTag}</span>
                                 </span>
                               )}
                             </div>
                             {matched?.color && (
-                              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                              <div className="text-[11px] text-slate-400 mt-0.5">
                                 {matched.color} {matched.gender ? `· ${matched.gender}` : ''}
                               </div>
                             )}
                           </td>
-                          <td style={{ padding: '0.65rem 0.85rem', fontFamily: 'monospace', color: '#38bdf8', fontWeight: 700 }}>
+                          <td className="px-3 py-2.5 font-mono text-sky-400 font-bold whitespace-nowrap text-xs sm:text-sm">
                             {b.clockInTime}
                           </td>
-                          <td style={{ padding: '0.65rem 0.85rem', fontFamily: 'monospace', color: isWinner ? '#FFC107' : '#4ade80', fontWeight: 900, textAlign: 'right', fontSize: '0.88rem' }}>
+                          <td className={`px-3 py-2.5 font-mono font-extrabold text-right whitespace-nowrap text-xs sm:text-sm ${
+                            isWinner ? 'text-amber-400' : 'text-emerald-400'
+                          }`}>
                             {b.speed.toLocaleString()} m/min
                           </td>
                         </tr>
@@ -848,99 +706,47 @@ export default function ElectronicPadModal({
           </div>
         </div>
 
-        {/* ── Footer: Test Sensor / Manual Simulation Bar ── */}
-        <div
-          style={{
-            padding: '0.85rem 1.5rem',
-            background: 'rgba(10, 15, 26, 0.95)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}
-        >
-          {/* Sensor Simulator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flex: 1, minWidth: '260px' }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>
-              Test Sensor Tap:
-            </span>
-            <input
-              type="text"
-              placeholder="Tap sensor with ring or type ID..."
-              value={testTagInput}
-              onChange={(e) => setTestTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleTestSensor()
-              }}
-              style={{
-                height: '2rem',
-                fontSize: '0.76rem',
-                background: '#0d1527',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                borderRadius: '6px',
-                padding: '0.2rem 0.6rem',
-                flex: 1,
-                maxWidth: '220px',
-                fontFamily: 'monospace',
-              }}
-            />
+        {/* ── Footer: Test Sensor & Actions Bar (Clean 2-Row Layout) ── */}
+        <div className="p-3 sm:p-4 bg-slate-950/90 border-t border-white/[0.08] flex flex-col gap-2.5">
+          {/* Row 1: Integrated Sensor Simulator Input Group */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder="Scan RFID or enter Ring / Tag ID..."
+                value={testTagInput}
+                onChange={(e) => setTestTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTestSensor()
+                }}
+                className="w-full h-8.5 px-3 bg-[#0d1527] border border-white/15 focus:border-amber-400/60 rounded-lg text-xs font-mono text-white placeholder:text-slate-500 outline-none transition-colors"
+              />
+            </div>
             <button
               type="button"
               onClick={() => handleTestSensor()}
-              style={{
-                height: '2rem',
-                padding: '0.2rem 0.75rem',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                background: '#FFC107',
-                color: '#000',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-              }}
+              className="h-8.5 px-3.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-mono font-bold text-xs whitespace-nowrap shrink-0 transition-colors cursor-pointer"
             >
               Test Clock
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {onOpenRegistry && (
+          {/* Row 2: Secondary Navigation Actions */}
+          <div className="flex items-center justify-between gap-2">
+            {onOpenRegistry ? (
               <button
                 type="button"
                 onClick={onOpenRegistry}
-                style={{
-                  height: '2rem',
-                  padding: '0.2rem 0.75rem',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#cbd5e1',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                }}
+                className="h-7.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Loft Registry
               </button>
-            )}
+            ) : <div />}
 
             <button
               type="button"
               onClick={onClose}
-              style={{
-                height: '2rem',
-                padding: '0.2rem 1rem',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                background: '#10b981',
-                color: '#000',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-              }}
+              className="h-7.5 px-5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs ml-auto transition-colors cursor-pointer"
             >
               Done
             </button>

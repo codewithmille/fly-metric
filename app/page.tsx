@@ -34,6 +34,7 @@ import {
   HomeIcon,
   CameraIcon,
   UserIcon,
+  SparklesIcon,
 } from '@/components/icons'
 import type { RaceEvent } from '@/app/api/race-events/route'
 import { supabase } from '@/lib/supabase'
@@ -928,31 +929,10 @@ export default function Home() {
             <CameraIcon size={13} />
             <span>Photo Audit</span>
           </button>
-
-          <button
-            id="header-ai-chat"
-            className="cockpit-nav-btn !py-1 !px-2.5 !text-xs text-purple-300 hover:text-purple-200 hover:border-purple-500/40"
-            onClick={() => setIsChatOpen(true)}
-            aria-label="Ask FlyMetric AI"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-            <span>Ask AI</span>
-          </button>
         </nav>
 
         {/* Right Action & Profile Toolbar */}
         <div className="nav-actions flex items-center gap-2 sm:gap-2.5">
-          {/* Mobile AI Chat quick shortcut */}
-          <button
-            id="ai-chat-nav-mobile"
-            className="xl:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-purple-400 hover:bg-white/10 transition-colors"
-            onClick={() => setIsChatOpen(true)}
-            aria-label="FlyMetric AI"
-            title="Ask AI"
-          >
-            <span className="text-xs font-black">AI</span>
-          </button>
-
           {/* Mobile Speed Calc quick shortcut */}
           <button
             id="speed-calc-nav-mobile"
@@ -1886,6 +1866,30 @@ export default function Home() {
         onClockInSaved={fetchEvents}
         authToken={session.access_token}
       />
+
+      {/* ── Floating AI Chat Button (Bottom FAB) ── */}
+      {!isChatOpen && (
+        <button
+          type="button"
+          id="floating-ai-chat-btn"
+          onClick={() => setIsChatOpen(true)}
+          className="fixed right-3.5 sm:right-6 bottom-[calc(3.65rem+0.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 z-[9500] group flex items-center gap-2 p-2.5 sm:px-3.5 sm:py-2.5 rounded-full bg-[#080c14]/90 hover:bg-[#0d121d] border border-emerald-500/40 hover:border-emerald-400/70 text-emerald-300 shadow-[0_8px_24px_rgba(0,0,0,0.6),0_0_16px_rgba(16,185,129,0.25)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.7),0_0_24px_rgba(16,185,129,0.4)] transition-all duration-200 cursor-pointer active:scale-95"
+          aria-label="Open FlyMetric AI Chat"
+          title="Ask FlyMetric AI"
+        >
+          <div className="relative flex items-center justify-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute -top-0.5 -right-0.5 opacity-75" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5" />
+            <SparklesIcon size={18} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+          </div>
+          <span className="hidden sm:inline font-mono font-bold text-xs tracking-wider text-emerald-200">
+            Ask AI
+          </span>
+          <span className="sm:hidden font-mono font-extrabold text-[11px] text-emerald-300">
+            AI
+          </span>
+        </button>
+      )}
 
       {/* ── Pigeon AI Chat Modal ─────────────────────── */}
       <PigeonChatModal
